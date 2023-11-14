@@ -211,6 +211,7 @@ rewrite_target_list = [
     "rasterization_proto",
     "raw_signals_processor_calculator_proto",
     "recolor_calculator_proto",
+    "VirtualBackground_calculator_proto",
     "rect_proto",
     "rect_to_render_data_calculator_proto",
     "rect_to_render_scale_calculator_proto",
