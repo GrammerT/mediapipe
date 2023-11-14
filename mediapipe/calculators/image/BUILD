@@ -75,6 +75,17 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
+    name = "VirtualBackground_calculator_proto",
+    srcs = ["VirtualBackground_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util:color_proto",
+    ],
+)
+
+
+mediapipe_proto_library(
     name = "segmentation_smoothing_calculator_proto",
     srcs = ["segmentation_smoothing_calculator.proto"],
     deps = [
@@ -404,6 +415,31 @@ cc_library(
     srcs = ["recolor_calculator.cc"],
     deps = [
         ":recolor_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/util:color_cc_proto",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_quad_renderer",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:shader_util",
+        ],
+    }),
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "VirtualBackground_calculator",
+    srcs = ["VirtualBackground_calculator.cc"],
+    deps = [
+        ":VirtualBackground_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
