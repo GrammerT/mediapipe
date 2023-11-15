@@ -16,24 +16,11 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
-cc_binary(
-    name = "hello_world",
-    srcs = ["hello_world.cc"],
-    deps = [
-        "//mediapipe/calculators/core:pass_through_calculator",
-        "//mediapipe/framework:calculator_graph",
-        "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
-        "@com_google_absl//absl/log:absl_check",
-        "@com_google_absl//absl/log:absl_log",
-    ],
-)
-
-
 
 cc_binary(
     name = "hello_world_dll",
-    srcs = ["hello_world.cc"],
+    copts = ["-DEFFECT_LIBRARY"],
+    srcs = ["IVideoEffect.h","VideoEffectImpl.h","VideoEffectImpl.cpp"],
     deps = [
         "//mediapipe/calculators/core:pass_through_calculator",
         "//mediapipe/framework:calculator_graph",
