@@ -23,9 +23,13 @@ cmd
 @bazel-bin\mediapipe\examples\desktop\selfie_segmentation\selfie_segmentation_cpu.exe -calculator_graph_config_file=mediapipe\graphs\selfie_segmentation\selfie_segmentation_cpu.pbtxt 实时
 
 
-@如果编译出错,很有可能还需要开启vpn下载代码再编译
-@bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/face_mesh:face_mesh_cpu
+@如果编译出错,很有可能还需要开启vpn下载代码再编译 面部识别
+@bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/face_mesh:face_mesh_cpu 
 @bazel-bin\mediapipe\examples\desktop\face_mesh\face_mesh_cpu.exe -calculator_graph_config_file=mediapipe\graphs\face_mesh\face_mesh_desktop_live.pbtxt 实时
+//! 可以编译，但是运行有问题
+@bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/face_mesh:face_mesh_tflite
+@bazel-bin\mediapipe\examples\desktop\face_mesh\face_mesh_tflite.exe -calculator_graph_config_file=mediapipe\graphs\face_mesh\face_mesh_desktop_live.pbtxt
+
 
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/pose_tracking:pose_tracking_cpu
 @bazel-bin\mediapipe\examples\desktop\pose_tracking\pose_tracking_cpu.exe -calculator_graph_config_file=mediapipe\graphs\pose_tracking\pose_tracking_cpu.pbtxt 实时
@@ -33,6 +37,10 @@ cmd
 //! 传图片背景
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/selfie_segmentation_self:selfie_segmentation_cpu_image
 @bazel-bin\mediapipe\examples\desktop\selfie_segmentation_self\selfie_segmentation_cpu_image.exe -calculator_graph_config_file=mediapipe\graphs\selfie_segmentation_image\selfie_segmentation_cpu.pbtxt 实时
+
+//! holistic_tracking 整体追踪？
+@bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/holistic_tracking:holistic_tracking_cpu
+@bazel-bin\mediapipe\examples\desktop\holistic_tracking\holistic_tracking_cpu.exe -calculator_graph_config_file=mediapipe\graphs\holistic_tracking\holistic_tracking_cpu.pbtxt 实时
 
 
 //! hand_tracking手势追踪
