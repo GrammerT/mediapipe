@@ -19,7 +19,6 @@ cmd
 @bazel-bin\mediapipe\examples\desktop\face_detection\face_detection_cpu.exe -calculator_graph_config_file=mediapipe\graphs\face_detection\face_detection_desktop_live.pbtxt -input_video_path=test_video\test_video.mkv 文件输入
 @bazel-bin\mediapipe\examples\desktop\face_detection\face_detection_cpu.exe -calculator_graph_config_file=mediapipe\graphs\face_detection\face_detection_desktop_live.pbtxt 实时
 
-
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/selfie_segmentation:selfie_segmentation_cpu
 @bazel-bin\mediapipe\examples\desktop\selfie_segmentation\selfie_segmentation_cpu.exe -calculator_graph_config_file=mediapipe\graphs\selfie_segmentation\selfie_segmentation_cpu.pbtxt 实时
 
@@ -34,6 +33,17 @@ cmd
 //! 传图片背景
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/selfie_segmentation_self:selfie_segmentation_cpu_image
 @bazel-bin\mediapipe\examples\desktop\selfie_segmentation_self\selfie_segmentation_cpu_image.exe -calculator_graph_config_file=mediapipe\graphs\selfie_segmentation_image\selfie_segmentation_cpu.pbtxt 实时
+
+
+//! hand_tracking手势追踪
+@bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/hand_tracking:hand_tracking_cpu
+@bazel-bin\mediapipe\examples\desktop\hand_tracking\hand_tracking_cpu.exe -calculator_graph_config_file=mediapipe\graphs\hand_tracking\hand_tracking_desktop_live.pbtxt 实时 区分左右手
+@bazel-bin\mediapipe\examples\desktop\hand_tracking\hand_tracking_cpu.exe -calculator_graph_config_file=mediapipe\graphs\hand_tracking\hand_detection_desktop_live.pbtxt 实时 手部检测
+
+//! 物体识别object_tracking_cpu
+@bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/object_tracking:object_tracking_cpu
+@bazel-bin\mediapipe\examples\desktop\object_tracking\object_tracking_cpu.exe -calculator_graph_config_file=mediapipe\graphs\tracking\object_detection_tracking_desktop_live.pbtxt
+
 
 
 //! 自定义dll编译
