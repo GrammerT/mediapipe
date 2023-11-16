@@ -14,20 +14,17 @@
 
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
 
 cc_binary(
     name = "hello_world_dll",
     copts = ["-DEFFECT_LIBRARY"],
     srcs = ["IVideoEffect.h","VideoEffectImpl.h","VideoEffectImpl.cpp"],
+    data = ["//mediapipe/modules/selfie_segmentation:selfie_segmentation.tflite"],
     deps = [
-        "//mediapipe/calculators/core:pass_through_calculator",
-        "//mediapipe/framework:calculator_graph",
-        "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:status",
-        "@com_google_absl//absl/log:absl_check",
-        "@com_google_absl//absl/log:absl_log",
+        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/graphs/selfie_segmentation_image:selfie_segmentation_cpu_deps",
     ],
     linkshared=True,
 )
