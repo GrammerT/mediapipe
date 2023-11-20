@@ -28,6 +28,12 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"
+#include "mediapipe/framework/calculator.pb.h"
+#include "mediapipe/calculators/image/VirtualBackground_calculator.pb.h"
+#include "mediapipe/framework/calculator_options.pb.h"
+
+#include "mediapipe/framework/graph_output_stream.h"
+
 
 constexpr char kInputStream[] = "input_video";
 constexpr char kOutputStream[] = "output_video";
@@ -42,6 +48,48 @@ ABSL_FLAG(std::string, output_video_path, "",
           "Full path of where to save result (.mp4 only). "
           "If not provided, show result in a window.");
 
+std::string graphContent = "node {"\
+  "calculator: \"FlowLimiterCalculator\""\
+  "input_stream: \"input_video\""\
+  "input_stream: \"FINISHED:output_video\""\
+  "input_stream_info: {"\
+    "tag_index: \"FINISHED\""\
+    "back_edge: true"\
+  "}"\
+  "output_stream: \"throttled_input_video\""\
+"}"\
+"node {"\
+  "calculator: \"SelfieSegmentationCpu\""\
+  "input_stream: \"IMAGE:throttled_input_video\""\
+  "output_stream: \"SEGMENTATION_MASK:segmentation_mask\""\
+"}"\
+"node {"\
+  "calculator: \"VirtualBackgroundCalculator\""\
+  "input_stream: \"IMAGE:throttled_input_video\""\
+  "input_stream: \"MASK:segmentation_mask\""\
+  "output_stream: \"IMAGE:output_video\""\
+  "node_options: {"\
+    "[type.googleapis.com/mediapipe.VirtualBackgroundCalculatorOptions] {"\
+      "mask_channel: UNKNOWN"\
+      "invert_mask: true"\
+      "adjust_with_luminance: false"\
+      "background_image_path:\"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg\""\
+    "}"\
+  "}"\
+"}";
+
+
+// mediapipe::VirtualBackgroundCalculatorOptions CreateOptions()
+// {
+//   mediapipe::VirtualBackgroundCalculatorOptions img_options;
+//   img_options.set_mask_channel(mediapipe::VirtualBackgroundCalculatorOptions_MaskChannel_RED);
+//   img_options.set_invert_mask(true);
+//   img_options.set_adjust_with_luminance(false);
+//   img_options.set_background_image_path("D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (2).jpg");
+//   return img_options;
+// }
+
+
 absl::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;
   MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
@@ -52,6 +100,26 @@ absl::Status RunMPPGraph() {
   mediapipe::CalculatorGraphConfig config =
       mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(
           calculator_graph_config_contents);
+#if 0
+      // 在 config 对象中找到需要修改的字段并进行修改
+    for (int i = 0; i < config.node_size(); ++i) {
+        mediapipe::CalculatorGraphConfig::Node* node = config.mutable_node(i);
+        if(node->calculator()=="VirtualBackgroundCalculator")
+        {
+          printf("get VirtualBackgroundCalculator\n");
+          mediapipe::CalculatorOptions* node_options = node->mutable_options();
+          auto realOptions = node_options->MutableExtension(mediapipe::VirtualBackgroundCalculatorOptions::ext);
+          std::string path = "D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (3).jpg";
+          realOptions->set_mask_channel(mediapipe::VirtualBackgroundCalculatorOptions_MaskChannel_RED);
+          realOptions->set_invert_mask(true);
+          realOptions->set_adjust_with_luminance(false);
+          realOptions->set_background_image_path(path);
+          
+          printf("already set VirtualBackgroundCalculator\n");
+        }
+
+    }
+#endif
 
   ABSL_LOG(INFO) << "Initialize the calculator graph.";
   mediapipe::CalculatorGraph graph;
@@ -148,7 +216,30 @@ absl::Status RunMPPGraph() {
   return graph.WaitUntilDone();
 }
 
+#include "mediapipe/framework/port/logging.h"
+
+// class FileLogSink : public google::LogSink {
+// public:
+//     FileLogSink(const std::string& filename) : file_(filename, std::ios_base::app) {}
+
+//     void send(google::LogSeverity severity, const char* full_filename,
+//               const char* base_filename, int line,
+//               const struct ::tm* tm_time, const char* message, size_t message_len) override {
+//         // 将日志消息写入文件
+//         file_ << "[" << google::LogSeverityNames[severity] << "] "
+//               << base_filename << ":" << line << " - " << message << std::endl;
+//     }
+
+// private:
+//     std::ofstream file_;
+// };
+
 int main(int argc, char** argv) {
+// 创建自定义的日志输出
+  std::string logFilePath = "/log_file.txt";
+  // 将标准错误输出重定向到文件
+  freopen("log_file_1.txt", "w", stderr);
+
   google::InitGoogleLogging(argv[0]);
   absl::ParseCommandLine(argc, argv);
   absl::Status run_status = RunMPPGraph();
