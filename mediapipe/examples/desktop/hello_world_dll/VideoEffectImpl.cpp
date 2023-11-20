@@ -15,7 +15,46 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"
 #include "MemoryPool.h"
+
+#include "mediapipe/calculators/image/VirtualBackground_calculator.pb.h"
+#include "mediapipe/framework/calculator_options.pb.h"
+
+
+
 // #define SHOW_CV_WINDOW
+
+
+std::string calculator_graph_config_contents = R"pb(node{"\
+  "calculator: \"FlowLimiterCalculator\""\
+  "input_stream: \"input_video\""\
+  "input_stream: \"FINISHED:output_video\""\
+  "input_stream_info: {"\
+    "tag_index: \"FINISHED\""\
+    "back_edge: true"\
+  "}"\
+  "output_stream: \"throttled_input_video\""\
+"}"\
+"node {"\
+  "calculator: \"SelfieSegmentationCpu\""\
+  "input_stream: \"IMAGE:throttled_input_video\""\
+  "output_stream: \"SEGMENTATION_MASK:segmentation_mask\""\
+"}"\
+"node {"\
+  "calculator: \"VirtualBackgroundCalculator\""\
+  "input_stream: \"IMAGE:throttled_input_video\""\
+  "input_stream: \"MASK:segmentation_mask\""\
+  "output_stream: \"IMAGE:output_video\""\
+  "node_options: {"\
+    "[type.googleapis.com/mediapipe.VirtualBackgroundCalculatorOptions] {"\
+      "mask_channel: UNKNOWN"\
+      "invert_mask: true"\
+      "adjust_with_luminance: false"\
+      "background_image_path:\"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg\""\
+    "}"\
+  "}"\
+"})pb";
+
+
 
 constexpr char kInputStream[] = "input_video";
 constexpr char kOutputStream[] = "output_video";
@@ -84,21 +123,39 @@ int VideoEffectImpl::enableVideoEffect()
       ABSL_LOG(ERROR) << "init param is nullptr.";
       return -1;
     }
-    std::string calculator_graph_config_contents;
-    auto status = mediapipe::file::GetContents(
-      absl::GetFlag(FLAGS_calculator_graph_config_file),
-      &calculator_graph_config_contents);
-    if(!status.ok())
-    {
-      ABSL_LOG(ERROR) << "graph config file content read error.";
-      return -2;
-    }
-    ABSL_LOG(INFO) << "Get calculator graph config contents: "
-                 << calculator_graph_config_contents;
-
+    
     mediapipe::CalculatorGraphConfig config =mediapipe::ParseTextProtoOrDie
                                                     <mediapipe::CalculatorGraphConfig>(calculator_graph_config_contents);
-    status = m_media_pipe_graph.Initialize(config);
+    
+#if 1
+      // 在 config 对象中找到需要修改的字段并进行修改
+    for (int i = 0; i < config.node_size(); ++i) {
+        mediapipe::CalculatorGraphConfig::Node* node = config.mutable_node(i);
+        if(node->calculator()=="VirtualBackgroundCalculator")
+        {
+          ABSL_LOG(INFO) <<"get VirtualBackgroundCalculator";
+          mediapipe::CalculatorOptions* node_options = node->mutable_options();
+          auto realOptions = node_options->MutableExtension(mediapipe::VirtualBackgroundCalculatorOptions::ext);
+          if(m_param->user_pure_color)
+          {
+            
+          }
+          realOptions->set_mask_channel(mediapipe::VirtualBackgroundCalculatorOptions_MaskChannel_RED);
+
+          realOptions->set_background_image_path(m_param->background_file_path);
+          
+        
+          //! MUST.
+          realOptions->set_invert_mask(true);
+          realOptions->set_adjust_with_luminance(false);
+          
+          ABSL_LOG(INFO) <<"already set VirtualBackgroundCalculator\n";
+        }
+
+    }
+#endif
+    
+    auto status = m_media_pipe_graph.Initialize(config);
     if(!status.ok())
     {
       ABSL_LOG(ERROR) << "media pipe graph init error : "<<status.ToString();

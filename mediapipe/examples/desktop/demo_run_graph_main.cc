@@ -34,6 +34,43 @@
 
 #include "mediapipe/framework/graph_output_stream.h"
 
+// #define USER_CONFIG_CONTENT
+
+#ifdef USER_CONFIG_CONTENT
+std::string calculator_graph_config_contents = R"pb(
+  input_stream: "input_video"
+  output_stream: "output_video"
+  node{
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:output_video"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+node {
+  calculator: "SelfieSegmentationCpu"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "SEGMENTATION_MASK:segmentation_mask"
+}
+node {
+  calculator: "VirtualBackgroundCalculator"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "MASK:segmentation_mask"
+  output_stream: "IMAGE:output_video"
+  node_options: {
+    [type.googleapis.com/mediapipe.VirtualBackgroundCalculatorOptions] {
+      mask_channel: UNKNOWN
+      invert_mask: true
+      adjust_with_luminance: false
+      background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg"
+    }
+  }
+})pb";
+
+#endif
 
 constexpr char kInputStream[] = "input_video";
 constexpr char kOutputStream[] = "output_video";
@@ -48,35 +85,7 @@ ABSL_FLAG(std::string, output_video_path, "",
           "Full path of where to save result (.mp4 only). "
           "If not provided, show result in a window.");
 
-std::string graphContent = "node {"\
-  "calculator: \"FlowLimiterCalculator\""\
-  "input_stream: \"input_video\""\
-  "input_stream: \"FINISHED:output_video\""\
-  "input_stream_info: {"\
-    "tag_index: \"FINISHED\""\
-    "back_edge: true"\
-  "}"\
-  "output_stream: \"throttled_input_video\""\
-"}"\
-"node {"\
-  "calculator: \"SelfieSegmentationCpu\""\
-  "input_stream: \"IMAGE:throttled_input_video\""\
-  "output_stream: \"SEGMENTATION_MASK:segmentation_mask\""\
-"}"\
-"node {"\
-  "calculator: \"VirtualBackgroundCalculator\""\
-  "input_stream: \"IMAGE:throttled_input_video\""\
-  "input_stream: \"MASK:segmentation_mask\""\
-  "output_stream: \"IMAGE:output_video\""\
-  "node_options: {"\
-    "[type.googleapis.com/mediapipe.VirtualBackgroundCalculatorOptions] {"\
-      "mask_channel: UNKNOWN"\
-      "invert_mask: true"\
-      "adjust_with_luminance: false"\
-      "background_image_path:\"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg\""\
-    "}"\
-  "}"\
-"}";
+
 
 
 // mediapipe::VirtualBackgroundCalculatorOptions CreateOptions()
@@ -91,16 +100,18 @@ std::string graphContent = "node {"\
 
 
 absl::Status RunMPPGraph() {
+#ifndef USER_CONFIG_CONTENT
   std::string calculator_graph_config_contents;
   MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
       absl::GetFlag(FLAGS_calculator_graph_config_file),
       &calculator_graph_config_contents));
+#endif
   ABSL_LOG(INFO) << "Get calculator graph config contents: "
                  << calculator_graph_config_contents;
   mediapipe::CalculatorGraphConfig config =
       mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(
           calculator_graph_config_contents);
-#if 0
+#ifdef USER_CONFIG_CONTENT
       // 在 config 对象中找到需要修改的字段并进行修改
     for (int i = 0; i < config.node_size(); ++i) {
         mediapipe::CalculatorGraphConfig::Node* node = config.mutable_node(i);
@@ -238,9 +249,9 @@ int main(int argc, char** argv) {
 // 创建自定义的日志输出
   std::string logFilePath = "/log_file.txt";
   // 将标准错误输出重定向到文件
-  freopen("log_file_1.txt", "w", stderr);
+  // freopen("log_file_1.txt", "w", stderr);
 
-  google::InitGoogleLogging(argv[0]);
+  // google::InitGoogleLogging(argv[0]);
   absl::ParseCommandLine(argc, argv);
   absl::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
