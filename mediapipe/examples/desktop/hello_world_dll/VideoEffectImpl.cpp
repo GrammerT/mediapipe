@@ -14,6 +14,8 @@
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"
+#include "MemoryPool.h"
+// #define SHOW_CV_WINDOW
 
 constexpr char kInputStream[] = "input_video";
 constexpr char kOutputStream[] = "output_video";
@@ -36,26 +38,83 @@ std::shared_ptr<IVideoEffect> IVideoEffect::create()
 
 VideoEffectImpl::VideoEffectImpl()
 {
+  google::InitGoogleLogging("");
 }
 
 VideoEffectImpl::~VideoEffectImpl()
 {
+  stopGraphThread();
+
+  m_yuv_2_rgb_tmpframe.reset();
+  m_memory_pool.reset();
 }
 
 bool VideoEffectImpl::initVideoEffect(std::shared_ptr<SVideoEffectParam> param)
 {
     if (!param)
     {
+        ABSL_LOG(ERROR) << "init param is nullptr.";
         return false;
     }
     m_param = param;
+    if(!m_param->user_pure_color)
+    {
+      ABSL_LOG(INFO)<<"init param : user_pure_color:"<<m_param->user_pure_color<<" background file:"<<m_param->background_file_path;
+    }
+    else
+    {
+      ABSL_LOG(INFO)<<"init param : user_pure_color:"<<m_param->user_pure_color<<"  pure_color_value:"<<(int)m_param->pure_color;
+    }
     return true;
+}
+
+void VideoEffectImpl::enableLogOutput(bool enable, std::string log_file_name)
+{
+  if (enable)
+  {
+    freopen("log_file.txt", "w", stderr);
+  }
 }
 
 int VideoEffectImpl::enableVideoEffect()
 {
     m_is_enable = true;
+    if(!m_param)
+    {
+      ABSL_LOG(ERROR) << "init param is nullptr.";
+      return -1;
+    }
+    std::string calculator_graph_config_contents;
+    auto status = mediapipe::file::GetContents(
+      absl::GetFlag(FLAGS_calculator_graph_config_file),
+      &calculator_graph_config_contents);
+    if(!status.ok())
+    {
+      ABSL_LOG(ERROR) << "graph config file content read error.";
+      return -2;
+    }
+    ABSL_LOG(INFO) << "Get calculator graph config contents: "
+                 << calculator_graph_config_contents;
+
+    mediapipe::CalculatorGraphConfig config =mediapipe::ParseTextProtoOrDie
+                                                    <mediapipe::CalculatorGraphConfig>(calculator_graph_config_contents);
+    status = m_media_pipe_graph.Initialize(config);
+    if(!status.ok())
+    {
+      ABSL_LOG(ERROR) << "media pipe graph init error : "<<status.ToString();
+      return -3;
+    }
+    ABSL_LOG(INFO) << "Start running the calculator graph.";
     
+    m_stream_poller = m_media_pipe_graph.AddOutputStreamPoller(kOutputStream);
+    if (!m_stream_poller.ok()) {
+        // 处理错误，例如打印错误消息
+        ABSL_LOG(ERROR) << "Error: " << m_stream_poller.status().ToString();
+        // 返回特定错误码或状态
+        return -3;
+    }
+
+    startGraphThread();
     return 0;
 }
 
@@ -70,9 +129,17 @@ int VideoEffectImpl::pushVideoFrame(std::shared_ptr<SVideoFrame> frame)
 {
     if (m_param)
     {
-        return -1;
+      ABSL_LOG(ERROR) << "param is nullptr.";
+      return -1;
     }
-    
+    if(!m_is_enable)
+    {
+      ABSL_LOG(WARNING) << "m_is_enable is FALSE.";
+      return -2;
+    }
+    std::unique_lock<std::mutex> locker(m_frame_queue_mutex);
+		m_frame_queue.push(frame);
+		m_frame_queue_cond.notify_one();
     return 0;
 }
 
@@ -81,6 +148,145 @@ void VideoEffectImpl::setVideoFrameReceiverCallback(std::function<void(std::shar
     m_receiver_callback = callback;
 }
 
+void VideoEffectImpl::startGraphThread()
+{
+  stopGraphThread();
+  m_is_graph_running = true;
+  m_graph_thread = std::thread([this](){
+  ABSL_LOG(INFO) << "Starting thread: " << m_graph_thread.get_id();
+  MP_RETURN_IF_ERROR(m_media_pipe_graph.StartRun({}));
+  ABSL_LOG(INFO) << "Starting graph success: " << m_graph_thread.get_id();
+  while (m_is_graph_running) {
+    // Capture opencv camera or video frame.
+    cv::Mat camera_frame = PopVideoFrameQueueToCVMat();
+    if (camera_frame.empty()) {
+        ABSL_LOG(WARNING) << "Ignore empty frames from Queue.";
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000/60));
+        continue;
+    }
+    // cv::Mat camera_frame;
+    // cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
+    // if (!load_video) {
+    //   cv::flip(camera_frame, camera_frame, /*flipcode=HORIZONTAL*/ 1);
+    // }
+
+    // Wrap Mat into an ImageFrame.
+    auto input_frame = absl::make_unique<mediapipe::ImageFrame>(
+        mediapipe::ImageFormat::SRGB, camera_frame.cols, camera_frame.rows,
+        mediapipe::ImageFrame::kDefaultAlignmentBoundary);
+    cv::Mat input_frame_mat = mediapipe::formats::MatView(input_frame.get());
+    camera_frame.copyTo(input_frame_mat);
+
+    // Send image packet into the graph.
+    size_t frame_timestamp_us =
+        (double)cv::getTickCount() / (double)cv::getTickFrequency() * 1e6;
+    MP_RETURN_IF_ERROR(m_media_pipe_graph.AddPacketToInputStream(
+        kInputStream, mediapipe::Adopt(input_frame.release())
+                          .At(mediapipe::Timestamp(frame_timestamp_us))));
+
+    // Get the graph result packet, or stop if that fails.
+    mediapipe::Packet packet;
+    if (!m_stream_poller->Next(&packet)) 
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000/60));
+      continue;
+    }
+    auto& output_frame = packet.Get<mediapipe::ImageFrame>();
+    // Convert back to opencv for display or saving.
+    cv::Mat output_frame_mat = mediapipe::formats::MatView(&output_frame);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000/60));
+#if 0
+    cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
+#endif
+#ifdef SHOW_CV_WINDOW
+    {
+      cv::imshow(kWindowName, output_frame_mat);
+      // Press any key to exit.
+      const int pressed_key = cv::waitKey(5);
+      if (pressed_key >= 0 && pressed_key != 255) grab_frames = false;
+    }
+#endif
+  }
+  });
+}
+
+void VideoEffectImpl::stopGraphThread()
+{
+  ABSL_LOG(INFO) << "graph thread will stop.";
+  m_is_graph_running = false;
+  if(m_graph_thread.joinable())
+  {
+    m_graph_thread.join();
+  }
+  auto status = m_media_pipe_graph.CloseInputStream(kInputStream);
+  if(!status.ok())
+  {
+      ABSL_LOG(ERROR) << "graph close input stream failed."<<status.ToString();
+      return ;
+  }
+  status = m_media_pipe_graph.WaitUntilDone();
+   if(!status.ok())
+  {
+      ABSL_LOG(ERROR) << "graph close input stream failed."<<status.ToString();
+      return ;
+  }
+  ABSL_LOG(INFO) << "graph thread already stop.";
+}
+
+cv::Mat &VideoEffectImpl::PopVideoFrameQueueToCVMat()
+{
+  cv::Mat frameMat;
+  std::unique_lock<std::mutex> locker(m_frame_queue_mutex);
+  m_frame_queue_cond.wait(locker, [this] { return !m_is_graph_running.load()|| m_frame_queue.size()>0;});
+  if (m_is_graph_running.load())
+  {
+    return frameMat;
+  }
+  auto frame = m_frame_queue.front();
+  m_frame_queue.pop();
+  locker.unlock();//! 锁粒度最小,保证渲染不被encode影响 ,如果锁还在，将导致渲染帧率降低
+  cv::Mat yuvMat;
+
+  switch (frame->format)
+  {
+  case EVideoFormat::kYUV420P:
+  {
+    if(!m_memory_pool)
+    {
+        m_memory_pool = std::make_shared<MemoryPool>(frame->width*frame->height*3/2);    
+    }
+    if(!m_yuv_2_rgb_tmpframe)
+    {
+      auto tmpFrame = new SVideoFrame;
+      m_yuv_2_rgb_tmpframe = std::shared_ptr<SVideoFrame>(tmpFrame,[this](SVideoFrame *frame){
+        if(frame->data[0])
+        {
+          m_memory_pool->release(frame->data[0]);
+        }
+        delete frame;
+      });
+      m_yuv_2_rgb_tmpframe->data[0] = (uint8_t*)m_memory_pool->get();
+      m_yuv_2_rgb_tmpframe->width = frame->width;
+      m_yuv_2_rgb_tmpframe->height = frame->height;
+    }
+
+    int index = 0;
+    m_yuv_2_rgb_tmpframe->data[index] = frame->data[0];
+    index+=frame->width*frame->height;
+    m_yuv_2_rgb_tmpframe->data[index] = frame->data[1];
+    index+=frame->width*frame->height/4;
+    m_yuv_2_rgb_tmpframe->data[index] = frame->data[2];
+    yuvMat = cv::Mat(m_yuv_2_rgb_tmpframe->height + m_yuv_2_rgb_tmpframe->height / 2, m_yuv_2_rgb_tmpframe->width, CV_8UC1, m_yuv_2_rgb_tmpframe->data[0]);
+    
+    cv::cvtColor(yuvMat, frameMat, cv::COLOR_YUV2RGB_I420);
+  }
+    break;
+  default:
+    break;
+  }
+
+  return std::move(frameMat);
+}
 
 absl::Status RunMPPGraph() {
   std::string calculator_graph_config_contents;

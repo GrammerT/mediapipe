@@ -17,7 +17,8 @@
 /** return值说明
  * 0  : 成功
  * -1 : 参数异常
- * 
+ * -2 : 配置文件读取异常
+ * -3 : media引擎初始化失败
  */
 
 enum class EPureColor
@@ -40,7 +41,6 @@ struct SVideoEffectParam
 
 enum class EVideoFormat
 {
-    kRGB24,
     kYUV420P,
 };
 /**
@@ -78,6 +78,13 @@ public:
      */
     virtual bool initVideoEffect(std::shared_ptr<SVideoEffectParam> param) =0;
 
+    /**
+     * @brief 启用或关闭日志重定向
+     * 
+     * @param enable true 开启日志重定向,false 关闭日志重定向
+     * @param log_file_name 日志文件名
+     */
+    virtual void enableLogOutput(bool enable,std::string log_file_name) = 0;
     // enable IVideoEffect, return 0 if failed
     /**
      * @brief 启用视频特效
