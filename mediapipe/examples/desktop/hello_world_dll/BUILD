@@ -20,7 +20,10 @@ package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 cc_binary(
     name = "hello_world_dll",
     copts = ["-DEFFECT_LIBRARY"],
-    srcs = ["IVideoEffect.h","VideoEffectImpl.h","VideoEffectImpl.cpp"],
+    srcs = ["IVideoEffect.h",
+            "VideoEffectImpl.h","VideoEffectImpl.cpp",
+            "MemoryPool.h","MemoryPool.cpp"
+            ],
     data = ["//mediapipe/modules/selfie_segmentation:selfie_segmentation.tflite"],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
