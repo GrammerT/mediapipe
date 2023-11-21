@@ -23,9 +23,9 @@
 
 enum class EPureColor
 {
-    kRED,
-    kGREEN,
-    kBLUE,
+    kRED = 1,
+    kGREEN = 2,
+    kBLUE = 3,
 };
 /**
  * @brief 视频特效参数
@@ -51,9 +51,10 @@ struct SVideoFrame
 {
     EVideoFormat format;
     uint8_t* data[MAX_DATA_NUM];
-    int linesize[MAX_DATA_NUM];
-    int width;
-    int height;
+    int32_t linesize[MAX_DATA_NUM];
+    int32_t width;
+    int32_t height;
+    void *extend_data;
 };
 
 

@@ -20,54 +20,45 @@
 #include "mediapipe/framework/calculator_options.pb.h"
 
 
-
-// #define SHOW_CV_WINDOW
-
-
-std::string calculator_graph_config_contents = R"pb(node{"\
-  "calculator: \"FlowLimiterCalculator\""\
-  "input_stream: \"input_video\""\
-  "input_stream: \"FINISHED:output_video\""\
-  "input_stream_info: {"\
-    "tag_index: \"FINISHED\""\
-    "back_edge: true"\
-  "}"\
-  "output_stream: \"throttled_input_video\""\
-"}"\
-"node {"\
-  "calculator: \"SelfieSegmentationCpu\""\
-  "input_stream: \"IMAGE:throttled_input_video\""\
-  "output_stream: \"SEGMENTATION_MASK:segmentation_mask\""\
-"}"\
-"node {"\
-  "calculator: \"VirtualBackgroundCalculator\""\
-  "input_stream: \"IMAGE:throttled_input_video\""\
-  "input_stream: \"MASK:segmentation_mask\""\
-  "output_stream: \"IMAGE:output_video\""\
-  "node_options: {"\
-    "[type.googleapis.com/mediapipe.VirtualBackgroundCalculatorOptions] {"\
-      "mask_channel: UNKNOWN"\
-      "invert_mask: true"\
-      "adjust_with_luminance: false"\
-      "background_image_path:\"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg\""\
-    "}"\
-  "}"\
-"})pb";
-
+std::string calculator_graph_config_contents = R"pb(
+  input_stream: "input_video"
+  output_stream: "output_video"
+  node{
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:output_video"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+node {
+  calculator: "SelfieSegmentationCpu"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "SEGMENTATION_MASK:segmentation_mask"
+}
+node {
+  calculator: "VirtualBackgroundCalculator"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "MASK:segmentation_mask"
+  output_stream: "IMAGE:output_video"
+  node_options: {
+    [type.googleapis.com/mediapipe.VirtualBackgroundCalculatorOptions] {
+      mask_channel: UNKNOWN
+      invert_mask: true
+      adjust_with_luminance: false
+      background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg"
+    }
+  }
+})pb";
 
 
 constexpr char kInputStream[] = "input_video";
 constexpr char kOutputStream[] = "output_video";
 constexpr char kWindowName[] = "MediaPipe";
 
-ABSL_FLAG(std::string, calculator_graph_config_file, "",
-          "Name of file containing text format CalculatorGraphConfig proto.");
-ABSL_FLAG(std::string, input_video_path, "",
-          "Full path of video to load. "
-          "If not provided, attempt to use a webcam.");
-ABSL_FLAG(std::string, output_video_path, "",
-          "Full path of where to save result (.mp4 only). "
-          "If not provided, show result in a window.");
+
 
 std::shared_ptr<IVideoEffect> IVideoEffect::create()
 {   
@@ -123,7 +114,7 @@ int VideoEffectImpl::enableVideoEffect()
       ABSL_LOG(ERROR) << "init param is nullptr.";
       return -1;
     }
-    
+    ABSL_LOG(INFO) << "will init graph config.";
     mediapipe::CalculatorGraphConfig config =mediapipe::ParseTextProtoOrDie
                                                     <mediapipe::CalculatorGraphConfig>(calculator_graph_config_contents);
     
@@ -138,13 +129,13 @@ int VideoEffectImpl::enableVideoEffect()
           auto realOptions = node_options->MutableExtension(mediapipe::VirtualBackgroundCalculatorOptions::ext);
           if(m_param->user_pure_color)
           {
-            
+            realOptions->set_mask_channel(mediapipe::VirtualBackgroundCalculatorOptions_MaskChannel_RED);
           }
-          realOptions->set_mask_channel(mediapipe::VirtualBackgroundCalculatorOptions_MaskChannel_RED);
+          else
+          {
+            realOptions->set_background_image_path(m_param->background_file_path);    
+          }
 
-          realOptions->set_background_image_path(m_param->background_file_path);
-          
-        
           //! MUST.
           realOptions->set_invert_mask(true);
           realOptions->set_adjust_with_luminance(false);
@@ -209,24 +200,44 @@ void VideoEffectImpl::startGraphThread()
 {
   stopGraphThread();
   m_is_graph_running = true;
+#ifdef SHOW_CV_WINDOW
   m_graph_thread = std::thread([this](){
   ABSL_LOG(INFO) << "Starting thread: " << m_graph_thread.get_id();
+#endif
   MP_RETURN_IF_ERROR(m_media_pipe_graph.StartRun({}));
   ABSL_LOG(INFO) << "Starting graph success: " << m_graph_thread.get_id();
+#ifdef SHOW_CV_WINDOW
+  m_capture.open(0);
+  m_capture.isOpened();
+  cv::namedWindow(kWindowName, /*flags=WINDOW_AUTOSIZE*/ 1);
+#if (CV_MAJOR_VERSION >= 3) && (CV_MINOR_VERSION >= 2)
+    m_capture.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+    m_capture.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+    m_capture.set(cv::CAP_PROP_FPS, 30);
+#endif 
+#endif
+
   while (m_is_graph_running) {
     // Capture opencv camera or video frame.
-    cv::Mat camera_frame = PopVideoFrameQueueToCVMat();
-    if (camera_frame.empty()) {
+#ifdef  SHOW_CV_WINDOW
+    cv::Mat camera_frame_raw;
+    m_capture >> camera_frame_raw;
+    if (camera_frame_raw.empty()) {
         ABSL_LOG(WARNING) << "Ignore empty frames from Queue.";
         std::this_thread::sleep_for(std::chrono::milliseconds(1000/60));
         continue;
     }
-    // cv::Mat camera_frame;
-    // cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
-    // if (!load_video) {
-    //   cv::flip(camera_frame, camera_frame, /*flipcode=HORIZONTAL*/ 1);
-    // }
-
+    cv::Mat camera_frame;
+    cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
+    cv::flip(camera_frame, camera_frame, /*flipcode=HORIZONTAL*/ 1);
+#else
+    cv::Mat camera_frame = PopVideoFrameQueueToCVMat();
+    if (camera_frame.empty()) {
+    ABSL_LOG(WARNING) << "Ignore empty frames from Queue.";
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000/60));
+    continue;
+    }
+#endif
     // Wrap Mat into an ImageFrame.
     auto input_frame = absl::make_unique<mediapipe::ImageFrame>(
         mediapipe::ImageFormat::SRGB, camera_frame.cols, camera_frame.rows,
@@ -245,48 +256,55 @@ void VideoEffectImpl::startGraphThread()
     mediapipe::Packet packet;
     if (!m_stream_poller->Next(&packet)) 
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000/60));
+      // std::this_thread::sleep_for(std::chrono::milliseconds(1000/60));
       continue;
     }
     auto& output_frame = packet.Get<mediapipe::ImageFrame>();
-    // Convert back to opencv for display or saving.
+    // Convert back to opencv for display or saving
     cv::Mat output_frame_mat = mediapipe::formats::MatView(&output_frame);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000/60));
-#if 0
     cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
-#endif
-#ifdef SHOW_CV_WINDOW
+    if(m_receiver_callback)
     {
-      cv::imshow(kWindowName, output_frame_mat);
-      // Press any key to exit.
-      const int pressed_key = cv::waitKey(5);
-      if (pressed_key >= 0 && pressed_key != 255) grab_frames = false;
+      auto frame = matToSVideoFrame(output_frame_mat, EVideoFormat::kYUV420P);
+      m_receiver_callback(frame);
     }
+#ifdef SHOW_CV_WINDOW
+  cv::imshow(kWindowName, output_frame_mat);
+  cv::waitKey(30);
+#else
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000/60));
 #endif
   }
+#ifdef SHOW_CV_WINDOW
   });
+#endif
 }
 
 void VideoEffectImpl::stopGraphThread()
 {
+
   ABSL_LOG(INFO) << "graph thread will stop.";
   m_is_graph_running = false;
   if(m_graph_thread.joinable())
   {
+    ABSL_LOG(INFO) << "graph thread will stop 2";
+    auto status = m_media_pipe_graph.CloseInputStream(kInputStream);
+    ABSL_LOG(INFO) << "graph thread will stop 3";
+    if(!status.ok())
+    {
+        ABSL_LOG(ERROR) << "graph close input stream failed."<<status.ToString();
+        return ;
+    }
+    status = m_media_pipe_graph.WaitUntilDone();
+    if(!status.ok())
+    {
+        ABSL_LOG(ERROR) << "graph close input stream failed."<<status.ToString();
+        return ;
+    }
+
     m_graph_thread.join();
   }
-  auto status = m_media_pipe_graph.CloseInputStream(kInputStream);
-  if(!status.ok())
-  {
-      ABSL_LOG(ERROR) << "graph close input stream failed."<<status.ToString();
-      return ;
-  }
-  status = m_media_pipe_graph.WaitUntilDone();
-   if(!status.ok())
-  {
-      ABSL_LOG(ERROR) << "graph close input stream failed."<<status.ToString();
-      return ;
-  }
+
   ABSL_LOG(INFO) << "graph thread already stop.";
 }
 
@@ -345,108 +363,37 @@ cv::Mat &VideoEffectImpl::PopVideoFrameQueueToCVMat()
   return std::move(frameMat);
 }
 
-absl::Status RunMPPGraph() {
-  std::string calculator_graph_config_contents;
-  MP_RETURN_IF_ERROR(mediapipe::file::GetContents(
-      absl::GetFlag(FLAGS_calculator_graph_config_file),
-      &calculator_graph_config_contents));
-  ABSL_LOG(INFO) << "Get calculator graph config contents: "
-                 << calculator_graph_config_contents;
-  mediapipe::CalculatorGraphConfig config =
-      mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(
-          calculator_graph_config_contents);
-
-  ABSL_LOG(INFO) << "Initialize the calculator graph.";
-  mediapipe::CalculatorGraph graph;
-  MP_RETURN_IF_ERROR(graph.Initialize(config));
-
-  ABSL_LOG(INFO) << "Initialize the camera or load the video.";
-  cv::VideoCapture capture;
-  const bool load_video = !absl::GetFlag(FLAGS_input_video_path).empty();
-  if (load_video) {
-    capture.open(absl::GetFlag(FLAGS_input_video_path));
-  } else {
-    capture.open(0);
-  }
-  RET_CHECK(capture.isOpened());
-
-  cv::VideoWriter writer;
-  const bool save_video = !absl::GetFlag(FLAGS_output_video_path).empty();
-  if (!save_video) {
-    cv::namedWindow(kWindowName, /*flags=WINDOW_AUTOSIZE*/ 1);
-#if (CV_MAJOR_VERSION >= 3) && (CV_MINOR_VERSION >= 2)
-    capture.set(cv::CAP_PROP_FRAME_WIDTH, 640);
-    capture.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
-    capture.set(cv::CAP_PROP_FPS, 30);
-#endif
-  }
-
-  ABSL_LOG(INFO) << "Start running the calculator graph.";
-  MP_ASSIGN_OR_RETURN(mediapipe::OutputStreamPoller poller,
-                      graph.AddOutputStreamPoller(kOutputStream));
-  MP_RETURN_IF_ERROR(graph.StartRun({}));
-
-  ABSL_LOG(INFO) << "Start grabbing and processing frames.";
-  bool grab_frames = true;
-  while (grab_frames) {
-    // Capture opencv camera or video frame.
-    cv::Mat camera_frame_raw;
-    capture >> camera_frame_raw;
-    if (camera_frame_raw.empty()) {
-      if (!load_video) {
-        ABSL_LOG(INFO) << "Ignore empty frames from camera.";
-        continue;
+std::shared_ptr<SVideoFrame> VideoEffectImpl::matToSVideoFrame(const cv::Mat& inputMat, EVideoFormat format) 
+{
+    auto videoFrame = new SVideoFrame;
+   
+    auto videoFrameSPtr = std::shared_ptr<SVideoFrame>(videoFrame,[](SVideoFrame *frame){
+      if(frame->extend_data)
+      {
+        cv::Mat *mat = (cv::Mat*)frame->extend_data;
+        delete mat;
       }
-      ABSL_LOG(INFO) << "Empty frame, end of video reached.";
-      break;
+      delete frame;
+    });
+    
+    videoFrameSPtr->format = format;
+    videoFrameSPtr->width = inputMat.cols;
+    videoFrameSPtr->height = inputMat.rows;
+
+    // 如果是YUV420格式
+    if (format == EVideoFormat::kYUV420P) {
+        cv::Mat *yuvMat = new cv::Mat;
+        videoFrameSPtr->extend_data = (void*)yuvMat;
+        cv::cvtColor(inputMat, *yuvMat, cv::COLOR_BGR2YUV_I420);
+
+        // 获取各通道数据和行大小
+        videoFrameSPtr->data[0] = yuvMat->data;
+        videoFrameSPtr->data[1] = yuvMat->data + yuvMat->cols * yuvMat->rows;
+        videoFrameSPtr->data[2] = yuvMat->data + yuvMat->cols * yuvMat->rows * 5 / 4;
+        videoFrameSPtr->linesize[0] = yuvMat->cols;
+        videoFrameSPtr->linesize[1] = yuvMat->cols / 2;
+        videoFrameSPtr->linesize[2] = yuvMat->cols / 2;
     }
-    cv::Mat camera_frame;
-    cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
-    if (!load_video) {
-      cv::flip(camera_frame, camera_frame, /*flipcode=HORIZONTAL*/ 1);
-    }
 
-    // Wrap Mat into an ImageFrame.
-    auto input_frame = absl::make_unique<mediapipe::ImageFrame>(
-        mediapipe::ImageFormat::SRGB, camera_frame.cols, camera_frame.rows,
-        mediapipe::ImageFrame::kDefaultAlignmentBoundary);
-    cv::Mat input_frame_mat = mediapipe::formats::MatView(input_frame.get());
-    camera_frame.copyTo(input_frame_mat);
-
-    // Send image packet into the graph.
-    size_t frame_timestamp_us =
-        (double)cv::getTickCount() / (double)cv::getTickFrequency() * 1e6;
-    MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
-        kInputStream, mediapipe::Adopt(input_frame.release())
-                          .At(mediapipe::Timestamp(frame_timestamp_us))));
-
-    // Get the graph result packet, or stop if that fails.
-    mediapipe::Packet packet;
-    if (!poller.Next(&packet)) break;
-    auto& output_frame = packet.Get<mediapipe::ImageFrame>();
-
-    // Convert back to opencv for display or saving.
-    cv::Mat output_frame_mat = mediapipe::formats::MatView(&output_frame);
-    cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
-    if (save_video) {
-      if (!writer.isOpened()) {
-        ABSL_LOG(INFO) << "Prepare video writer.";
-        writer.open(absl::GetFlag(FLAGS_output_video_path),
-                    mediapipe::fourcc('a', 'v', 'c', '1'),  // .mp4
-                    capture.get(cv::CAP_PROP_FPS), output_frame_mat.size());
-        RET_CHECK(writer.isOpened());
-      }
-      writer.write(output_frame_mat);
-    } else {
-      cv::imshow(kWindowName, output_frame_mat);
-      // Press any key to exit.
-      const int pressed_key = cv::waitKey(5);
-      if (pressed_key >= 0 && pressed_key != 255) grab_frames = false;
-    }
-  }
-
-  ABSL_LOG(INFO) << "Shutting down.";
-  if (writer.isOpened()) writer.release();
-  MP_RETURN_IF_ERROR(graph.CloseInputStream(kInputStream));
-  return graph.WaitUntilDone();
+    return videoFrameSPtr;
 }

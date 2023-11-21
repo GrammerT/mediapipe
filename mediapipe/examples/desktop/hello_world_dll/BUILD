@@ -18,15 +18,27 @@ package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
 
 cc_binary(
-    name = "hello_world_dll",
+    name = "ACVideoEffect",
     copts = ["-DEFFECT_LIBRARY"],
     srcs = ["IVideoEffect.h",
             "VideoEffectImpl.h","VideoEffectImpl.cpp",
             "MemoryPool.h","MemoryPool.cpp"
             ],
     data = ["//mediapipe/modules/selfie_segmentation:selfie_segmentation.tflite"],
+    # data = ["//ACData:selfie_segmentation.tflite"], 
     deps = [
-        "//mediapipe/examples/desktop:demo_run_graph_main",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/port:file_helpers",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_video",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/log:absl_log",
         "//mediapipe/graphs/selfie_segmentation_image:selfie_segmentation_cpu_deps",
     ],
     linkshared=True,

@@ -46,7 +46,7 @@ node {
       mask_channel: UNKNOWN
       invert_mask: true
       adjust_with_luminance: false
-      background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (9).jpg"
+      background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg"
     }
   }
 }
