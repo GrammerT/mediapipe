@@ -200,11 +200,16 @@ void VideoEffectImpl::startGraphThread()
 {
   stopGraphThread();
   m_is_graph_running = true;
-#ifdef SHOW_CV_WINDOW
+#ifndef SHOW_CV_WINDOW
   m_graph_thread = std::thread([this](){
   ABSL_LOG(INFO) << "Starting thread: " << m_graph_thread.get_id();
 #endif
-  MP_RETURN_IF_ERROR(m_media_pipe_graph.StartRun({}));
+  auto status = m_media_pipe_graph.StartRun({});
+  if(!status.ok())
+  {
+    ABSL_LOG(INFO) << "Starting graph false: " << m_graph_thread.get_id();
+    return ;
+  }
   ABSL_LOG(INFO) << "Starting graph success: " << m_graph_thread.get_id();
 #ifdef SHOW_CV_WINDOW
   m_capture.open(0);
@@ -237,6 +242,7 @@ void VideoEffectImpl::startGraphThread()
     std::this_thread::sleep_for(std::chrono::milliseconds(1000/60));
     continue;
     }
+    cv::cvtColor(camera_frame, camera_frame, cv::COLOR_BGR2RGB);
 #endif
     // Wrap Mat into an ImageFrame.
     auto input_frame = absl::make_unique<mediapipe::ImageFrame>(
@@ -248,10 +254,15 @@ void VideoEffectImpl::startGraphThread()
     // Send image packet into the graph.
     size_t frame_timestamp_us =
         (double)cv::getTickCount() / (double)cv::getTickFrequency() * 1e6;
-    MP_RETURN_IF_ERROR(m_media_pipe_graph.AddPacketToInputStream(
+    auto addRetStatus = m_media_pipe_graph.AddPacketToInputStream(
         kInputStream, mediapipe::Adopt(input_frame.release())
-                          .At(mediapipe::Timestamp(frame_timestamp_us))));
-
+                          .At(mediapipe::Timestamp(frame_timestamp_us)));
+    if (!addRetStatus.ok())
+    {
+      ABSL_LOG(WARNING) << "addRetStatus return false.";
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000/60));
+      continue;
+    }
     // Get the graph result packet, or stop if that fails.
     mediapipe::Packet packet;
     if (!m_stream_poller->Next(&packet)) 
@@ -262,7 +273,9 @@ void VideoEffectImpl::startGraphThread()
     auto& output_frame = packet.Get<mediapipe::ImageFrame>();
     // Convert back to opencv for display or saving
     cv::Mat output_frame_mat = mediapipe::formats::MatView(&output_frame);
+#ifdef SHOW_CV_WINDOW
     cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
+#endif
     if(m_receiver_callback)
     {
       auto frame = matToSVideoFrame(output_frame_mat, EVideoFormat::kYUV420P);
@@ -275,7 +288,7 @@ void VideoEffectImpl::startGraphThread()
   std::this_thread::sleep_for(std::chrono::milliseconds(1000/60));
 #endif
   }
-#ifdef SHOW_CV_WINDOW
+#ifndef SHOW_CV_WINDOW
   });
 #endif
 }
@@ -384,7 +397,7 @@ std::shared_ptr<SVideoFrame> VideoEffectImpl::matToSVideoFrame(const cv::Mat& in
     if (format == EVideoFormat::kYUV420P) {
         cv::Mat *yuvMat = new cv::Mat;
         videoFrameSPtr->extend_data = (void*)yuvMat;
-        cv::cvtColor(inputMat, *yuvMat, cv::COLOR_BGR2YUV_I420);
+        cv::cvtColor(inputMat, *yuvMat, cv::COLOR_RGB2YUV_I420);
 
         // 获取各通道数据和行大小
         videoFrameSPtr->data[0] = yuvMat->data;
