@@ -33,7 +33,7 @@ private:
     void startGraphThread();
     void stopGraphThread();
 
-    cv::Mat& PopVideoFrameQueueToCVMat();
+    cv::Mat PopVideoFrameQueueToCVMat();
     std::shared_ptr<SVideoFrame> matToSVideoFrame(const cv::Mat& inputMat, EVideoFormat format);
 private:
     bool m_is_enable=false;
