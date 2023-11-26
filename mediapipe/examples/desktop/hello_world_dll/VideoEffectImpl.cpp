@@ -83,7 +83,6 @@ VideoEffectImpl::VideoEffectImpl()
 VideoEffectImpl::~VideoEffectImpl()
 {
   stopGraphThread();
-
   m_yuv_2_rgb_tmpframe.reset();
   m_memory_pool.reset();
 }
@@ -111,7 +110,7 @@ void VideoEffectImpl::enableLogOutput(bool enable, std::string log_file_name)
 {
   if (enable)
   {
-    freopen("log_file.txt", "w", stderr);
+    freopen(log_file_name.c_str(), "w", stderr);
   }
 }
 
@@ -358,8 +357,18 @@ cv::Mat VideoEffectImpl::PopVideoFrameQueueToCVMat()
       ABSL_LOG(INFO) << "start convert format to cv::mat from yuv420p";
     if(!m_memory_pool)
     {
-        m_memory_pool = std::make_shared<MemoryPool>(frame->width*frame->height*3/2);    
+      auto frameW = 640;
+      auto frameH = 640;
+      
+      if(frame->size!=EVideoFrameSize::kSize_640_480)
+      {
+        assert(false);
+      }
+      m_memory_pool = std::make_shared<MemoryPool>(frameW*frameH*3/2);    
     }
+    int yDataSize = 640 * 480;
+    auto frameWidth= 640;
+    auto frameHeight= 480;
     if(!m_yuv_2_rgb_tmpframe)
     {
       auto tmpFrame = new SVideoFrame;
@@ -371,18 +380,27 @@ cv::Mat VideoEffectImpl::PopVideoFrameQueueToCVMat()
         delete frame;
       });
       m_yuv_2_rgb_tmpframe->data[0] = (uint8_t*)m_memory_pool->get();
-      m_yuv_2_rgb_tmpframe->width = frame->width;
-      m_yuv_2_rgb_tmpframe->height = frame->height;
+      
+
+      if(frame->size==EVideoFrameSize::kSize_640_480)
+      {
+        m_yuv_2_rgb_tmpframe->size =EVideoFrameSize::kSize_640_480;
+      }
+      else
+      {
+        //! need resign value.change int yDataSize = w*h
+        assert(false);
+        return frameMat;
+      }
     }
 
-    int yDataSize = frame->width * frame->height;
     m_yuv_2_rgb_tmpframe->data[0] = frame->data[0];
     memcpy(m_yuv_2_rgb_tmpframe->data[0], frame->data[0], yDataSize);
     memcpy(m_yuv_2_rgb_tmpframe->data[0] + yDataSize, frame->data[1], yDataSize/4);
     memcpy(m_yuv_2_rgb_tmpframe->data[0] + yDataSize + yDataSize/4, frame->data[2], yDataSize/4);
 
     cv::Mat yuvMat;
-    yuvMat.create(frame->height*3/2,frame->width, CV_8UC1);   
+    yuvMat.create(frameHeight*3/2,frameWidth, CV_8UC1);   
     memcpy(yuvMat.data, m_yuv_2_rgb_tmpframe->data[0], yDataSize+yDataSize/2);
     cv::cvtColor(yuvMat, frameMat, cv::COLOR_YUV2RGB_I420);
 
@@ -414,8 +432,12 @@ cv::Mat VideoEffectImpl::PopVideoFrameQueueToCVMat()
 
 std::shared_ptr<SVideoFrame> VideoEffectImpl::matToSVideoFrame(const cv::Mat& inputMat, EVideoFormat format) 
 {
+    if(inputMat.cols!=640||inputMat.rows!=480)
+    {
+      return nullptr;
+    }
     auto videoFrame = new SVideoFrame;
-   
+
     auto videoFrameSPtr = std::shared_ptr<SVideoFrame>(videoFrame,[](SVideoFrame *frame){
       if(frame->extend_data)
       {
@@ -424,17 +446,17 @@ std::shared_ptr<SVideoFrame> VideoEffectImpl::matToSVideoFrame(const cv::Mat& in
       }
       delete frame;
     });
-    
     videoFrameSPtr->format = format;
-    videoFrameSPtr->width = inputMat.cols;
-    videoFrameSPtr->height = inputMat.rows;
+    videoFrameSPtr->size = EVideoFrameSize::kSize_640_480;
+    // videoFrameSPtr->width = inputMat.cols;
+    // videoFrameSPtr->height = inputMat.rows;
 
     // 如果是YUV420格式
     if (format == EVideoFormat::kYUV420P) {
         cv::Mat *yuvMat = new cv::Mat;
         videoFrameSPtr->extend_data = (void*)yuvMat;
         cv::cvtColor(inputMat, *yuvMat, cv::COLOR_RGB2YUV_I420);
-        auto yDataSize = videoFrameSPtr->width * videoFrameSPtr->height;
+        auto yDataSize = inputMat.cols * inputMat.rows;
         // 获取各通道数据和行大小
         videoFrameSPtr->data[0] = yuvMat->data;
         videoFrameSPtr->data[1] = yuvMat->data + yDataSize;

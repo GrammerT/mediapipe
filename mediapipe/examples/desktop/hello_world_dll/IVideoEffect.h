@@ -43,6 +43,11 @@ enum class EVideoFormat
 {
     kYUV420P,
 };
+
+enum class EVideoFrameSize
+{
+    kSize_640_480
+};
 /**
  * @brief 推送给虚拟背景引擎的视频数据,建议rgba数据
  * 
@@ -52,8 +57,7 @@ struct SVideoFrame
     EVideoFormat format;
     uint8_t* data[MAX_DATA_NUM];
     int32_t linesize[MAX_DATA_NUM];
-    int32_t width;
-    int32_t height;
+    EVideoFrameSize size;
     void *extend_data;
 };
 
