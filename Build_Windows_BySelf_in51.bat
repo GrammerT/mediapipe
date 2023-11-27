@@ -62,3 +62,8 @@ cmd
 @bazel-bin\mediapipe\examples\desktop\selfie_segmentation_self\selfie_segmentation_cpu_image.exe -calculator_graph_config_file=mediapipe\graphs\selfie_segmentation_image\selfie_segmentation_cpu.pbtxt
 //! 尝试x86 not work
 @bazel-6.3.1 build -c opt --cpu=x64_x86_windows --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/hello_world_dll:ACVideoEffect
+
+
+
+//! 尝试姿势识别gesture_recognizer  这个只是个lib
+@bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer
