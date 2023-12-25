@@ -70,7 +70,8 @@ class AnnotationRenderer {
   // top-left corner. Set it to true if the image origin is at the bottom-left
   // corner.
   void SetFlipTextVertically(bool flip);
-
+  
+  void DrawText(std::string text, int top, int left);
   // For GPU rendering optimization in AnnotationOverlayCalculator.
   // Scale all incoming coordinates,sizes,thickness,etc. by this amount.
   // Should be in the range (0-1].

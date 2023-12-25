@@ -34,6 +34,11 @@ output_stream: "WORLD_LANDMARKS:hand_world_landmarks"
 # (ClassificationList)
 output_stream: "HANDEDNESS:handedness"
 
+output_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
+output_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
+output_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
+output_stream: "RECOGNIZED_HAND_MOUVEMENT_SLIDING:recognized_hand_mouvement_sliding"
+
 # Transforms a region of image into a 224x224 tensor while keeping the aspect
 # ratio, and therefore may result in potential letterboxing.
 node {
@@ -216,4 +221,19 @@ node {
   input_stream: "LANDMARKS:unprojected_world_landmarks"
   input_stream: "NORM_RECT:hand_rect"
   output_stream: "LANDMARKS:hand_world_landmarks"
+}
+node {
+  calculator: "HandGestureRecognitionCalculator"
+  input_stream: "NORM_LANDMARKS:scaled_landmarks"
+  input_stream: "NORM_RECT:hand_rect_for_next_frame"
+  output_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
+}
+
+node {
+   calculator: "HandMouvementRecognitionCalculator"
+   input_stream: "NORM_LANDMARKS:hand_landmarks"
+   input_stream: "NORM_RECT:hand_rect_for_next_frame"
+   output_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
+   output_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
+   output_stream: "RECOGNIZED_HAND_MOUVEMENT_SLIDING:recognized_hand_mouvement_sliding"
 }

@@ -16,6 +16,13 @@ input_stream: "NORM_RECTS:0:multi_palm_rects"
 # Regions of interest calculated based on landmarks.
 # (std::vector<NormalizedRect>)
 input_stream: "NORM_RECTS:1:multi_hand_rects"
+
+
+input_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
+input_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
+input_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
+input_stream: "RECOGNIZED_HAND_MOUVEMENT_SLIDING:recognized_hand_mouvement_sliding"
+
 # Detected palms. (std::vector<Detection>)
 input_stream: "DETECTIONS:palm_detections"
 
@@ -205,5 +212,9 @@ node {
   input_stream: "multi_palm_rects_render_data"
   input_stream: "handedness_render_data"
   input_stream: "VECTOR:0:multi_hand_landmarks_render_data"
+  input_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
+  input_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
+  input_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
+  input_stream: "RECOGNIZED_HAND_MOUVEMENT_SLIDING:recognized_hand_mouvement_sliding"
   output_stream: "IMAGE:output_image"
 }

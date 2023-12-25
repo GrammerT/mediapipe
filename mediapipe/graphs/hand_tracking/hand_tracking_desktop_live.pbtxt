@@ -30,6 +30,7 @@ node {
   output_stream: "PALM_DETECTIONS:multi_palm_detections"
   output_stream: "HAND_ROIS_FROM_LANDMARKS:multi_hand_rects"
   output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:multi_palm_rects"
+  output_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
 }
 
 # Subgraph that renders annotations and overlays them on top of the input
@@ -42,5 +43,6 @@ node {
   input_stream: "HANDEDNESS:handedness"
   input_stream: "NORM_RECTS:0:multi_palm_rects"
   input_stream: "NORM_RECTS:1:multi_hand_rects"
+  input_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
   output_stream: "IMAGE:output_video"
 }

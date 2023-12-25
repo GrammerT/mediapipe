@@ -250,8 +250,7 @@ int main(int argc, char** argv) {
   std::string logFilePath = "/log_file.txt";
   // 将标准错误输出重定向到文件
   // freopen("log_file_1.txt", "w", stderr);
-
-  // google::InitGoogleLogging(argv[0]);
+  google::InitGoogleLogging(argv[0]);
   absl::ParseCommandLine(argc, argv);
   absl::Status run_status = RunMPPGraph();
   if (!run_status.ok()) {
