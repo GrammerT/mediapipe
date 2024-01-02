@@ -61,7 +61,9 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:landmark_projection_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
         "//mediapipe/calculators/util:world_landmark_projection_calculator",
-    ],
+        "//mediapipe/calculators/util:detections_to_rects_calculator",
+        "//mediapipe/calculators/util:rect_transformation_calculator",
+        ],
 )
 
 mediapipe_simple_subgraph(

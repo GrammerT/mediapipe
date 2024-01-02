@@ -220,13 +220,13 @@ node {
   input_stream: "DETECTION:hand_detection"
   input_stream: "IMAGE_SIZE:image_size"
   output_stream: "NORM_RECT:hand_rect_from_landmarks"
-  node_options: {
-    [type.googleapis.com/mediapipe.DetectionsToRectsCalculatorOptions] {
+  options: {
+    [mediapipe.DetectionsToRectsCalculatorOptions.ext] {
       rotation_vector_start_keypoint_index: 0  # Center of wrist.
       rotation_vector_end_keypoint_index: 9  # MCP of middle finger.
       rotation_vector_target_angle_degrees: 90
     }
-  }
+    }
 }
 
 # Expands the hand rectangle so that in the next video frame it's likely to
@@ -236,8 +236,8 @@ node {
   input_stream: "NORM_RECT:hand_rect_from_landmarks"
   input_stream: "IMAGE_SIZE:image_size"
   output_stream: "hand_rect_for_next_frame"
-  node_options: {
-    [type.googleapis.com/mediapipe.RectTransformationCalculatorOptions] {
+  options: {
+    [mediapipe.RectTransformationCalculatorOptions.ext] {
       scale_x: 1.6
       scale_y: 1.6
       square_long: true
