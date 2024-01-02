@@ -34,6 +34,8 @@ output_stream: "WORLD_LANDMARKS:hand_world_landmarks"
 # (ClassificationList)
 output_stream: "HANDEDNESS:handedness"
 
+
+
 output_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
 output_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
 output_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
@@ -193,6 +195,57 @@ node {
   output_stream: "NORM_LANDMARKS:hand_landmarks"
 }
 
+# Extracts image size from the input images.
+node {
+  calculator: "ImagePropertiesCalculator"
+  input_stream: "IMAGE:image"
+  output_stream: "SIZE:image_size"
+}
+
+
+# Converts hand landmarks to a detection that tightly encloses all landmarks.
+node {
+  calculator: "LandmarksToDetectionCalculator"
+  input_stream: "NORM_LANDMARKS:hand_landmarks"
+  output_stream: "DETECTION:hand_detection"
+}
+
+
+# Converts the hand detection into a rectangle (normalized by image size)
+# that encloses the hand and is rotated such that the line connecting center of
+# the wrist and MCP of the middle finger is aligned with the Y-axis of the
+# rectangle.
+node {
+  calculator: "DetectionsToRectsCalculator"
+  input_stream: "DETECTION:hand_detection"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "NORM_RECT:hand_rect_from_landmarks"
+  node_options: {
+    [type.googleapis.com/mediapipe.DetectionsToRectsCalculatorOptions] {
+      rotation_vector_start_keypoint_index: 0  # Center of wrist.
+      rotation_vector_end_keypoint_index: 9  # MCP of middle finger.
+      rotation_vector_target_angle_degrees: 90
+    }
+  }
+}
+
+# Expands the hand rectangle so that in the next video frame it's likely to
+# still contain the hand even with some motion.
+node {
+  calculator: "RectTransformationCalculator"
+  input_stream: "NORM_RECT:hand_rect_from_landmarks"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "hand_rect_for_next_frame"
+  node_options: {
+    [type.googleapis.com/mediapipe.RectTransformationCalculatorOptions] {
+      scale_x: 1.6
+      scale_y: 1.6
+      square_long: true
+    }
+  }
+}
+
+
 # Drops world landmarks tensors if hand is not present.
 node {
   calculator: "GateCalculator"
@@ -222,6 +275,7 @@ node {
   input_stream: "NORM_RECT:hand_rect"
   output_stream: "LANDMARKS:hand_world_landmarks"
 }
+
 node {
   calculator: "HandGestureRecognitionCalculator"
   input_stream: "NORM_LANDMARKS:scaled_landmarks"
