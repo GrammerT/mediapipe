@@ -61,6 +61,12 @@ output_stream: "HAND_ROIS_FROM_LANDMARKS:hand_rects_from_landmarks"
 # (std::vector<NormalizedRect>)
 output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:hand_rects_from_palm_detections"
 
+output_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
+output_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
+output_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
+output_stream: "RECOGNIZED_HAND_MOUVEMENT_SLIDING:recognized_hand_mouvement_sliding"
+
+
 # When the optional input side packet "use_prev_landmarks" is either absent or
 # set to true, uses the landmarks on the previous image to help localize
 # landmarks on the current image.
@@ -203,6 +209,11 @@ node {
   output_stream: "LANDMARKS:single_hand_landmarks"
   output_stream: "WORLD_LANDMARKS:single_hand_world_landmarks"
   output_stream: "HANDEDNESS:single_handedness"
+  output_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
+  output_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
+  output_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
+  output_stream: "RECOGNIZED_HAND_MOUVEMENT_SLIDING:recognized_hand_mouvement_sliding"
+
 }
 
 # Collects the handedness for each single hand into a vector. Upon receiving the

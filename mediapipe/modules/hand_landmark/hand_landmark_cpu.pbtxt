@@ -34,12 +34,11 @@ output_stream: "WORLD_LANDMARKS:hand_world_landmarks"
 # (ClassificationList)
 output_stream: "HANDEDNESS:handedness"
 
-
-
 output_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
 output_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
 output_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
 output_stream: "RECOGNIZED_HAND_MOUVEMENT_SLIDING:recognized_hand_mouvement_sliding"
+
 
 # Transforms a region of image into a 224x224 tensor while keeping the aspect
 # ratio, and therefore may result in potential letterboxing.

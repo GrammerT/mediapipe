@@ -237,6 +237,7 @@ absl::Status AnnotationOverlayCalculator::GetContract(CalculatorContract* cc) {
        ++id) {
     auto tag_and_index = cc->Inputs().TagAndIndexFromId(id);
     std::string tag = tag_and_index.first;
+    ABSL_LOG(INFO)<< "tag_and_index first tag : "<<tag;
     if (tag == kVectorTag) {
       cc->Inputs().Get(id).Set<std::vector<RenderData>>();
     } else if (tag.empty()) {
