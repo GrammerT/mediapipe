@@ -95,7 +95,7 @@ node {
 
         RET_CHECK(cc->Outputs().HasTag(recognizedHandMouvementSlidingTag));
         cc->Outputs().Tag(recognizedHandMouvementSlidingTag).Set<std::string>();
-        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->GetContract(CalculatorContext) -- 1";
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->GetContract(CalculatorContext) -- OK";
         return absl::OkStatus();
     }
 
@@ -104,6 +104,7 @@ node {
     {
         ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Open(CalculatorContext) -- 0";
         cc->SetOffset(TimestampDiff(0));
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Open(CalculatorContext) -- OK";
         return absl::OkStatus();
     }
 
@@ -228,6 +229,7 @@ node {
             .Tag(recognizedHandMouvementSlidingTag)
             .Add(recognized_hand_mouvement_sliding, cc->InputTimestamp());
         ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 8";
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- OK";
         return absl::OkStatus();
     } // namespace mediapipe
 

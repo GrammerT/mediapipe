@@ -311,7 +311,7 @@ absl::Status AnnotationOverlayCalculator::Open(CalculatorContext* cc) {
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
-  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Open(CalculatorContext) -- 4";
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Open(CalculatorContext) -- OK";
   return absl::OkStatus();
 }
 
@@ -319,15 +319,18 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
   ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 0";
   if (cc->Inputs().HasTag(kGpuBufferTag) &&
       cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
+        ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- OK";
     return absl::OkStatus();
   }
   ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 1" ;
   if (cc->Inputs().HasTag(kImageFrameTag) &&
       cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
+        ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- OK";
     return absl::OkStatus();
   }
   ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 2" ;
   if (cc->Inputs().HasTag(kImageTag) && cc->Inputs().Tag(kImageTag).IsEmpty()) {
+    ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- OK";
     return absl::OkStatus();
   }
   ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 3" ;
@@ -404,16 +407,16 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
       }
     }
   }
-  ABSL_LOG(INFO)<< "renderer_->DrawText(recognizedHandGesture, 50, 50);";
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 12" ;
   const auto &recognizedHandGesture = cc->Inputs().Tag(recognizedHandGestureTag).Get<std::string>();
   renderer_->DrawText(recognizedHandGesture, 50, 50);
-  ABSL_LOG(INFO)<< "renderer_->DrawText(recognizedHandMouvementScrolling, 120, 50);";
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 13" ;
   const auto &recognizedHandMouvementScrolling = cc->Inputs().Tag(recognizedHandMouvementScrollingTag).Get<std::string>();
   renderer_->DrawText(recognizedHandMouvementScrolling, 120, 50);
-  ABSL_LOG(INFO)<< "renderer_->DrawText(recognizedHandMouvementZooming, 190, 50);";
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 14" ;
   const auto &recognizedHandMouvementZooming = cc->Inputs().Tag(recognizedHandMouvementZoomingTag).Get<std::string>();
   renderer_->DrawText(recognizedHandMouvementZooming, 190, 50);
-  ABSL_LOG(INFO)<< "renderer_->DrawText(recognizedHandMouvementSliding, 260, 50);";
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 15" ;
   const auto &recognizedHandMouvementSliding = cc->Inputs().Tag(recognizedHandMouvementSlidingTag).Get<std::string>();
   renderer_->DrawText(recognizedHandMouvementSliding, 260, 50);
   if (use_gpu_) {
@@ -434,7 +437,7 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
     uchar* image_mat_ptr = image_mat->data;
     MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr));
   }
-
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- OK";
   return absl::OkStatus();
 }
 

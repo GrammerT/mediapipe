@@ -35,6 +35,7 @@ class InferenceCalculatorSelectorImpl
  public:
   absl::StatusOr<CalculatorGraphConfig> GetConfig(
       const CalculatorGraphConfig::Node& subgraph_node) {
+        ABSL_LOG(INFO)<< "InferenceCalculatorSelectorImpl->GetConfig(CalculatorContext) -- 0";
     const auto& options =
         Subgraph::GetOptions<mediapipe::InferenceCalculatorOptions>(
             subgraph_node);
@@ -69,8 +70,10 @@ class InferenceCalculatorSelectorImpl
                       : "output_stream " + subgraph_node.output_stream(0));
       CalculatorGraphConfig::Node impl_node = subgraph_node;
       impl_node.set_calculator(impl);
+      ABSL_LOG(INFO)<< "InferenceCalculatorSelectorImpl->GetConfig(CalculatorContext) -- absl::MakeSingleNodeGraph(std::move(impl_node));";
       return tool::MakeSingleNodeGraph(std::move(impl_node));
     }
+    ABSL_LOG(INFO)<< "InferenceCalculatorSelectorImpl->GetConfig(CalculatorContext) -- absl::UnimplementedError(no implementation available);";
     return absl::UnimplementedError("no implementation available");
   }
 };
@@ -78,10 +81,13 @@ class InferenceCalculatorSelectorImpl
 absl::StatusOr<Packet<TfLiteModelPtr>> InferenceCalculator::GetModelAsPacket(
     CalculatorContext* cc) {
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
+  ABSL_LOG(INFO)<< "InferenceCalculator::GetModelAsPacket -- 0";
   if (!options.model_path().empty()) {
+    ABSL_LOG(INFO)<< "InferenceCalculator::GetModelAsPacket -- 1"<<options.model_path();
     return TfLiteModelLoader::LoadFromPath(options.model_path());
   }
   if (!kSideInModel(cc).IsEmpty()) return kSideInModel(cc);
+  ABSL_LOG(INFO)<< "InferenceCalculator::GetModelAsPacket -- 2 Must specify TFLite model as path or loaded model.";
   return absl::Status(mediapipe::StatusCode::kNotFound,
                       "Must specify TFLite model as path or loaded model.");
 }

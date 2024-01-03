@@ -170,7 +170,7 @@ class ImageToTensorCalculator : public Node {
     if ((kIn(cc).IsConnected() && kIn(cc).IsEmpty()) ||
         (kInGpu(cc).IsConnected() && kInGpu(cc).IsEmpty())) {
       // Timestamp bound update happens automatically.
-    ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 1";
+    ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- OK";
       return absl::OkStatus();
     }
     ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 2";
@@ -178,7 +178,7 @@ class ImageToTensorCalculator : public Node {
     if (kInNormRect(cc).IsConnected()) {
       if (kInNormRect(cc).IsEmpty()) {
         // Timestamp bound update happens automatically. (See Open().)
-            ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 3";
+            ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- OK";
         return absl::OkStatus();
       }
           ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 4";
@@ -191,7 +191,7 @@ class ImageToTensorCalculator : public Node {
         // NOTE: usage of sentinel rects should be avoided.
         DLOG(WARNING)
             << "Updating timestamp bound in response to a sentinel rect";
-            ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 5";
+          ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- OK";
         return absl::OkStatus();
       }
     }
@@ -239,7 +239,7 @@ class ImageToTensorCalculator : public Node {
     auto result = std::make_unique<std::vector<Tensor>>();
     result->push_back(std::move(tensor));
     kOutTensors(cc).Send(std::move(result));
-    ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 13";
+        ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- OK";
     return absl::OkStatus();
   }
 

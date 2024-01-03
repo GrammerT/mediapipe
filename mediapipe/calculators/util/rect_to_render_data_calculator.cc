@@ -117,6 +117,7 @@ class RectToRenderDataCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(RectToRenderDataCalculator);
 
 absl::Status RectToRenderDataCalculator::GetContract(CalculatorContract* cc) {
+  ABSL_LOG(INFO)<< "RectToRenderDataCalculator::GetContract(CalculatorContract* cc) -- 0";
   RET_CHECK_EQ((cc->Inputs().HasTag(kNormRectTag) ? 1 : 0) +
                    (cc->Inputs().HasTag(kRectTag) ? 1 : 0) +
                    (cc->Inputs().HasTag(kNormRectsTag) ? 1 : 0) +
@@ -139,26 +140,26 @@ absl::Status RectToRenderDataCalculator::GetContract(CalculatorContract* cc) {
     cc->Inputs().Tag(kRectsTag).Set<std::vector<Rect>>();
   }
   cc->Outputs().Tag(kRenderDataTag).Set<RenderData>();
-
+  ABSL_LOG(INFO)<< "RectToRenderDataCalculator::GetContract(CalculatorContract* cc) -- OK";
   return absl::OkStatus();
 }
 
 absl::Status RectToRenderDataCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
-
+  ABSL_LOG(INFO)<< "RectToRenderDataCalculator::Open(CalculatorContext* cc) -- 0";
   options_ = cc->Options<RectToRenderDataCalculatorOptions>();
   if (options_.has_top_left_thickness()) {
     // Filled and oval don't support top_left_thickness.
     RET_CHECK(!options_.filled());
     RET_CHECK(!options_.oval());
   }
-
+  ABSL_LOG(INFO)<< "RectToRenderDataCalculator::Open(CalculatorContext* cc) -- OK";
   return absl::OkStatus();
 }
 
 absl::Status RectToRenderDataCalculator::Process(CalculatorContext* cc) {
   auto render_data = absl::make_unique<RenderData>();
-
+  ABSL_LOG(INFO)<< "RectToRenderDataCalculator::Process(CalculatorContext* cc) -- 0";
   if (cc->Inputs().HasTag(kNormRectTag) &&
       !cc->Inputs().Tag(kNormRectTag).IsEmpty()) {
     const auto& rect = cc->Inputs().Tag(kNormRectTag).Get<NormalizedRect>();
@@ -199,7 +200,7 @@ absl::Status RectToRenderDataCalculator::Process(CalculatorContext* cc) {
   cc->Outputs()
       .Tag(kRenderDataTag)
       .Add(render_data.release(), cc->InputTimestamp());
-
+  ABSL_LOG(INFO)<< "RectToRenderDataCalculator::Process(CalculatorContext* cc) -- OK";
   return absl::OkStatus();
 }
 
