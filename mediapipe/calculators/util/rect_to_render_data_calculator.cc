@@ -159,7 +159,7 @@ absl::Status RectToRenderDataCalculator::Open(CalculatorContext* cc) {
 
 absl::Status RectToRenderDataCalculator::Process(CalculatorContext* cc) {
   auto render_data = absl::make_unique<RenderData>();
-  ABSL_LOG(INFO)<< "RectToRenderDataCalculator::Process(CalculatorContext* cc) -- 0";
+  // ABSL_LOG(INFO)<< "RectToRenderDataCalculator::Process(CalculatorContext* cc) -- 0";
   if (cc->Inputs().HasTag(kNormRectTag) &&
       !cc->Inputs().Tag(kNormRectTag).IsEmpty()) {
     const auto& rect = cc->Inputs().Tag(kNormRectTag).Get<NormalizedRect>();
@@ -200,7 +200,7 @@ absl::Status RectToRenderDataCalculator::Process(CalculatorContext* cc) {
   cc->Outputs()
       .Tag(kRenderDataTag)
       .Add(render_data.release(), cc->InputTimestamp());
-  ABSL_LOG(INFO)<< "RectToRenderDataCalculator::Process(CalculatorContext* cc) -- OK";
+  // ABSL_LOG(INFO)<< "RectToRenderDataCalculator::Process(CalculatorContext* cc) -- OK";
   return absl::OkStatus();
 }
 

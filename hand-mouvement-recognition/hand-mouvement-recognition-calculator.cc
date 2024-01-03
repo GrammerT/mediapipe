@@ -111,14 +111,14 @@ node {
     absl::Status HandMouvementRecognitionCalculator::Process(
         CalculatorContext *cc)
     {
-        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 0";
+        // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 0";
         Counter *frameCounter = cc->GetCounter("HandMouvementRecognitionCalculator");
         frameCounter->Increment();
 
         std::string *recognized_hand_mouvement_scrolling = new std::string("___");
         std::string *recognized_hand_mouvement_zooming = new std::string("___");
         std::string *recognized_hand_mouvement_sliding = new std::string("___");
-        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 1";
+        // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 1";
         // hand closed (red) rectangle
         const auto rect = &(cc->Inputs().Tag(normRectTag).Get<NormalizedRect>());
         const float height = rect->height();
@@ -126,12 +126,12 @@ node {
         const float y_center = rect->y_center();
 
         // LOG(INFO) << "height: " << height;
-        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 2";
+        // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 2";
         const auto &landmarkList = cc->Inputs()
                                        .Tag(normalizedLandmarkListTag)
                                        .Get<mediapipe::NormalizedLandmarkList>();
         RET_CHECK_GT(landmarkList.landmark_size(), 0) << "Input landmark vector is empty.";
-        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 3";
+        // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 3";
         // 1. FEATURE - Scrolling
         if (this->previous_x_center)
         {
@@ -167,7 +167,7 @@ node {
         }
         this->previous_x_center = x_center;
         this->previous_y_center = y_center;
-        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 4";
+        // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 4";
         // 2. FEATURE - Zoom in/out
         if (this->previous_rectangle_height)
         {
@@ -216,20 +216,20 @@ node {
             }
             this->previous_angle = ang_in_degree;
         }
-        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 5";
+        // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 5";
         cc->Outputs()
             .Tag(recognizedHandMouvementScrollingTag)
             .Add(recognized_hand_mouvement_scrolling, cc->InputTimestamp());
-        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 6";
+        // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 6";
         cc->Outputs()
             .Tag(recognizedHandMouvementZoomingTag)
             .Add(recognized_hand_mouvement_zooming, cc->InputTimestamp());
-        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 7";
+        // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 7";
         cc->Outputs()
             .Tag(recognizedHandMouvementSlidingTag)
             .Add(recognized_hand_mouvement_sliding, cc->InputTimestamp());
-        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 8";
-        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- OK";
+        // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 8";
+        // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- OK";
         return absl::OkStatus();
     } // namespace mediapipe
 
