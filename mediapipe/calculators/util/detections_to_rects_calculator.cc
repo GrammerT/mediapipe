@@ -173,7 +173,7 @@ absl::Status DetectionsToRectsCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
 
   options_ = cc->Options<DetectionsToRectsCalculatorOptions>();
-  ABSL_LOG(INFO) << "DetectionsToRectsCalculator::Open(CalculatorContext* cc) -- 0";
+  // ABSL_LOG(INFO) << "DetectionsToRectsCalculator::Open(CalculatorContext* cc) -- 0";
   if (options_.has_rotation_vector_start_keypoint_index()) {
     RET_CHECK(options_.has_rotation_vector_end_keypoint_index());
     RET_CHECK(options_.has_rotation_vector_target_angle() ^
@@ -193,12 +193,12 @@ absl::Status DetectionsToRectsCalculator::Open(CalculatorContext* cc) {
 
   output_zero_rect_for_empty_detections_ =
       options_.output_zero_rect_for_empty_detections();
-  ABSL_LOG(INFO) << "DetectionsToRectsCalculator::Open(CalculatorContext* cc) -- OK";
+  // ABSL_LOG(INFO) << "DetectionsToRectsCalculator::Open(CalculatorContext* cc) -- OK";
   return absl::OkStatus();
 }
 
 absl::Status DetectionsToRectsCalculator::Process(CalculatorContext* cc) {
-    ABSL_LOG(INFO) << "DetectionsToRectsCalculator::Process(CalculatorContext* cc) -- 0";
+    // ABSL_LOG(INFO) << "DetectionsToRectsCalculator::Process(CalculatorContext* cc) -- 0";
   if (cc->Inputs().HasTag(kDetectionTag) &&
       cc->Inputs().Tag(kDetectionTag).IsEmpty()) {
     return absl::OkStatus();
@@ -236,7 +236,7 @@ absl::Status DetectionsToRectsCalculator::Process(CalculatorContext* cc) {
               .Add(rect_vector.release(), cc->InputTimestamp());
         }
       }
-      ABSL_LOG(INFO) << "DetectionsToRectsCalculator::Process(CalculatorContext* cc) -- OK";
+      // ABSL_LOG(INFO) << "DetectionsToRectsCalculator::Process(CalculatorContext* cc) -- OK";
       return absl::OkStatus();
     }
   }
@@ -303,7 +303,7 @@ absl::Status DetectionsToRectsCalculator::Process(CalculatorContext* cc) {
         .Tag(kNormRectsTag)
         .Add(output_rects.release(), cc->InputTimestamp());
   }
-  ABSL_LOG(INFO) << "DetectionsToRectsCalculator::Open(CalculatorContext* cc) -- OK";
+  // ABSL_LOG(INFO) << "DetectionsToRectsCalculator::Open(CalculatorContext* cc) -- OK";
   return absl::OkStatus();
 }
 

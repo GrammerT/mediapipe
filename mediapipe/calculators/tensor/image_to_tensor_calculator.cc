@@ -166,22 +166,22 @@ class ImageToTensorCalculator : public Node {
   }
 
   absl::Status Process(CalculatorContext* cc) {
-    ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 0";
+    // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 0";
     if ((kIn(cc).IsConnected() && kIn(cc).IsEmpty()) ||
         (kInGpu(cc).IsConnected() && kInGpu(cc).IsEmpty())) {
       // Timestamp bound update happens automatically.
-    ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- OK";
+    // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- OK";
       return absl::OkStatus();
     }
-    ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 2";
+    // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 2";
     absl::optional<mediapipe::NormalizedRect> norm_rect;
     if (kInNormRect(cc).IsConnected()) {
       if (kInNormRect(cc).IsEmpty()) {
         // Timestamp bound update happens automatically. (See Open().)
-            ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- OK";
+            // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- OK";
         return absl::OkStatus();
       }
-          ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 4";
+          // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 4";
       norm_rect = *kInNormRect(cc);
       if (norm_rect->width() == 0 && norm_rect->height() == 0) {
         // WORKAROUND: some existing graphs may use sentinel rects {width=0,
@@ -191,11 +191,11 @@ class ImageToTensorCalculator : public Node {
         // NOTE: usage of sentinel rects should be avoided.
         DLOG(WARNING)
             << "Updating timestamp bound in response to a sentinel rect";
-          ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- OK";
+          // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- OK";
         return absl::OkStatus();
       }
     }
-    ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 6";
+    // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 6";
 #if MEDIAPIPE_DISABLE_GPU
     MP_ASSIGN_OR_RETURN(auto image, GetInputImage(kIn(cc)));
 #else
@@ -203,30 +203,30 @@ class ImageToTensorCalculator : public Node {
     MP_ASSIGN_OR_RETURN(auto image, is_input_gpu ? GetInputImage(kInGpu(cc))
                                                  : GetInputImage(kIn(cc)));
 #endif  // MEDIAPIPE_DISABLE_GPU
-    ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 7";
+    // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 7";
     RotatedRect roi = GetRoi(image->width(), image->height(), norm_rect);
     const int tensor_width = params_.output_width.value_or(image->width());
     const int tensor_height = params_.output_height.value_or(image->height());
     MP_ASSIGN_OR_RETURN(auto padding,
                         PadRoi(tensor_width, tensor_height,
                                options_.keep_aspect_ratio(), &roi));
-    ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 8";
+    // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 8";
     if (kOutLetterboxPadding(cc).IsConnected()) {
       kOutLetterboxPadding(cc).Send(padding);
     }
-        ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 9";
+        // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 9";
     if (kOutMatrix(cc).IsConnected()) {
       std::array<float, 16> matrix;
-          ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 10";
+          // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 10";
       GetRotatedSubRectToRectTransformMatrix(
           roi, image->width(), image->height(),
           /*flip_horizontaly=*/false, &matrix);
       kOutMatrix(cc).Send(std::move(matrix));
     }
-    ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 11";
+    // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 11";
     // Lazy initialization of the GPU or CPU converter.
     MP_RETURN_IF_ERROR(InitConverterIfNecessary(cc, *image.get()));
-    ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 12";
+    // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- 12";
     Tensor::ElementType output_tensor_type =
         GetOutputTensorType(image->UsesGpu(), params_);
     Tensor tensor(output_tensor_type, {1, tensor_height, tensor_width,
@@ -239,7 +239,7 @@ class ImageToTensorCalculator : public Node {
     auto result = std::make_unique<std::vector<Tensor>>();
     result->push_back(std::move(tensor));
     kOutTensors(cc).Send(std::move(result));
-        ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- OK";
+        // ABSL_LOG(INFO) << "image_to_tensor_calculator Process -- OK";
     return absl::OkStatus();
   }
 

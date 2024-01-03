@@ -76,7 +76,7 @@ class RectTransformationCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(RectTransformationCalculator);
 
 absl::Status RectTransformationCalculator::GetContract(CalculatorContract* cc) {
-  ABSL_LOG(INFO)<< "RectTransformationCalculator::GetContract(CalculatorContract* cc) -- 0";
+  // ABSL_LOG(INFO)<< "RectTransformationCalculator::GetContract(CalculatorContract* cc) -- 0";
   RET_CHECK_EQ((cc->Inputs().HasTag(kNormRectTag) ? 1 : 0) +
                    (cc->Inputs().HasTag(kNormRectsTag) ? 1 : 0) +
                    (cc->Inputs().HasTag(kRectTag) ? 1 : 0) +
@@ -117,7 +117,7 @@ absl::Status RectTransformationCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status RectTransformationCalculator::Process(CalculatorContext* cc) {
-  ABSL_LOG(INFO)<< "RectTransformationCalculator::Process(CalculatorContext* cc) -- 0";
+  // ABSL_LOG(INFO)<< "RectTransformationCalculator::Process(CalculatorContext* cc) -- 0";
   if (cc->Inputs().HasTag(kRectTag) && !cc->Inputs().Tag(kRectTag).IsEmpty()) {
     auto rect = cc->Inputs().Tag(kRectTag).Get<Rect>();
     TransformRect(&rect);
@@ -159,7 +159,7 @@ absl::Status RectTransformationCalculator::Process(CalculatorContext* cc) {
     }
     cc->Outputs().Index(0).Add(output_rects.release(), cc->InputTimestamp());
   }
-  ABSL_LOG(INFO)<< "RectTransformationCalculator::Process(CalculatorContext* cc) -- OK";
+  // ABSL_LOG(INFO)<< "RectTransformationCalculator::Process(CalculatorContext* cc) -- OK";
   return absl::OkStatus();
 }
 
