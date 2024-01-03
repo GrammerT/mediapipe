@@ -138,10 +138,12 @@ class ConstantSidePacketCalculator : public CalculatorBase {
             "None of supported values were specified in options.");
       }
     }
+
     return absl::OkStatus();
   }
 
   absl::Status Process(CalculatorContext* cc) override {
+    ABSL_LOG(INFO) << "ConstantSidePacketCalculator process .";
     return absl::OkStatus();
   }
 

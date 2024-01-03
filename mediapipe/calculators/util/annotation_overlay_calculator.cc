@@ -270,14 +270,14 @@ absl::Status AnnotationOverlayCalculator::GetContract(CalculatorContract* cc) {
 
 absl::Status AnnotationOverlayCalculator::Open(CalculatorContext* cc) {
   cc->SetOffset(TimestampDiff(0));
-
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Open(CalculatorContext) -- 0";
   options_ = cc->Options<AnnotationOverlayCalculatorOptions>();
   if (cc->Inputs().HasTag(kGpuBufferTag) || HasImageTag(cc)) {
 #if !MEDIAPIPE_DISABLE_GPU
     use_gpu_ = true;
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
-
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Open(CalculatorContext) -- 1";
   if (cc->Inputs().HasTag(kGpuBufferTag) ||
       cc->Inputs().HasTag(kImageFrameTag) || HasImageTag(cc)) {
     image_frame_available_ = true;
@@ -285,6 +285,7 @@ absl::Status AnnotationOverlayCalculator::Open(CalculatorContext* cc) {
     RET_CHECK(options_.has_canvas_width_px());
     RET_CHECK(options_.has_canvas_height_px());
   }
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Open(CalculatorContext) -- 2";
 
   // Initialize the helper renderer library.
   renderer_ = absl::make_unique<AnnotationRenderer>();
@@ -304,32 +305,36 @@ absl::Status AnnotationOverlayCalculator::Open(CalculatorContext* cc) {
     auto* output_video_header = new VideoHeader(input_header);
     cc->Outputs().Tag(tag).SetHeader(Adopt(output_video_header));
   }
-
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Open(CalculatorContext) -- 3";
   if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
-
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Open(CalculatorContext) -- 4";
   return absl::OkStatus();
 }
 
 absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 0";
   if (cc->Inputs().HasTag(kGpuBufferTag) &&
       cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
     return absl::OkStatus();
   }
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 1" ;
   if (cc->Inputs().HasTag(kImageFrameTag) &&
       cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
     return absl::OkStatus();
   }
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 2" ;
   if (cc->Inputs().HasTag(kImageTag) && cc->Inputs().Tag(kImageTag).IsEmpty()) {
     return absl::OkStatus();
   }
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 3" ;
   if (HasImageTag(cc)) {
     use_gpu_ = cc->Inputs().Tag(kImageTag).Get<mediapipe::Image>().UsesGpu();
   }
-
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 4" ; 
   // Initialize render target, drawn with OpenCV.
   std::unique_ptr<cv::Mat> image_mat;
   ImageFormat::Format target_format;
@@ -356,18 +361,22 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
     }
 #endif  // !MEDIAPIPE_DISABLE_GPU
   } else {
+    ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 5" ;
     if (cc->Outputs().HasTag(kImageTag)) {
       MP_RETURN_IF_ERROR(
           CreateRenderTargetCpuImage(cc, image_mat, &target_format));
+      ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 6" ;
     }
+
     if (cc->Outputs().HasTag(kImageFrameTag)) {
       MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
     }
+    ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 7" ;
   }
-
+  
   // Reset the renderer with the image_mat. No copy here.
   renderer_->AdoptImage(image_mat.get());
-
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 8" ;
   // Render streams onto render target.
   for (CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId();
        ++id) {
@@ -376,14 +385,17 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
     if (!tag.empty() && tag != kVectorTag) {
       continue;
     }
+    ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 9" ;
     if (cc->Inputs().Get(id).IsEmpty()) {
       continue;
     }
+    ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 10" <<tag;
     if (tag.empty()) {
       // Empty tag defaults to accepting a single object of RenderData type.
       const RenderData& render_data = cc->Inputs().Get(id).Get<RenderData>();
       renderer_->RenderDataOnImage(render_data);
     } else {
+      ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 11" <<tag;
       RET_CHECK_EQ(kVectorTag, tag);
       const std::vector<RenderData>& render_data_vec =
           cc->Inputs().Get(id).Get<std::vector<RenderData>>();
@@ -392,16 +404,16 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
       }
     }
   }
-
+  ABSL_LOG(INFO)<< "renderer_->DrawText(recognizedHandGesture, 50, 50);";
   const auto &recognizedHandGesture = cc->Inputs().Tag(recognizedHandGestureTag).Get<std::string>();
   renderer_->DrawText(recognizedHandGesture, 50, 50);
-
+  ABSL_LOG(INFO)<< "renderer_->DrawText(recognizedHandMouvementScrolling, 120, 50);";
   const auto &recognizedHandMouvementScrolling = cc->Inputs().Tag(recognizedHandMouvementScrollingTag).Get<std::string>();
   renderer_->DrawText(recognizedHandMouvementScrolling, 120, 50);
-
+  ABSL_LOG(INFO)<< "renderer_->DrawText(recognizedHandMouvementZooming, 190, 50);";
   const auto &recognizedHandMouvementZooming = cc->Inputs().Tag(recognizedHandMouvementZoomingTag).Get<std::string>();
   renderer_->DrawText(recognizedHandMouvementZooming, 190, 50);
-
+  ABSL_LOG(INFO)<< "renderer_->DrawText(recognizedHandMouvementSliding, 260, 50);";
   const auto &recognizedHandMouvementSliding = cc->Inputs().Tag(recognizedHandMouvementSlidingTag).Get<std::string>();
   renderer_->DrawText(recognizedHandMouvementSliding, 260, 50);
   if (use_gpu_) {
@@ -454,17 +466,19 @@ absl::Status AnnotationOverlayCalculator::RenderToCpu(
                               renderer_->GetImageHeight(), data_image,
                               ImageFrame::kDefaultAlignmentBoundary);
 #endif  // !MEDIAPIPE_DISABLE_GPU
-
+    ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->RenderToCpu(CalculatorContext) -- 0";
   if (HasImageTag(cc)) {
+    ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->RenderToCpu(CalculatorContext) -- 1";
     auto out = std::make_unique<mediapipe::Image>(std::move(output_frame));
     cc->Outputs().Tag(kImageTag).Add(out.release(), cc->InputTimestamp());
   }
   if (cc->Outputs().HasTag(kImageFrameTag)) {
+    ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->RenderToCpu(CalculatorContext) -- 2";
     cc->Outputs()
         .Tag(kImageFrameTag)
         .Add(output_frame.release(), cc->InputTimestamp());
   }
-
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->RenderToCpu(CalculatorContext) -- 3";
   return absl::OkStatus();
 }
 

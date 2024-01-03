@@ -30,10 +30,10 @@ node {
     class HandMouvementRecognitionCalculator : public CalculatorBase
     {
     public:
-        static ::mediapipe::Status GetContract(CalculatorContract *cc);
-        ::mediapipe::Status Open(CalculatorContext *cc) override;
+        static absl::Status GetContract(CalculatorContract *cc);
+        absl::Status Open(CalculatorContext *cc) override;
 
-        ::mediapipe::Status Process(CalculatorContext *cc) override;
+        absl::Status Process(CalculatorContext *cc) override;
 
     private:
         float previous_x_center;
@@ -77,9 +77,10 @@ node {
 
     REGISTER_CALCULATOR(HandMouvementRecognitionCalculator);
 
-    ::mediapipe::Status HandMouvementRecognitionCalculator::GetContract(
+    absl::Status HandMouvementRecognitionCalculator::GetContract(
         CalculatorContract *cc)
     {
+            ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->GetContract(CalculatorContext) -- 0";
         RET_CHECK(cc->Inputs().HasTag(normalizedLandmarkListTag));
         cc->Inputs().Tag(normalizedLandmarkListTag).Set<mediapipe::NormalizedLandmarkList>();
 
@@ -94,27 +95,29 @@ node {
 
         RET_CHECK(cc->Outputs().HasTag(recognizedHandMouvementSlidingTag));
         cc->Outputs().Tag(recognizedHandMouvementSlidingTag).Set<std::string>();
-
-        return ::mediapipe::OkStatus();
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->GetContract(CalculatorContext) -- 1";
+        return absl::OkStatus();
     }
 
-    ::mediapipe::Status HandMouvementRecognitionCalculator::Open(
+    absl::Status HandMouvementRecognitionCalculator::Open(
         CalculatorContext *cc)
     {
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Open(CalculatorContext) -- 0";
         cc->SetOffset(TimestampDiff(0));
-        return ::mediapipe::OkStatus();
+        return absl::OkStatus();
     }
 
-    ::mediapipe::Status HandMouvementRecognitionCalculator::Process(
+    absl::Status HandMouvementRecognitionCalculator::Process(
         CalculatorContext *cc)
     {
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 0";
         Counter *frameCounter = cc->GetCounter("HandMouvementRecognitionCalculator");
         frameCounter->Increment();
 
         std::string *recognized_hand_mouvement_scrolling = new std::string("___");
         std::string *recognized_hand_mouvement_zooming = new std::string("___");
         std::string *recognized_hand_mouvement_sliding = new std::string("___");
-
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 1";
         // hand closed (red) rectangle
         const auto rect = &(cc->Inputs().Tag(normRectTag).Get<NormalizedRect>());
         const float height = rect->height();
@@ -122,12 +125,12 @@ node {
         const float y_center = rect->y_center();
 
         // LOG(INFO) << "height: " << height;
-
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 2";
         const auto &landmarkList = cc->Inputs()
                                        .Tag(normalizedLandmarkListTag)
                                        .Get<mediapipe::NormalizedLandmarkList>();
         RET_CHECK_GT(landmarkList.landmark_size(), 0) << "Input landmark vector is empty.";
-
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 3";
         // 1. FEATURE - Scrolling
         if (this->previous_x_center)
         {
@@ -163,7 +166,7 @@ node {
         }
         this->previous_x_center = x_center;
         this->previous_y_center = y_center;
-
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 4";
         // 2. FEATURE - Zoom in/out
         if (this->previous_rectangle_height)
         {
@@ -212,20 +215,20 @@ node {
             }
             this->previous_angle = ang_in_degree;
         }
-
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 5";
         cc->Outputs()
             .Tag(recognizedHandMouvementScrollingTag)
             .Add(recognized_hand_mouvement_scrolling, cc->InputTimestamp());
-
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 6";
         cc->Outputs()
             .Tag(recognizedHandMouvementZoomingTag)
             .Add(recognized_hand_mouvement_zooming, cc->InputTimestamp());
-
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 7";
         cc->Outputs()
             .Tag(recognizedHandMouvementSlidingTag)
             .Add(recognized_hand_mouvement_sliding, cc->InputTimestamp());
-
-        return ::mediapipe::OkStatus();
+        ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 8";
+        return absl::OkStatus();
     } // namespace mediapipe
 
 } // namespace mediapipe

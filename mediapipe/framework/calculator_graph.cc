@@ -498,20 +498,25 @@ absl::StatusOr<OutputStreamPoller> CalculatorGraph::AddOutputStreamPoller(
     const std::string& stream_name, bool observe_timestamp_bounds) {
   RET_CHECK(initialized_).SetNoLogging()
       << "CalculatorGraph is not initialized.";
+  ABSL_LOG(INFO) << "CalculatorGraph AddOutputStreamPoller -- 0";
   int output_stream_index = validated_graph_->OutputStreamIndex(stream_name);
+  ABSL_LOG(INFO) << "CalculatorGraph AddOutputStreamPoller -- 1";
   if (output_stream_index < 0) {
     return mediapipe::NotFoundErrorBuilder(MEDIAPIPE_LOC)
            << "Unable to attach observer to output stream \"" << stream_name
            << "\" because it doesn't exist.";
   }
+  ABSL_LOG(INFO) << "CalculatorGraph AddOutputStreamPoller -- 2";
   auto internal_poller = std::make_shared<internal::OutputStreamPollerImpl>();
   MP_RETURN_IF_ERROR(internal_poller->Initialize(
       stream_name, &any_packet_type_,
       std::bind(&CalculatorGraph::UpdateThrottledNodes, this,
                 std::placeholders::_1, std::placeholders::_2),
       &output_stream_managers_[output_stream_index], observe_timestamp_bounds));
+  ABSL_LOG(INFO) << "CalculatorGraph AddOutputStreamPoller -- 3";
   OutputStreamPoller poller(internal_poller);
   graph_output_streams_.push_back(std::move(internal_poller));
+  ABSL_LOG(INFO) << "CalculatorGraph AddOutputStreamPoller -- 4";
   return std::move(poller);
 }
 
@@ -556,6 +561,7 @@ absl::Status CalculatorGraph::Run(
   RET_CHECK(graph_input_streams_.empty()).SetNoLogging()
       << "When using graph input streams, call StartRun() instead of Run() so "
          "that AddPacketToInputStream() and CloseInputStream() can be called.";
+  ABSL_LOG(INFO) << "CalculatorGraph Run -- 0";
   MP_RETURN_IF_ERROR(StartRun(extra_side_packets, {}));
   return WaitUntilDone();
 }
@@ -565,9 +571,11 @@ absl::Status CalculatorGraph::StartRun(
     const std::map<std::string, Packet>& stream_headers) {
   RET_CHECK(initialized_).SetNoLogging()
       << "CalculatorGraph is not initialized.";
+  ABSL_LOG(INFO) << "CalculatorGraph StartRun -- 0";  
   MP_RETURN_IF_ERROR(PrepareForRun(extra_side_packets, stream_headers));
   MP_RETURN_IF_ERROR(profiler_->Start(executors_[""].get()));
   scheduler_.Start();
+  ABSL_LOG(INFO) << "CalculatorGraph StartRun -- 1";
   return absl::OkStatus();
 }
 

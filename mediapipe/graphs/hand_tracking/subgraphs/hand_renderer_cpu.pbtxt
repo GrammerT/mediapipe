@@ -17,7 +17,6 @@ input_stream: "NORM_RECTS:0:multi_palm_rects"
 # (std::vector<NormalizedRect>)
 input_stream: "NORM_RECTS:1:multi_hand_rects"
 
-
 input_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
 input_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
 input_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
@@ -195,7 +194,6 @@ node {
       font_height_px: 50
       horizontal_offset_px: 30
       vertical_offset_px: 50
-
       max_num_labels: 1
       location: TOP_LEFT
     }

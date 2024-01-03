@@ -164,6 +164,7 @@ absl::Status RunMPPGraph() {
 
   ABSL_LOG(INFO) << "Start grabbing and processing frames.";
   bool grab_frames = true;
+  ABSL_LOG(INFO) << "will start grab_frames";
   while (grab_frames) {
     // Capture opencv camera or video frame.
     cv::Mat camera_frame_raw;
@@ -195,10 +196,15 @@ absl::Status RunMPPGraph() {
     MP_RETURN_IF_ERROR(graph.AddPacketToInputStream(
         kInputStream, mediapipe::Adopt(input_frame.release())
                           .At(mediapipe::Timestamp(frame_timestamp_us))));
-
+    ABSL_LOG(INFO) << "frame_timestamp_us "<<frame_timestamp_us;
     // Get the graph result packet, or stop if that fails.
     mediapipe::Packet packet;
-    if (!poller.Next(&packet)) break;
+    if (!poller.Next(&packet)) 
+    {
+      ABSL_LOG(INFO) << "poller.Next false.";
+      break;
+    }
+    ABSL_LOG(INFO) << "after poller.Next";
     auto& output_frame = packet.Get<mediapipe::ImageFrame>();
 
     // Convert back to opencv for display or saving.

@@ -23,10 +23,10 @@ constexpr char recognizedHandGestureTag[] = "RECOGNIZED_HAND_GESTURE";
 class HandGestureRecognitionCalculator : public CalculatorBase
 {
 public:
-    static ::mediapipe::Status GetContract(CalculatorContract *cc);
-    ::mediapipe::Status Open(CalculatorContext *cc) override;
+    static absl::Status GetContract(CalculatorContract *cc);
+    absl::Status Open(CalculatorContext *cc) override;
 
-    ::mediapipe::Status Process(CalculatorContext *cc) override;
+    absl::Status Process(CalculatorContext *cc) override;
 
 private:
     float get_Euclidean_DistanceAB(float a_x, float a_y, float b_x, float b_y)
@@ -44,9 +44,10 @@ private:
 
 REGISTER_CALCULATOR(HandGestureRecognitionCalculator);
 
-::mediapipe::Status HandGestureRecognitionCalculator::GetContract(
+absl::Status HandGestureRecognitionCalculator::GetContract(
     CalculatorContract *cc)
 {
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->GetContract(CalculatorContext) -- 0";
     RET_CHECK(cc->Inputs().HasTag(normalizedLandmarkListTag));
     cc->Inputs().Tag(normalizedLandmarkListTag).Set<mediapipe::NormalizedLandmarkList>();
 
@@ -55,27 +56,29 @@ REGISTER_CALCULATOR(HandGestureRecognitionCalculator);
 
     RET_CHECK(cc->Outputs().HasTag(recognizedHandGestureTag));
     cc->Outputs().Tag(recognizedHandGestureTag).Set<std::string>();
-
-    return ::mediapipe::OkStatus();
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->GetContract(CalculatorContext) -- 1";
+    return absl::OkStatus();
 }
 
-::mediapipe::Status HandGestureRecognitionCalculator::Open(
+absl::Status HandGestureRecognitionCalculator::Open(
     CalculatorContext *cc)
 {
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Open(CalculatorContext) -- 0";
     cc->SetOffset(TimestampDiff(0));
-    return ::mediapipe::OkStatus();
+    return absl::OkStatus();
 }
 
-::mediapipe::Status HandGestureRecognitionCalculator::Process(
+absl::Status HandGestureRecognitionCalculator::Process(
     CalculatorContext *cc)
 {
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- 0";
     std::string *recognized_hand_gesture;
 
     // hand closed (red) rectangle
     const auto rect = &(cc->Inputs().Tag(normRectTag).Get<NormalizedRect>());
     float width = rect->width();
     float height = rect->height();
-
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- 1";
     if (width < 0.01 || height < 0.01)
     {
         // LOG(INFO) << "No Hand Detected";
@@ -83,14 +86,14 @@ REGISTER_CALCULATOR(HandGestureRecognitionCalculator);
         cc->Outputs()
             .Tag(recognizedHandGestureTag)
             .Add(recognized_hand_gesture, cc->InputTimestamp());
-        return ::mediapipe::OkStatus();
+        return absl::OkStatus();
     }
-
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- 2";
     const auto &landmarkList = cc->Inputs()
                                    .Tag(normalizedLandmarkListTag)
                                    .Get<mediapipe::NormalizedLandmarkList>();
     RET_CHECK_GT(landmarkList.landmark_size(), 0) << "Input landmark vector is empty.";
-
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- 3";
     // finger states
     bool thumbIsOpen = false;
     bool firstFingerIsOpen = false;
@@ -98,19 +101,19 @@ REGISTER_CALCULATOR(HandGestureRecognitionCalculator);
     bool thirdFingerIsOpen = false;
     bool fourthFingerIsOpen = false;
     //
-
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- 4";
     float pseudoFixKeyPoint = landmarkList.landmark(2).x();
     if (landmarkList.landmark(3).x() < pseudoFixKeyPoint && landmarkList.landmark(4).x() < pseudoFixKeyPoint)
     {
         thumbIsOpen = true;
     }
-
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- 5";
     pseudoFixKeyPoint = landmarkList.landmark(6).y();
     if (landmarkList.landmark(7).y() < pseudoFixKeyPoint && landmarkList.landmark(8).y() < pseudoFixKeyPoint)
     {
         firstFingerIsOpen = true;
     }
-
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- 6";
     pseudoFixKeyPoint = landmarkList.landmark(10).y();
     if (landmarkList.landmark(11).y() < pseudoFixKeyPoint && landmarkList.landmark(12).y() < pseudoFixKeyPoint)
     {
@@ -176,12 +179,12 @@ REGISTER_CALCULATOR(HandGestureRecognitionCalculator);
         // LOG(INFO) << "Finger States: " << thumbIsOpen << firstFingerIsOpen << secondFingerIsOpen << thirdFingerIsOpen << fourthFingerIsOpen;       
     }
     // LOG(INFO) << recognized_hand_gesture;
-
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- 7";
     cc->Outputs()
         .Tag(recognizedHandGestureTag)
         .Add(recognized_hand_gesture, cc->InputTimestamp());
-
-    return ::mediapipe::OkStatus();
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- 8";
+    return absl::OkStatus();
 } // namespace mediapipe
 
 } // namespace mediapipe
