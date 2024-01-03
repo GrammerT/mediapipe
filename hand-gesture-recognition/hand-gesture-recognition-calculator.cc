@@ -179,11 +179,11 @@ absl::Status HandGestureRecognitionCalculator::Process(
         // LOG(INFO) << "Finger States: " << thumbIsOpen << firstFingerIsOpen << secondFingerIsOpen << thirdFingerIsOpen << fourthFingerIsOpen;       
     }
     // LOG(INFO) << recognized_hand_gesture;
-    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- 7";
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- 7 ";
     cc->Outputs()
         .Tag(recognizedHandGestureTag)
         .Add(recognized_hand_gesture, cc->InputTimestamp());
-    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- OK";
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- OK "<<recognized_hand_gesture->c_str();
     return absl::OkStatus();
 } // namespace mediapipe
 

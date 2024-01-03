@@ -205,14 +205,16 @@ node {
 node {
   calculator: "AnnotationOverlayCalculator"
   input_stream: "IMAGE:input_image"
+  
+  input_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
+  input_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
+  input_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
+  input_stream: "RECOGNIZED_HAND_MOUVEMENT_SLIDING:recognized_hand_mouvement_sliding"
+
   input_stream: "detection_render_data"
   input_stream: "multi_hand_rects_render_data"
   input_stream: "multi_palm_rects_render_data"
   input_stream: "handedness_render_data"
   input_stream: "VECTOR:0:multi_hand_landmarks_render_data"
-  input_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
-  input_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
-  input_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
-  input_stream: "RECOGNIZED_HAND_MOUVEMENT_SLIDING:recognized_hand_mouvement_sliding"
   output_stream: "IMAGE:output_image"
 }
