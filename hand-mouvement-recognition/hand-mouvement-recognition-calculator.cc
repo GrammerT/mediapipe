@@ -220,15 +220,17 @@ node {
         cc->Outputs()
             .Tag(recognizedHandMouvementScrollingTag)
             .Add(recognized_hand_mouvement_scrolling, cc->InputTimestamp());
+            ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(scrolling) -- "<<recognized_hand_mouvement_scrolling;
         // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 6";
         cc->Outputs()
             .Tag(recognizedHandMouvementZoomingTag)
             .Add(recognized_hand_mouvement_zooming, cc->InputTimestamp());
+            ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(zooming) -- "<<recognized_hand_mouvement_zooming;
         // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 7";
         cc->Outputs()
             .Tag(recognizedHandMouvementSlidingTag)
             .Add(recognized_hand_mouvement_sliding, cc->InputTimestamp());
-        // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- 8";
+         ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(sliding) -- "<<recognized_hand_mouvement_sliding;
         // ABSL_LOG(INFO)<< "HandMouvementRecognitionCalculator->Process(CalculatorContext) -- OK";
         return absl::OkStatus();
     } // namespace mediapipe

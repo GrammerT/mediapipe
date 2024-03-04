@@ -436,7 +436,7 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
       }
     }
   }
-#if 0
+#ifdef GESTURE_OPEN
   ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 12" ;
   const auto &recognizedHandGesture = cc->Inputs().Tag(recognizedHandGestureTag).Get<std::string>();
   renderer_->DrawText(recognizedHandGesture, 50, 50);

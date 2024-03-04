@@ -183,7 +183,7 @@ absl::Status HandGestureRecognitionCalculator::Process(
     cc->Outputs()
         .Tag(recognizedHandGestureTag)
         .Add(recognized_hand_gesture, cc->InputTimestamp());
-    ABSL_LOG(ERROR)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- OK "<<recognized_hand_gesture->c_str();
+    ABSL_LOG(INFO)<< "HandGestureRecognitionCalculator->Process(CalculatorContext) -- OK "<<recognized_hand_gesture->c_str();
     return absl::OkStatus();
 } // namespace mediapipe
 
