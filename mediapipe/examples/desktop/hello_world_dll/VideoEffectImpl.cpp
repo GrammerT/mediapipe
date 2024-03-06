@@ -297,6 +297,7 @@ void VideoEffectImpl::startGraphThread()
       m_receiver_callback(frame);
     }
 #ifdef SHOW_CV_WINDOW
+  ABSL_LOG(INFO) << "opencv imshow image.";
   cv::imshow(kWindowName, output_frame_mat);
   cv::waitKey(30);
 #else
