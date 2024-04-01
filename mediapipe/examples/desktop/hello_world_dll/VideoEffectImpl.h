@@ -11,13 +11,12 @@
 #include "mediapipe/framework/calculator_framework.h"
 #include <opencv2/opencv.hpp>
 
-// #define SHOW_CV_WINDOW
+//  #define SHOW_CV_WINDOW
 
 class MemoryPool;
 
-class VideoEffectImpl: public IVideoEffect
+class VideoEffectImpl:  public IVideoEffect
 {
-
 public:
     VideoEffectImpl();
     ~VideoEffectImpl();

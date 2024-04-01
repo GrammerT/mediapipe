@@ -197,7 +197,7 @@ int VideoEffectImpl::pushVideoFrame(std::shared_ptr<SVideoFrame> frame)
     m_frame_queue.push(frame);
     locker.unlock();
     m_frame_queue_cond.notify_one();
-    ABSL_LOG(INFO) << "m_frame_queue SIZE "<<m_frame_queue.size();
+    // ABSL_LOG(INFO) << "m_frame_queue SIZE "<<m_frame_queue.size();
     return 0;
 }
 
@@ -255,7 +255,7 @@ void VideoEffectImpl::startGraphThread()
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
       continue;
     }
-    ABSL_LOG(INFO) << "frame from Queue will callback.";
+    // ABSL_LOG(INFO) << "frame from Queue will callback.";
 
 #endif
     // Wrap Mat into an ImageFrame.
@@ -301,7 +301,7 @@ void VideoEffectImpl::startGraphThread()
   cv::imshow(kWindowName, output_frame_mat);
   cv::waitKey(30);
 #else
-  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   std::this_thread::sleep_for(std::chrono::milliseconds(10));
 #endif
   }
 #ifndef SHOW_CV_WINDOW
@@ -349,13 +349,13 @@ cv::Mat VideoEffectImpl::PopVideoFrameQueueToCVMat()
   auto frame = m_frame_queue.front();
   m_frame_queue.pop();
   locker.unlock();//! 锁粒度最小,保证渲染不被encode影响 ,如果锁还在，将导致渲染帧率降低
-  ABSL_LOG(INFO) << "pop m_frame_queue SIZE "<<m_frame_queue.size();
-  ABSL_LOG(INFO) << "start convert format to cv::mat";
+  // ABSL_LOG(INFO) << "pop m_frame_queue SIZE "<<m_frame_queue.size();
+  // ABSL_LOG(INFO) << "start convert format to cv::mat";
   switch (frame->format)
   {
   case EVideoFormat::kYUV420P:
   {
-      ABSL_LOG(INFO) << "start convert format to cv::mat from yuv420p";
+      // ABSL_LOG(INFO) << "start convert format to cv::mat from yuv420p";
     if(!m_memory_pool)
     {
       auto frameW = 640;
