@@ -59,6 +59,7 @@ struct SVideoFrame
     int32_t linesize[MAX_DATA_NUM];
     EVideoFrameSize size;
     void *extend_data;
+    uint64_t index;//! 标记帧的索引,用于计算每一帧的处理耗时,可选,非必须
 };
 
 

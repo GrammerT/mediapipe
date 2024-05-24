@@ -32,7 +32,7 @@ private:
     void startGraphThread();
     void stopGraphThread();
 
-    cv::Mat PopVideoFrameQueueToCVMat();
+    cv::Mat PopVideoFrameQueueToCVMat(uint64_t &index);
     std::shared_ptr<SVideoFrame> matToSVideoFrame(const cv::Mat& inputMat, EVideoFormat format);
 private:
     bool m_is_enable=false;
@@ -51,6 +51,9 @@ private:
 
     std::shared_ptr<MemoryPool> m_memory_pool=nullptr;
     std::shared_ptr<SVideoFrame> m_yuv_2_rgb_tmpframe=nullptr; //! 临时做缓存用,不考虑此变量格式
+    
+    std::shared_ptr<SVideoFrame> m_mat_to_tmpframe=nullptr; //! 临时做缓存用,不考虑此变量格式
+
 #ifdef SHOW_CV_WINDOW
     cv::VideoCapture m_capture;
 #endif

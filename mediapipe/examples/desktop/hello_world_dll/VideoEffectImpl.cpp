@@ -193,9 +193,11 @@ int VideoEffectImpl::pushVideoFrame(std::shared_ptr<SVideoFrame> frame)
       ABSL_LOG(WARNING) << "m_is_enable is FALSE.";
       return -2;
     }
-    std::unique_lock<std::mutex> locker(m_frame_queue_mutex);
-    m_frame_queue.push(frame);
-    locker.unlock();
+    {
+      std::unique_lock<std::mutex> locker(m_frame_queue_mutex);
+      m_frame_queue.push(frame);
+      locker.unlock();
+    }
     m_frame_queue_cond.notify_one();
     // ABSL_LOG(INFO) << "m_frame_queue SIZE "<<m_frame_queue.size();
     return 0;
@@ -234,7 +236,12 @@ void VideoEffectImpl::startGraphThread()
     m_capture.set(cv::CAP_PROP_FPS, 30);
 #endif 
 #endif
-
+  ABSL_LOG(INFO) << "frame queue size:" << m_frame_queue.size();
+  ABSL_LOG(WARNING) << "m_frame_queue will be clean.";
+  std::queue<std::shared_ptr<SVideoFrame>> t;
+  std::unique_lock<std::mutex> locker(m_frame_queue_mutex);
+  m_frame_queue.swap(t);
+  locker.unlock();  
   while (m_is_graph_running) {
     // Capture opencv camera or video frame.
 #ifdef  SHOW_CV_WINDOW
@@ -249,10 +256,11 @@ void VideoEffectImpl::startGraphThread()
     cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
     cv::flip(camera_frame, camera_frame, /*flipcode=HORIZONTAL*/ 1);
 #else
-    cv::Mat camera_frame = PopVideoFrameQueueToCVMat();
+    uint64_t frame_index=0;
+    cv::Mat camera_frame = PopVideoFrameQueueToCVMat(frame_index);
     if (camera_frame.empty()) {
       ABSL_LOG(WARNING) << "Ignore empty frames from Queue.";
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
     // ABSL_LOG(INFO) << "frame from Queue will callback.";
@@ -294,6 +302,7 @@ void VideoEffectImpl::startGraphThread()
     if(m_receiver_callback)
     {
       auto frame = matToSVideoFrame(output_frame_mat, EVideoFormat::kYUV420P);
+      frame->index=frame_index;
       m_receiver_callback(frame);
     }
 #ifdef SHOW_CV_WINDOW
@@ -301,7 +310,7 @@ void VideoEffectImpl::startGraphThread()
   cv::imshow(kWindowName, output_frame_mat);
   cv::waitKey(30);
 #else
-   std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   std::this_thread::sleep_for(std::chrono::milliseconds(1));
 #endif
   }
 #ifndef SHOW_CV_WINDOW
@@ -337,16 +346,20 @@ void VideoEffectImpl::stopGraphThread()
   ABSL_LOG(INFO) << "graph thread already stop.";
 }
 
-cv::Mat VideoEffectImpl::PopVideoFrameQueueToCVMat()
+cv::Mat VideoEffectImpl::PopVideoFrameQueueToCVMat(uint64_t &index)
 {
-  cv::Mat frameMat;
+  static cv::Mat s_frameMat=cv::Mat();
   std::unique_lock<std::mutex> locker(m_frame_queue_mutex);
   m_frame_queue_cond.wait(locker, [this] { return !m_is_graph_running.load()|| m_frame_queue.size()>0;});
   if (!m_is_graph_running.load())
   {
-    return frameMat;
+    std::queue<std::shared_ptr<SVideoFrame>> t;
+    m_frame_queue.swap(t);
+    return s_frameMat;
   }
-  auto frame = m_frame_queue.front();
+  //ABSL_LOG(INFO) << "m_frame_queue size is : "<<m_frame_queue.size();
+  std::shared_ptr<SVideoFrame> frame = m_frame_queue.front();
+  index=frame->index;
   m_frame_queue.pop();
   locker.unlock();//! 锁粒度最小,保证渲染不被encode影响 ,如果锁还在，将导致渲染帧率降低
   // ABSL_LOG(INFO) << "pop m_frame_queue SIZE "<<m_frame_queue.size();
@@ -391,7 +404,7 @@ cv::Mat VideoEffectImpl::PopVideoFrameQueueToCVMat()
       {
         //! need resign value.change int yDataSize = w*h
         assert(false);
-        return frameMat;
+        return s_frameMat;
       }
     }
 
@@ -400,14 +413,18 @@ cv::Mat VideoEffectImpl::PopVideoFrameQueueToCVMat()
     memcpy(m_yuv_2_rgb_tmpframe->data[0] + yDataSize, frame->data[1], yDataSize/4);
     memcpy(m_yuv_2_rgb_tmpframe->data[0] + yDataSize + yDataSize/4, frame->data[2], yDataSize/4);
 
-    cv::Mat yuvMat;
-    yuvMat.create(frameHeight*3/2,frameWidth, CV_8UC1);   
-    memcpy(yuvMat.data, m_yuv_2_rgb_tmpframe->data[0], yDataSize+yDataSize/2);
-    cv::cvtColor(yuvMat, frameMat, cv::COLOR_YUV2RGB_I420);
+    static cv::Mat s_yuvMat=cv::Mat();
+    if(s_yuvMat.empty())
+    {
+      s_yuvMat.create(frameHeight*3/2,frameWidth, CV_8UC1);   
+    }
+    
+    memcpy(s_yuvMat.data, m_yuv_2_rgb_tmpframe->data[0], yDataSize+yDataSize/2);
+    cv::cvtColor(s_yuvMat, s_frameMat, cv::COLOR_YUV2RGB_I420);
 
 #ifdef OUT_CV_MAT
     cv::Mat frameMat1;
-    cv::cvtColor(yuvMat, frameMat1, cv::COLOR_YUV2BGR_I420);
+    cv::cvtColor(s_yuvMat, frameMat1, cv::COLOR_YUV2BGR_I420);
   if(writer.isOpened())
   {
     ABSL_LOG(INFO) << "cv::mat will write to file.";
@@ -428,7 +445,7 @@ cv::Mat VideoEffectImpl::PopVideoFrameQueueToCVMat()
     break;
   }
 
-  return frameMat;
+  return s_frameMat;
 }
 
 std::shared_ptr<SVideoFrame> VideoEffectImpl::matToSVideoFrame(const cv::Mat& inputMat, EVideoFormat format) 
@@ -437,34 +454,37 @@ std::shared_ptr<SVideoFrame> VideoEffectImpl::matToSVideoFrame(const cv::Mat& in
     {
       return nullptr;
     }
-    auto videoFrame = new SVideoFrame;
+    if(!m_mat_to_tmpframe)
+    {
+      auto videoFrame = new SVideoFrame;
+      cv::Mat *yuvMat = new cv::Mat;
+      
+        m_mat_to_tmpframe = std::shared_ptr<SVideoFrame>(videoFrame,[](SVideoFrame *frame){
+        if(frame->extend_data)
+        {
+          cv::Mat *mat = (cv::Mat*)frame->extend_data;
+          delete mat;
+        }
+        delete frame;
+      });
+      m_mat_to_tmpframe->extend_data = (void*)yuvMat;
+    }
 
-    auto videoFrameSPtr = std::shared_ptr<SVideoFrame>(videoFrame,[](SVideoFrame *frame){
-      if(frame->extend_data)
-      {
-        cv::Mat *mat = (cv::Mat*)frame->extend_data;
-        delete mat;
-      }
-      delete frame;
-    });
-    videoFrameSPtr->format = format;
-    videoFrameSPtr->size = EVideoFrameSize::kSize_640_480;
-    // videoFrameSPtr->width = inputMat.cols;
-    // videoFrameSPtr->height = inputMat.rows;
+    m_mat_to_tmpframe->format = format;
+    m_mat_to_tmpframe->size = EVideoFrameSize::kSize_640_480;
 
     // 如果是YUV420格式
     if (format == EVideoFormat::kYUV420P) {
-        cv::Mat *yuvMat = new cv::Mat;
-        videoFrameSPtr->extend_data = (void*)yuvMat;
+        cv::Mat *yuvMat=(cv::Mat *)m_mat_to_tmpframe->extend_data;
         cv::cvtColor(inputMat, *yuvMat, cv::COLOR_RGB2YUV_I420);
         auto yDataSize = inputMat.cols * inputMat.rows;
         // 获取各通道数据和行大小
-        videoFrameSPtr->data[0] = yuvMat->data;
-        videoFrameSPtr->data[1] = yuvMat->data + yDataSize;
-        videoFrameSPtr->data[2] = yuvMat->data + yDataSize+yDataSize/4;
-        videoFrameSPtr->linesize[0] = yuvMat->cols;
-        videoFrameSPtr->linesize[1] = yuvMat->cols / 2;
-        videoFrameSPtr->linesize[2] = yuvMat->cols / 2;
+        m_mat_to_tmpframe->data[0] = yuvMat->data;
+        m_mat_to_tmpframe->data[1] = yuvMat->data + yDataSize;
+        m_mat_to_tmpframe->data[2] = yuvMat->data + yDataSize+yDataSize/4;
+        m_mat_to_tmpframe->linesize[0] = yuvMat->cols;
+        m_mat_to_tmpframe->linesize[1] = yuvMat->cols / 2;
+        m_mat_to_tmpframe->linesize[2] = yuvMat->cols / 2;
 #ifdef OUT_YUV_FILE
 			if (!g_pFile)
 			{
@@ -480,5 +500,5 @@ std::shared_ptr<SVideoFrame> VideoEffectImpl::matToSVideoFrame(const cv::Mat& in
 #endif //OUT_YUV_FILE
     }
 
-    return videoFrameSPtr;
+    return m_mat_to_tmpframe;
 }
