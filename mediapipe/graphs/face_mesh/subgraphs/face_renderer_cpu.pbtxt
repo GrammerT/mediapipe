@@ -21,7 +21,7 @@ node {
   input_stream: "IMAGE:input_image"
   output_stream: "SIZE:image_size"
 }
-
+# if want to change color value,need delete bazel-out\x64_windows-opt\bin\mediapipe\graphs\face_mesh directory
 # Converts detections to drawing primitives for annotation overlay.
 node {
   calculator: "DetectionsToRenderDataCalculator"
@@ -30,7 +30,7 @@ node {
   node_options: {
     [type.googleapis.com/mediapipe.DetectionsToRenderDataCalculatorOptions] {
       thickness: 4.0
-      color { r: 0 g: 255 b: 0 }
+      color { r: 0 g: 255 b: 255 }
     }
   }
 }
