@@ -357,22 +357,42 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
        ++id) {
     auto tag_and_index = cc->Inputs().TagAndIndexFromId(id);
     std::string tag = tag_and_index.first;
+    /**
+     * node {
+        calculator: "AnnotationOverlayCalculator"
+        input_stream: "IMAGE:input_image"
+        input_stream: "detections_render_data"
+        input_stream: "VECTOR:0:multi_face_landmarks_render_data"
+        input_stream: "rects_render_data"
+        output_stream: "IMAGE:output_image"
+      }
+     * 
+     */
+    // printf("annotation tag: %s \n", tag.c_str()); //! 会打印IMAGE 和 VECTOR
     if (!tag.empty() && tag != kVectorTag) {
-      continue;
+      continue;//! IMAGE 会走此处
     }
+
+    /**
+     * 处理以下三个
+      input_stream: "detections_render_data"
+      input_stream: "VECTOR:0:multi_face_landmarks_render_data"
+      input_stream: "rects_render_data"
+     */
+
     if (cc->Inputs().Get(id).IsEmpty()) {
-      continue;
+      continue; 
     }
     if (tag.empty()) {
       // Empty tag defaults to accepting a single object of RenderData type.
       const RenderData& render_data = cc->Inputs().Get(id).Get<RenderData>();
-      renderer_->RenderDataOnImage(render_data);
+      renderer_->RenderDataOnImage(render_data);//! face mesh 中渲染 roi of face
     } else {
       RET_CHECK_EQ(kVectorTag, tag);
       const std::vector<RenderData>& render_data_vec =
           cc->Inputs().Get(id).Get<std::vector<RenderData>>();
       for (const RenderData& render_data : render_data_vec) {
-        renderer_->RenderDataOnImage(render_data);
+        renderer_->RenderDataOnImage(render_data);//! face mesh中渲染所有landmark点 
       }
     }
   }
