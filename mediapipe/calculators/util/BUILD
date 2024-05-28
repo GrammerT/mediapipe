@@ -72,6 +72,17 @@ mediapipe_proto_library(
 )
 
 mediapipe_proto_library(
+    name = "emotion_detection_calculator_proto",
+    srcs = ["emotion_detection_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+        "//mediapipe/util:color_proto",
+    ],
+)
+
+
+mediapipe_proto_library(
     name = "detection_label_id_to_text_calculator_proto",
     srcs = ["detection_label_id_to_text_calculator.proto"],
     deps = [

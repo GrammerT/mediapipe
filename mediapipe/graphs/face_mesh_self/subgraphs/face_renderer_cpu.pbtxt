@@ -87,7 +87,7 @@ node {
 
 # Draws annotations and overlays them on top of the input images.
 node {
-  calculator: "AnnotationOverlayCalculator"
+  calculator: "EmotionDetectionCalculator"
   input_stream: "IMAGE:input_image"
   input_stream: "detections_render_data"
   input_stream: "VECTOR:0:multi_face_landmarks_render_data"
