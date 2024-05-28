@@ -33,13 +33,7 @@
 #include "mediapipe/util/color.pb.h"
 #include "mediapipe/util/render_data.pb.h"
 
-#if !MEDIAPIPE_DISABLE_GPU
-#include "mediapipe/gpu/gl_calculator_helper.h"
-#include "mediapipe/gpu/gl_simple_shaders.h"
-#include "mediapipe/gpu/gpu_buffer.h"
-#include "mediapipe/gpu/gpu_buffer_format.h"
-#include "mediapipe/gpu/shader_util.h"
-#endif  // !MEDIAPIPE_DISABLE_GPU
+
 
 namespace mediapipe {
 
@@ -146,18 +140,11 @@ class EmotionDetectionCalculator : public CalculatorBase {
   absl::Status CreateRenderTargetCpuImage(CalculatorContext* cc,
                                           std::unique_ptr<cv::Mat>& image_mat,
                                           ImageFormat::Format* target_format);
-  template <typename Type, const char* Tag>
-  absl::Status CreateRenderTargetGpu(CalculatorContext* cc,
-                                     std::unique_ptr<cv::Mat>& image_mat);
-  template <typename Type, const char* Tag>
-  absl::Status RenderToGpu(CalculatorContext* cc, uchar* overlay_image);
+
   absl::Status RenderToCpu(CalculatorContext* cc,
                            const ImageFormat::Format& target_format,
                            uchar* data_image);
 
-  absl::Status GlRender(CalculatorContext* cc);
-  template <typename Type, const char* Tag>
-  absl::Status GlSetup(CalculatorContext* cc);
 
   // Options for the calculator.
   EmotionDetectionCalculatorOptions options_;
@@ -170,15 +157,7 @@ class EmotionDetectionCalculator : public CalculatorBase {
 
   bool use_gpu_ = false;
   bool gpu_initialized_ = false;
-#if !MEDIAPIPE_DISABLE_GPU
-  mediapipe::GlCalculatorHelper gpu_helper_;
-  GLuint program_ = 0;
-  GLuint image_mat_tex_ = 0;  // Overlay drawing image for GPU.
-  int width_ = 0;
-  int height_ = 0;
-  int width_canvas_ = 0;  // Size of overlay drawing texture canvas.
-  int height_canvas_ = 0;
-#endif  // MEDIAPIPE_DISABLE_GPU
+
 };
 REGISTER_CALCULATOR(EmotionDetectionCalculator);
 
@@ -197,13 +176,7 @@ absl::Status EmotionDetectionCalculator::GetContract(CalculatorContract* cc) {
             1);
 
   // Input image to render onto copy of. Should be same type as output.
-#if !MEDIAPIPE_DISABLE_GPU
-  if (cc->Inputs().HasTag(kGpuBufferTag)) {
-    cc->Inputs().Tag(kGpuBufferTag).Set<mediapipe::GpuBuffer>();
-    RET_CHECK(cc->Outputs().HasTag(kGpuBufferTag));
-    use_gpu = true;
-  }
-#endif  // !MEDIAPIPE_DISABLE_GPU
+
   if (cc->Inputs().HasTag(kImageFrameTag)) {
     cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
     RET_CHECK(cc->Outputs().HasTag(kImageFrameTag));
@@ -212,9 +185,7 @@ absl::Status EmotionDetectionCalculator::GetContract(CalculatorContract* cc) {
   if (cc->Inputs().HasTag(kImageTag)) {
     cc->Inputs().Tag(kImageTag).Set<mediapipe::Image>();
     RET_CHECK(cc->Outputs().HasTag(kImageTag));
-#if !MEDIAPIPE_DISABLE_GPU
-    use_gpu = true;  // Prepare GPU resources because images can come in on GPU.
-#endif
+
   }
 
   // Data streams to render.
@@ -231,11 +202,7 @@ absl::Status EmotionDetectionCalculator::GetContract(CalculatorContract* cc) {
   }
 
   // Rendered image. Should be same type as input.
-#if !MEDIAPIPE_DISABLE_GPU
-  if (cc->Outputs().HasTag(kGpuBufferTag)) {
-    cc->Outputs().Tag(kGpuBufferTag).Set<mediapipe::GpuBuffer>();
-  }
-#endif  // !MEDIAPIPE_DISABLE_GPU
+
   if (cc->Outputs().HasTag(kImageFrameTag)) {
     cc->Outputs().Tag(kImageFrameTag).Set<ImageFrame>();
   }
@@ -244,9 +211,7 @@ absl::Status EmotionDetectionCalculator::GetContract(CalculatorContract* cc) {
   }
 
   if (use_gpu) {
-#if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
-#endif  // !MEDIAPIPE_DISABLE_GPU
+
   }
 
   return absl::OkStatus();
@@ -257,9 +222,7 @@ absl::Status EmotionDetectionCalculator::Open(CalculatorContext* cc) {
 
   options_ = cc->Options<EmotionDetectionCalculatorOptions>();
   if (cc->Inputs().HasTag(kGpuBufferTag) || HasImageTag(cc)) {
-#if !MEDIAPIPE_DISABLE_GPU
-    use_gpu_ = true;
-#endif  // !MEDIAPIPE_DISABLE_GPU
+
   }
 
   if (cc->Inputs().HasTag(kGpuBufferTag) ||
@@ -290,9 +253,7 @@ absl::Status EmotionDetectionCalculator::Open(CalculatorContext* cc) {
   }
 
   if (use_gpu_) {
-#if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(gpu_helper_.Open(cc));
-#endif  // !MEDIAPIPE_DISABLE_GPU
+
   }
 
   return absl::OkStatus();
@@ -318,27 +279,7 @@ absl::Status EmotionDetectionCalculator::Process(CalculatorContext* cc) {
   std::unique_ptr<cv::Mat> image_mat;
   ImageFormat::Format target_format;
   if (use_gpu_) {
-#if !MEDIAPIPE_DISABLE_GPU
-    if (!gpu_initialized_) {
-      MP_RETURN_IF_ERROR(
-          gpu_helper_.RunInGlContext([this, cc]() -> absl::Status {
-            if (HasImageTag(cc)) {
-              return GlSetup<mediapipe::Image, kImageTag>(cc);
-            }
-            return GlSetup<mediapipe::GpuBuffer, kGpuBufferTag>(cc);
-          }));
-      gpu_initialized_ = true;
-    }
-    if (HasImageTag(cc)) {
-      MP_RETURN_IF_ERROR(
-          (CreateRenderTargetGpu<mediapipe::Image, kImageTag>(cc, image_mat)));
-    }
-    if (cc->Inputs().HasTag(kGpuBufferTag)) {
-      MP_RETURN_IF_ERROR(
-          (CreateRenderTargetGpu<mediapipe::GpuBuffer, kGpuBufferTag>(
-              cc, image_mat)));
-    }
-#endif  // !MEDIAPIPE_DISABLE_GPU
+
   } else {
     if (cc->Outputs().HasTag(kImageTag)) {
       MP_RETURN_IF_ERROR(
@@ -398,18 +339,7 @@ absl::Status EmotionDetectionCalculator::Process(CalculatorContext* cc) {
   }
 
   if (use_gpu_) {
-#if !MEDIAPIPE_DISABLE_GPU
-    // Overlay rendered image in OpenGL, onto a copy of input.
-    uchar* image_mat_ptr = image_mat->data;
-    MP_RETURN_IF_ERROR(
-        gpu_helper_.RunInGlContext([this, cc, image_mat_ptr]() -> absl::Status {
-          if (HasImageTag(cc)) {
-            return RenderToGpu<mediapipe::Image, kImageTag>(cc, image_mat_ptr);
-          }
-          return RenderToGpu<mediapipe::GpuBuffer, kGpuBufferTag>(
-              cc, image_mat_ptr);
-        }));
-#endif  // !MEDIAPIPE_DISABLE_GPU
+
   } else {
     // Copy the rendered image to output.
     uchar* image_mat_ptr = image_mat->data;
@@ -420,14 +350,7 @@ absl::Status EmotionDetectionCalculator::Process(CalculatorContext* cc) {
 }
 
 absl::Status EmotionDetectionCalculator::Close(CalculatorContext* cc) {
-#if !MEDIAPIPE_DISABLE_GPU
-  gpu_helper_.RunInGlContext([this] {
-    if (program_) glDeleteProgram(program_);
-    program_ = 0;
-    if (image_mat_tex_) glDeleteTextures(1, &image_mat_tex_);
-    image_mat_tex_ = 0;
-  });
-#endif  // !MEDIAPIPE_DISABLE_GPU
+
 
   return absl::OkStatus();
 }
@@ -438,15 +361,9 @@ absl::Status EmotionDetectionCalculator::RenderToCpu(
   auto output_frame = absl::make_unique<ImageFrame>(
       target_format, renderer_->GetImageWidth(), renderer_->GetImageHeight());
 
-#if !MEDIAPIPE_DISABLE_GPU
-  output_frame->CopyPixelData(target_format, renderer_->GetImageWidth(),
-                              renderer_->GetImageHeight(), data_image,
-                              ImageFrame::kGlDefaultAlignmentBoundary);
-#else
   output_frame->CopyPixelData(target_format, renderer_->GetImageWidth(),
                               renderer_->GetImageHeight(), data_image,
                               ImageFrame::kDefaultAlignmentBoundary);
-#endif  // !MEDIAPIPE_DISABLE_GPU
 
   if (HasImageTag(cc)) {
     auto out = std::make_unique<mediapipe::Image>(std::move(output_frame));
@@ -461,55 +378,6 @@ absl::Status EmotionDetectionCalculator::RenderToCpu(
   return absl::OkStatus();
 }
 
-template <typename Type, const char* Tag>
-absl::Status EmotionDetectionCalculator::RenderToGpu(CalculatorContext* cc,
-                                                      uchar* overlay_image) {
-#if !MEDIAPIPE_DISABLE_GPU
-  // Source and destination textures.
-  const auto& input_frame = cc->Inputs().Tag(Tag).Get<Type>();
-  auto input_texture = gpu_helper_.CreateSourceTexture(input_frame);
-
-  auto output_texture = gpu_helper_.CreateDestinationTexture(
-      input_texture.width(), input_texture.height(),
-      mediapipe::GpuBufferFormat::kBGRA32);
-
-  // Upload render target to GPU.
-  {
-    glBindTexture(GL_TEXTURE_2D, image_mat_tex_);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width_canvas_, height_canvas_,
-                    GL_RGB, GL_UNSIGNED_BYTE, overlay_image);
-    glBindTexture(GL_TEXTURE_2D, 0);
-  }
-
-  // Blend overlay image in GPU shader.
-  {
-    gpu_helper_.BindFramebuffer(output_texture);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, input_texture.name());
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, image_mat_tex_);
-
-    MP_RETURN_IF_ERROR(GlRender(cc));
-
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glFlush();
-  }
-
-  // Send out blended image as GPU packet.
-  auto output_frame = output_texture.template GetFrame<Type>();
-  cc->Outputs().Tag(Tag).Add(output_frame.release(), cc->InputTimestamp());
-
-  // Cleanup
-  input_texture.Release();
-  output_texture.Release();
-#endif  // !MEDIAPIPE_DISABLE_GPU
-
-  return absl::OkStatus();
-}
 
 absl::Status EmotionDetectionCalculator::CreateRenderTargetCpu(
     CalculatorContext* cc, std::unique_ptr<cv::Mat>& image_mat,
@@ -607,188 +475,5 @@ absl::Status EmotionDetectionCalculator::CreateRenderTargetCpuImage(
   return absl::OkStatus();
 }
 
-template <typename Type, const char* Tag>
-absl::Status EmotionDetectionCalculator::CreateRenderTargetGpu(
-    CalculatorContext* cc, std::unique_ptr<cv::Mat>& image_mat) {
-#if !MEDIAPIPE_DISABLE_GPU
-  if (image_frame_available_) {
-    const auto& input_frame = cc->Inputs().Tag(Tag).Get<Type>();
-    const mediapipe::ImageFormat::Format format =
-        mediapipe::ImageFormatForGpuBufferFormat(input_frame.format());
-    if (format != mediapipe::ImageFormat::SRGBA &&
-        format != mediapipe::ImageFormat::SRGB)
-      RET_CHECK_FAIL() << "Unsupported GPU input format: " << format;
-    image_mat =
-        absl::make_unique<cv::Mat>(height_canvas_, width_canvas_, CV_8UC3);
-    memset(image_mat->data, kAnnotationBackgroundColor,
-           height_canvas_ * width_canvas_ * image_mat->elemSize());
-  } else {
-    image_mat = absl::make_unique<cv::Mat>(
-        height_canvas_, width_canvas_, CV_8UC3,
-        cv::Scalar(options_.canvas_color().r(), options_.canvas_color().g(),
-                   options_.canvas_color().b()));
-  }
-#endif  // !MEDIAPIPE_DISABLE_GPU
-
-  return absl::OkStatus();
-}
-
-absl::Status EmotionDetectionCalculator::GlRender(CalculatorContext* cc) {
-#if !MEDIAPIPE_DISABLE_GPU
-  static const GLfloat square_vertices[] = {
-      -1.0f, -1.0f,  // bottom left
-      1.0f,  -1.0f,  // bottom right
-      -1.0f, 1.0f,   // top left
-      1.0f,  1.0f,   // top right
-  };
-  static const GLfloat texture_vertices[] = {
-      0.0f, 0.0f,  // bottom left
-      1.0f, 0.0f,  // bottom right
-      0.0f, 1.0f,  // top left
-      1.0f, 1.0f,  // top right
-  };
-
-  // program
-  glUseProgram(program_);
-
-  // vertex storage
-  GLuint vbo[2];
-  glGenBuffers(2, vbo);
-  GLuint vao;
-  glGenVertexArrays(1, &vao);
-  glBindVertexArray(vao);
-
-  // vbo 0
-  glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-  glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(GLfloat), square_vertices,
-               GL_STATIC_DRAW);
-  glEnableVertexAttribArray(ATTRIB_VERTEX);
-  glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, nullptr);
-
-  // vbo 1
-  glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-  glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(GLfloat), texture_vertices,
-               GL_STATIC_DRAW);
-  glEnableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
-  glVertexAttribPointer(ATTRIB_TEXTURE_POSITION, 2, GL_FLOAT, 0, 0, nullptr);
-
-  // draw
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-  // cleanup
-  glDisableVertexAttribArray(ATTRIB_VERTEX);
-  glDisableVertexAttribArray(ATTRIB_TEXTURE_POSITION);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindVertexArray(0);
-  glDeleteVertexArrays(1, &vao);
-  glDeleteBuffers(2, vbo);
-#endif  // !MEDIAPIPE_DISABLE_GPU
-
-  return absl::OkStatus();
-}
-
-template <typename Type, const char* Tag>
-absl::Status EmotionDetectionCalculator::GlSetup(CalculatorContext* cc) {
-#if !MEDIAPIPE_DISABLE_GPU
-  const GLint attr_location[NUM_ATTRIBUTES] = {
-      ATTRIB_VERTEX,
-      ATTRIB_TEXTURE_POSITION,
-  };
-  const GLchar* attr_name[NUM_ATTRIBUTES] = {
-      "position",
-      "texture_coordinate",
-  };
-
-  // Shader to overlay a texture onto another when overlay is non-zero.
-  constexpr char kFragSrcBody[] = R"(
-  DEFAULT_PRECISION(mediump, float)
-  #ifdef GL_ES
-    #define fragColor gl_FragColor
-  #else
-    out vec4 fragColor;
-  #endif  // GL_ES
-
-    in vec2 sample_coordinate;
-    uniform sampler2D input_frame;
-    // "overlay" texture has top-left origin (OpenCV mat with annotations has
-    // been uploaded to GPU without vertical flip)
-    uniform sampler2D overlay;
-    uniform vec3 transparent_color;
-
-    void main() {
-      vec3 image_pix = texture2D(input_frame, sample_coordinate).rgb;
-  #ifdef INPUT_FRAME_HAS_TOP_LEFT_ORIGIN
-      // "input_frame" has top-left origin same as "overlay", hence overlaying
-      // as is.
-      vec3 overlay_pix = texture2D(overlay, sample_coordinate).rgb;
-  #else
-      // "input_frame" has bottom-left origin, hence flipping "overlay" texture
-      // coordinates.
-      vec3 overlay_pix = texture2D(overlay, vec2(sample_coordinate.x, 1.0 - sample_coordinate.y)).rgb;
-  #endif  // INPUT_FRAME_HAS_TOP_LEFT_ORIGIN
-
-      vec3 out_pix = image_pix;
-      float dist = distance(overlay_pix.rgb, transparent_color);
-      if (dist > 0.001) out_pix = overlay_pix;
-      fragColor.rgb = out_pix;
-      fragColor.a = 1.0;
-    }
-  )";
-
-  std::string defines;
-  if (options_.gpu_uses_top_left_origin()) {
-    defines = R"(
-      #define INPUT_FRAME_HAS_TOP_LEFT_ORIGIN;
-    )";
-  }
-
-  const std::string frag_src = absl::StrCat(
-      mediapipe::kMediaPipeFragmentShaderPreamble, defines, kFragSrcBody);
-
-  // Create shader program and set parameters
-  mediapipe::GlhCreateProgram(mediapipe::kBasicVertexShader, frag_src.c_str(),
-                              NUM_ATTRIBUTES, (const GLchar**)&attr_name[0],
-                              attr_location, &program_);
-  RET_CHECK(program_) << "Problem initializing the program.";
-  glUseProgram(program_);
-  glUniform1i(glGetUniformLocation(program_, "input_frame"), 1);
-  glUniform1i(glGetUniformLocation(program_, "overlay"), 2);
-  glUniform3f(glGetUniformLocation(program_, "transparent_color"),
-              kAnnotationBackgroundColor / 255.0,
-              kAnnotationBackgroundColor / 255.0,
-              kAnnotationBackgroundColor / 255.0);
-
-  // Ensure GPU texture is divisible by 4. See b/138751944 for more info.
-  const float alignment = ImageFrame::kGlDefaultAlignmentBoundary;
-  const float scale_factor = options_.gpu_scale_factor();
-  if (image_frame_available_) {
-    const auto& input_frame = cc->Inputs().Tag(Tag).Get<Type>();
-    width_ = RoundUp(input_frame.width(), alignment);
-    height_ = RoundUp(input_frame.height(), alignment);
-  } else {
-    width_ = RoundUp(options_.canvas_width_px(), alignment);
-    height_ = RoundUp(options_.canvas_height_px(), alignment);
-  }
-  width_canvas_ = RoundUp(width_ * scale_factor, alignment);
-  height_canvas_ = RoundUp(height_ * scale_factor, alignment);
-
-  // Init texture for opencv rendered frame.
-  {
-    glGenTextures(1, &image_mat_tex_);
-    glBindTexture(GL_TEXTURE_2D, image_mat_tex_);
-    // TODO
-    // OpenCV only renders to RGB images, not RGBA. Ideally this should be RGBA.
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width_canvas_, height_canvas_, 0,
-                 GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_2D, 0);
-  }
-#endif  // !MEDIAPIPE_DISABLE_GPU
-
-  return absl::OkStatus();
-}
 
 }  // namespace mediapipe
