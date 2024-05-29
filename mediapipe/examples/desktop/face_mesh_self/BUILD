@@ -21,7 +21,7 @@ cc_binary(
     data = ["//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite"],
     deps = [
         "//mediapipe/examples/desktop:simple_run_graph_main",
-        "//mediapipe/graphs/face_mesh:desktop_calculators",
+        "//mediapipe/graphs/face_mesh_self:desktop_calculators",
     ],
 )
 
@@ -33,7 +33,7 @@ cc_binary(
     ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
-        "//mediapipe/graphs/face_mesh:desktop_live_calculators",
+        "//mediapipe/graphs/face_mesh_self:desktop_live_calculators",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
