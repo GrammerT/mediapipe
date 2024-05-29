@@ -89,6 +89,8 @@ class EmotionDetectionCalculator : public CalculatorBase {
                            const ImageFormat::Format& target_format,
                            uchar* data_image);
 
+  absl::Status loadEmotionModel();
+private:
 
   // Options for the calculator.
   EmotionDetectionCalculatorOptions options_;
@@ -166,10 +168,9 @@ absl::Status EmotionDetectionCalculator::Open(CalculatorContext* cc) {
   if (cc->Inputs().HasTag(kGpuBufferTag) ||
       cc->Inputs().HasTag(kImageFrameTag) || HasImageTag(cc)) {
     image_frame_available_ = true;
-  } else {
-    RET_CHECK(options_.has_canvas_width_px());
-    RET_CHECK(options_.has_canvas_height_px());
-  }
+  } 
+
+  loadEmotionModel();
 
 #ifdef RENDER_RECT_AND_POINTS
   // Initialize the helper renderer library.
@@ -321,6 +322,18 @@ absl::Status EmotionDetectionCalculator::RenderToCpu(
 }
 
 
+absl::Status EmotionDetectionCalculator::loadEmotionModel()
+{
+  if(!options_.has_model_path())
+  {
+    printf("error: emotion mode path is empty.\n");
+    return absl::InvalidArgumentError("model path is empty.");
+  }
+
+  printf("emotion mode path:%s \n",options_.model_path().c_str());
+  return absl::OkStatus();
+}
+
 absl::Status EmotionDetectionCalculator::CreateRenderTargetCpu(
     CalculatorContext* cc, std::unique_ptr<cv::Mat>& image_mat,
     ImageFormat::Format* target_format) {
@@ -359,13 +372,7 @@ absl::Status EmotionDetectionCalculator::CreateRenderTargetCpu(
     } else {
       input_mat.copyTo(*image_mat);
     }
-  } else {
-    image_mat = absl::make_unique<cv::Mat>(
-        options_.canvas_height_px(), options_.canvas_width_px(), CV_8UC3,
-        cv::Scalar(options_.canvas_color().r(), options_.canvas_color().g(),
-                   options_.canvas_color().b()));
-    *target_format = ImageFormat::SRGB;
-  }
+  } 
   LOG_FUNCTION_INFO();
   return absl::OkStatus();
 }
@@ -413,14 +420,7 @@ absl::Status EmotionDetectionCalculator::CreateRenderTargetCpuImage(
       input_mat->copyTo(*image_mat);
     }
   } 
-  else 
-  {
-    image_mat = absl::make_unique<cv::Mat>(
-        options_.canvas_height_px(), options_.canvas_width_px(), CV_8UC3,
-        cv::Scalar(options_.canvas_color().r(), options_.canvas_color().g(),
-                   options_.canvas_color().b()));
-    *target_format = ImageFormat::SRGB;
-  }
+  
   LOG_FUNCTION_INFO();
   return absl::OkStatus();
 }
