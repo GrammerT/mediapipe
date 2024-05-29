@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <memory>
-
+#include <vector>
 #include "absl/log/absl_log.h"
 #include "absl/strings/str_cat.h"
 #include "mediapipe/calculators/util/emotion_detection_calculator.pb.h"
@@ -37,7 +37,7 @@
 // #define LOG_FUNCTION_INFO() printf("Function: %s, File: %s, Line: %d\n", __FUNCTION__, __FILE__, __LINE__)
 #define LOG_FUNCTION_INFO()
 
-// #define RENDER_RECT_AND_POINTS
+#define RENDER_RECT_AND_POINTS
 
 namespace mediapipe {
 
@@ -100,9 +100,16 @@ private:
 
   // Indicates if image frame is available as input.
   bool image_frame_available_ = false;
-
   bool use_gpu_ = false;
   bool gpu_initialized_ = false;
+
+  //! emotion label
+// Angry
+// Happy
+// Neutral
+// Sad
+// Surprise
+  std::vector<std::string> m_emotions_vec={"Angry","Happy","Neutral","Sad","Surprise"};
 
 };
 REGISTER_CALCULATOR(EmotionDetectionCalculator);
@@ -418,8 +425,8 @@ absl::Status EmotionDetectionCalculator::CreateRenderTargetCpuImage(
     {
       input_mat->copyTo(*image_mat);
     }
-  } 
-  
+  }
+
   LOG_FUNCTION_INFO();
   return absl::OkStatus();
 }
