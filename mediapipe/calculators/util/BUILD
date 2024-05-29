@@ -279,6 +279,42 @@ cc_library(
 )
 
 cc_library(
+    name = "emotion_detection_calculator",
+    srcs = ["emotion_detection_calculator.cc"],
+    deps = [
+        ":emotion_detection_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:image",
+        "//mediapipe/framework/formats:image_format_cc_proto",
+        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/formats:image_frame_opencv",
+        "//mediapipe/framework/formats:image_opencv",
+        "//mediapipe/framework/formats:video_stream_header",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:vector",
+        "//mediapipe/util:annotation_renderer",
+        "//mediapipe/util:color_cc_proto",
+        "//mediapipe/util:render_data_cc_proto",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/strings",
+    ] + select({
+        "//mediapipe/gpu:disable_gpu": [],
+        "//conditions:default": [
+            "//mediapipe/gpu:gl_calculator_helper",
+            "//mediapipe/gpu:gl_simple_shaders",
+            "//mediapipe/gpu:gpu_buffer",
+            "//mediapipe/gpu:gpu_buffer_format",
+            "//mediapipe/gpu:shader_util",
+        ],
+    }),
+    alwayslink = 1,
+)
+
+
+cc_library(
     name = "annotation_overlay_calculator",
     srcs = ["annotation_overlay_calculator.cc"],
     deps = [
@@ -312,6 +348,7 @@ cc_library(
     }),
     alwayslink = 1,
 )
+
 
 cc_library(
     name = "detection_label_id_to_text_calculator",

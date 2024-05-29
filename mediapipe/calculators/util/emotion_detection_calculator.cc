@@ -34,7 +34,7 @@
 #include "mediapipe/util/render_data.pb.h"
 
 
-// #define RENDER_RECT_AND_POINTS
+#define RENDER_RECT_AND_POINTS
 
 namespace mediapipe {
 
@@ -162,9 +162,13 @@ absl::Status EmotionDetectionCalculator::Open(CalculatorContext* cc) {
 
   cc->SetOffset(TimestampDiff(0));
   options_ = cc->Options<EmotionDetectionCalculatorOptions>();
-
-  RET_CHECK(options_.has_canvas_width_px());
-  RET_CHECK(options_.has_canvas_height_px());
+  if (cc->Inputs().HasTag(kGpuBufferTag) ||
+      cc->Inputs().HasTag(kImageFrameTag) || HasImageTag(cc)) {
+    image_frame_available_ = true;
+  } else {
+    RET_CHECK(options_.has_canvas_width_px());
+    RET_CHECK(options_.has_canvas_height_px());
+  }
 
 #ifdef RENDER_RECT_AND_POINTS
   // Initialize the helper renderer library.

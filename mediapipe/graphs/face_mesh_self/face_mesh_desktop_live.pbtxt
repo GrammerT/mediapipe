@@ -23,7 +23,7 @@ node{
   calculator: "VirtualBackgroundCalculator"
   input_stream: "IMAGE:throttled_input_video"
   input_stream: "MASK:segmentation_mask"
-  output_stream: "IMAGE:output_video_1"
+  output_stream: "IMAGE:virtual_bk_video_1"
   node_options: {
     [type.googleapis.com/mediapipe.VirtualBackgroundCalculatorOptions] {
       mask_channel: UNKNOWN
@@ -49,7 +49,7 @@ node {
 
 node {
   calculator: "FaceLandmarkFrontCpu"
-  input_stream: "IMAGE:output_video_1"
+  input_stream: "IMAGE:throttled_input_video"
   input_side_packet: "NUM_FACES:num_faces"
   input_side_packet: "WITH_ATTENTION:with_attention"
   output_stream: "LANDMARKS:multi_face_landmarks"
@@ -60,7 +60,7 @@ node {
 
 node {
   calculator: "FaceRendererCpu"
-  input_stream: "IMAGE:output_video_1"
+  input_stream: "IMAGE:virtual_bk_video_1"
   input_stream: "LANDMARKS:multi_face_landmarks"
   input_stream: "NORM_RECTS:face_rects_from_landmarks"
   input_stream: "DETECTIONS:face_detections"

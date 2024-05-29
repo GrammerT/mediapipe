@@ -25,7 +25,7 @@ cc_library(
     name = "renderer_calculators",
     deps = [
         "//mediapipe/calculators/core:split_proto_list_calculator",
-        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:emotion_detection_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
         "//mediapipe/calculators/util:rect_to_render_data_calculator",

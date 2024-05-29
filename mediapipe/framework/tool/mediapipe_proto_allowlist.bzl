@@ -7,6 +7,7 @@ rewrite_target_list = [
     "affine_transform_from_rect_calculator_proto",
     "anchor_proto",
     "annotation_overlay_calculator_proto",
+    "emotion_detection_calculator_proto",
     "annotation_proto",
     "annotations_to_model_matrices_calculator_proto",
     "annotations_to_render_data_calculator_proto",
