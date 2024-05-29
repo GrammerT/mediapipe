@@ -29,7 +29,8 @@ cc_binary(
     name = "face_mesh_cpu_self",
     data = [
         "//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite",
-        "//mediapipe/modules/selfie_segmentation:selfie_segmentation.tflite"
+        "//mediapipe/modules/selfie_segmentation:selfie_segmentation.tflite",
+        "//mediapipe/modules/face_emotion_detect_self:keypoint_classifier.tflite"
     ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
