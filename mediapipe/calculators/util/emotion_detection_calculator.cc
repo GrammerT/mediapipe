@@ -34,6 +34,7 @@
 #include "mediapipe/util/render_data.pb.h"
 
 
+// #define RENDER_RECT_AND_POINTS
 
 namespace mediapipe {
 
@@ -60,66 +61,6 @@ inline bool HasImageTag(mediapipe::CalculatorContext* cc) {
 }
 }  // namespace
 
-// A calculator for rendering data on images.
-//
-// Inputs:
-//  1. IMAGE or IMAGE_GPU (optional): An ImageFrame (or GpuBuffer),
-//     or UIMAGE (an Image).
-//     containing the input image.
-//     If output is CPU, and input isn't provided, the renderer creates a
-//     blank canvas with the width, height and color provided in the options.
-//  2. RenderData proto on variable number of input streams. All the RenderData
-//     at a particular timestamp is drawn on the image in the order of their
-//     input streams. No tags required.
-//  3. std::vector<RenderData> on variable number of input streams. RenderData
-//     objects at a particular timestamp are drawn on the image in order of the
-//     input vector items. These input streams are tagged with "VECTOR".
-//
-// Output:
-//  1. IMAGE or IMAGE_GPU: A rendered ImageFrame (or GpuBuffer),
-//     or UIMAGE (an Image).
-//  Note: Output types should match their corresponding input stream type.
-//
-// For CPU input frames, only SRGBA, SRGB and GRAY8 format are supported. The
-// output format is the same as input except for GRAY8 where the output is in
-// SRGB to support annotations in color.
-//
-// For GPU input frames, only 4-channel images are supported.
-//
-// Note: When using GPU, drawing with color kAnnotationBackgroundColor (defined
-// above) is not supported.
-//
-// Example config (CPU):
-// node {
-//   calculator: "EmotionDetectionCalculator"
-//   input_stream: "IMAGE:image_frames"
-//   input_stream: "render_data_1"
-//   input_stream: "render_data_2"
-//   input_stream: "render_data_3"
-//   input_stream: "VECTOR:0:render_data_vec_0"
-//   input_stream: "VECTOR:1:render_data_vec_1"
-//   output_stream: "IMAGE:decorated_frames"
-//   options {
-//     [mediapipe.AnnotationOverlayCalculatorOptions.ext] {
-//     }
-//   }
-// }
-//
-// Example config (GPU):
-// node {
-//   calculator: "EmotionDetectionCalculator"
-//   input_stream: "IMAGE_GPU:image_frames"
-//   input_stream: "render_data_1"
-//   input_stream: "render_data_2"
-//   input_stream: "render_data_3"
-//   input_stream: "VECTOR:0:render_data_vec_0"
-//   input_stream: "VECTOR:1:render_data_vec_1"
-//   output_stream: "IMAGE_GPU:decorated_frames"
-//   options {
-//     [mediapipe.AnnotationOverlayCalculatorOptions.ext] {
-//     }
-//   }
-// }
 //
 class EmotionDetectionCalculator : public CalculatorBase {
  public:
@@ -218,29 +159,21 @@ absl::Status EmotionDetectionCalculator::GetContract(CalculatorContract* cc) {
 }
 
 absl::Status EmotionDetectionCalculator::Open(CalculatorContext* cc) {
+
   cc->SetOffset(TimestampDiff(0));
-
   options_ = cc->Options<EmotionDetectionCalculatorOptions>();
-  if (cc->Inputs().HasTag(kGpuBufferTag) || HasImageTag(cc)) {
 
-  }
+  RET_CHECK(options_.has_canvas_width_px());
+  RET_CHECK(options_.has_canvas_height_px());
 
-  if (cc->Inputs().HasTag(kGpuBufferTag) ||
-      cc->Inputs().HasTag(kImageFrameTag) || HasImageTag(cc)) {
-    image_frame_available_ = true;
-  } else {
-    RET_CHECK(options_.has_canvas_width_px());
-    RET_CHECK(options_.has_canvas_height_px());
-  }
-
+#ifdef RENDER_RECT_AND_POINTS
   // Initialize the helper renderer library.
   renderer_ = absl::make_unique<AnnotationRenderer>();
   renderer_->SetFlipTextVertically(options_.flip_text_vertically());
   if (use_gpu_) renderer_->SetScaleFactor(options_.gpu_scale_factor());
   if (renderer_->GetScaleFactor() < 1.0 && HasImageTag(cc))
-    ABSL_LOG(WARNING)
-        << "Annotation scale factor only supports GPU backed Image.";
-
+    ABSL_LOG(WARNING) << "Annotation scale factor only supports GPU backed Image.";
+#endif
   // Set the output header based on the input header (if present).
   const char* tag = HasImageTag(cc) ? kImageTag
                     : use_gpu_      ? kGpuBufferTag
@@ -252,18 +185,12 @@ absl::Status EmotionDetectionCalculator::Open(CalculatorContext* cc) {
     cc->Outputs().Tag(tag).SetHeader(Adopt(output_video_header));
   }
 
-  if (use_gpu_) {
-
-  }
-
   return absl::OkStatus();
 }
 
-absl::Status EmotionDetectionCalculator::Process(CalculatorContext* cc) {
-  if (cc->Inputs().HasTag(kGpuBufferTag) &&
-      cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
-    return absl::OkStatus();
-  }
+absl::Status EmotionDetectionCalculator::Process(CalculatorContext* cc) 
+{
+
   if (cc->Inputs().HasTag(kImageFrameTag) &&
       cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
     return absl::OkStatus();
@@ -278,20 +205,18 @@ absl::Status EmotionDetectionCalculator::Process(CalculatorContext* cc) {
   // Initialize render target, drawn with OpenCV.
   std::unique_ptr<cv::Mat> image_mat;
   ImageFormat::Format target_format;
-  if (use_gpu_) {
-
-  } else {
-    if (cc->Outputs().HasTag(kImageTag)) {
-      MP_RETURN_IF_ERROR(
-          CreateRenderTargetCpuImage(cc, image_mat, &target_format));
-    }
-    if (cc->Outputs().HasTag(kImageFrameTag)) {
-      MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
-    }
+  //! only cpu
+  if (cc->Outputs().HasTag(kImageTag)) {
+    MP_RETURN_IF_ERROR(
+        CreateRenderTargetCpuImage(cc, image_mat, &target_format));
   }
-
+  if (cc->Outputs().HasTag(kImageFrameTag)) {
+    MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
+  }
+#ifdef RENDER_RECT_AND_POINTS
   // Reset the renderer with the image_mat. No copy here.
   renderer_->AdoptImage(image_mat.get());
+#endif
 
   // Render streams onto render target.
   for (CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId();
@@ -327,30 +252,28 @@ absl::Status EmotionDetectionCalculator::Process(CalculatorContext* cc) {
     if (tag.empty()) {
       // Empty tag defaults to accepting a single object of RenderData type.
       const RenderData& render_data = cc->Inputs().Get(id).Get<RenderData>();
+#ifdef RENDER_RECT_AND_POINTS
       renderer_->RenderDataOnImage(render_data);//! face mesh 中渲染 roi of face
+#endif
     } else {
       RET_CHECK_EQ(kVectorTag, tag);
       const std::vector<RenderData>& render_data_vec =
           cc->Inputs().Get(id).Get<std::vector<RenderData>>();
       for (const RenderData& render_data : render_data_vec) {
+#ifdef RENDER_RECT_AND_POINTS
         renderer_->RenderDataOnImage(render_data);//! face mesh中渲染所有landmark点 
+#endif
       }
     }
   }
-
-  if (use_gpu_) {
-
-  } else {
-    // Copy the rendered image to output.
-    uchar* image_mat_ptr = image_mat->data;
-    MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr));
-  }
+  // Copy the rendered image to output.
+  uchar* image_mat_ptr = image_mat->data;
+  MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr));
 
   return absl::OkStatus();
 }
 
 absl::Status EmotionDetectionCalculator::Close(CalculatorContext* cc) {
-
 
   return absl::OkStatus();
 }
@@ -358,8 +281,8 @@ absl::Status EmotionDetectionCalculator::Close(CalculatorContext* cc) {
 absl::Status EmotionDetectionCalculator::RenderToCpu(
     CalculatorContext* cc, const ImageFormat::Format& target_format,
     uchar* data_image) {
-  auto output_frame = absl::make_unique<ImageFrame>(
-      target_format, renderer_->GetImageWidth(), renderer_->GetImageHeight());
+#ifdef RENDER_RECT_AND_POINTS
+  auto output_frame = absl::make_unique<ImageFrame>(target_format, renderer_->GetImageWidth(), renderer_->GetImageHeight());
 
   output_frame->CopyPixelData(target_format, renderer_->GetImageWidth(),
                               renderer_->GetImageHeight(), data_image,
@@ -374,7 +297,7 @@ absl::Status EmotionDetectionCalculator::RenderToCpu(
         .Tag(kImageFrameTag)
         .Add(output_frame.release(), cc->InputTimestamp());
   }
-
+#endif
   return absl::OkStatus();
 }
 
@@ -430,7 +353,8 @@ absl::Status EmotionDetectionCalculator::CreateRenderTargetCpu(
 absl::Status EmotionDetectionCalculator::CreateRenderTargetCpuImage(
     CalculatorContext* cc, std::unique_ptr<cv::Mat>& image_mat,
     ImageFormat::Format* target_format) {
-  if (image_frame_available_) {
+  if (image_frame_available_) 
+  {
     const auto& input_frame =
         cc->Inputs().Tag(kImageTag).Get<mediapipe::Image>();
 
@@ -457,21 +381,25 @@ absl::Status EmotionDetectionCalculator::CreateRenderTargetCpuImage(
         input_frame.height(), input_frame.width(), target_mat_type);
 
     auto input_mat = formats::MatView(&input_frame);
-    if (input_frame.image_format() == ImageFormat::GRAY8) {
+    if (input_frame.image_format() == ImageFormat::GRAY8) 
+    {
       cv::Mat rgb_mat;
       cv::cvtColor(*input_mat, rgb_mat, cv::COLOR_GRAY2RGB);
       rgb_mat.copyTo(*image_mat);
-    } else {
+    } 
+    else 
+    {
       input_mat->copyTo(*image_mat);
     }
-  } else {
+  } 
+  else 
+  {
     image_mat = absl::make_unique<cv::Mat>(
         options_.canvas_height_px(), options_.canvas_width_px(), CV_8UC3,
         cv::Scalar(options_.canvas_color().r(), options_.canvas_color().g(),
                    options_.canvas_color().b()));
     *target_format = ImageFormat::SRGB;
   }
-
   return absl::OkStatus();
 }
 
