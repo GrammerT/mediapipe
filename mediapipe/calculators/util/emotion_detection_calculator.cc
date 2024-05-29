@@ -176,7 +176,6 @@ absl::Status EmotionDetectionCalculator::Open(CalculatorContext* cc) {
   // Initialize the helper renderer library.
   renderer_ = absl::make_unique<AnnotationRenderer>();
   renderer_->SetFlipTextVertically(options_.flip_text_vertically());
-  if (use_gpu_) renderer_->SetScaleFactor(options_.gpu_scale_factor());
   if (renderer_->GetScaleFactor() < 1.0 && HasImageTag(cc))
     ABSL_LOG(WARNING) << "Annotation scale factor only supports GPU backed Image.";
 #endif
