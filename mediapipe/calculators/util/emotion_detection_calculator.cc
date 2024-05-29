@@ -34,7 +34,10 @@
 #include "mediapipe/util/render_data.pb.h"
 
 
-#define RENDER_RECT_AND_POINTS
+// #define LOG_FUNCTION_INFO() printf("Function: %s, File: %s, Line: %d\n", __FUNCTION__, __FILE__, __LINE__)
+#define LOG_FUNCTION_INFO()
+
+// #define RENDER_RECT_AND_POINTS
 
 namespace mediapipe {
 
@@ -104,7 +107,7 @@ REGISTER_CALCULATOR(EmotionDetectionCalculator);
 
 absl::Status EmotionDetectionCalculator::GetContract(CalculatorContract* cc) {
   RET_CHECK_GE(cc->Inputs().NumEntries(), 1);
-
+  LOG_FUNCTION_INFO();
   bool use_gpu = false;
 
   RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) +
@@ -151,15 +154,13 @@ absl::Status EmotionDetectionCalculator::GetContract(CalculatorContract* cc) {
     cc->Outputs().Tag(kImageTag).Set<mediapipe::Image>();
   }
 
-  if (use_gpu) {
-
-  }
-
+  LOG_FUNCTION_INFO();
   return absl::OkStatus();
 }
 
 absl::Status EmotionDetectionCalculator::Open(CalculatorContext* cc) {
 
+  LOG_FUNCTION_INFO();
   cc->SetOffset(TimestampDiff(0));
   options_ = cc->Options<EmotionDetectionCalculatorOptions>();
   if (cc->Inputs().HasTag(kGpuBufferTag) ||
@@ -188,13 +189,13 @@ absl::Status EmotionDetectionCalculator::Open(CalculatorContext* cc) {
     auto* output_video_header = new VideoHeader(input_header);
     cc->Outputs().Tag(tag).SetHeader(Adopt(output_video_header));
   }
-
+  LOG_FUNCTION_INFO();
   return absl::OkStatus();
 }
 
 absl::Status EmotionDetectionCalculator::Process(CalculatorContext* cc) 
 {
-
+  LOG_FUNCTION_INFO();
   if (cc->Inputs().HasTag(kImageFrameTag) &&
       cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
     return absl::OkStatus();
@@ -272,20 +273,35 @@ absl::Status EmotionDetectionCalculator::Process(CalculatorContext* cc)
   }
   // Copy the rendered image to output.
   uchar* image_mat_ptr = image_mat->data;
+#ifdef RENDER_RECT_AND_POINTS
   MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr));
-
+#else
+  auto output_frame = absl::make_unique<ImageFrame>(target_format, image_mat->cols, image_mat->rows);
+  output_frame->CopyPixelData(target_format, 
+                                image_mat->cols,
+                                image_mat->rows,
+                                image_mat_ptr,
+                                ImageFrame::kDefaultAlignmentBoundary);
+  if (cc->Outputs().HasTag(kImageFrameTag)) {
+    cc->Outputs()
+        .Tag(kImageFrameTag)
+        .Add(output_frame.release(), cc->InputTimestamp());
+  }
+#endif
+  LOG_FUNCTION_INFO();
   return absl::OkStatus();
 }
 
 absl::Status EmotionDetectionCalculator::Close(CalculatorContext* cc) {
-
+  LOG_FUNCTION_INFO();
   return absl::OkStatus();
 }
 
 absl::Status EmotionDetectionCalculator::RenderToCpu(
     CalculatorContext* cc, const ImageFormat::Format& target_format,
     uchar* data_image) {
-#ifdef RENDER_RECT_AND_POINTS
+    LOG_FUNCTION_INFO();
+
   auto output_frame = absl::make_unique<ImageFrame>(target_format, renderer_->GetImageWidth(), renderer_->GetImageHeight());
 
   output_frame->CopyPixelData(target_format, renderer_->GetImageWidth(),
@@ -301,7 +317,6 @@ absl::Status EmotionDetectionCalculator::RenderToCpu(
         .Tag(kImageFrameTag)
         .Add(output_frame.release(), cc->InputTimestamp());
   }
-#endif
   return absl::OkStatus();
 }
 
@@ -309,6 +324,7 @@ absl::Status EmotionDetectionCalculator::RenderToCpu(
 absl::Status EmotionDetectionCalculator::CreateRenderTargetCpu(
     CalculatorContext* cc, std::unique_ptr<cv::Mat>& image_mat,
     ImageFormat::Format* target_format) {
+      LOG_FUNCTION_INFO();
   if (image_frame_available_) {
     const auto& input_frame =
         cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
@@ -350,13 +366,14 @@ absl::Status EmotionDetectionCalculator::CreateRenderTargetCpu(
                    options_.canvas_color().b()));
     *target_format = ImageFormat::SRGB;
   }
-
+  LOG_FUNCTION_INFO();
   return absl::OkStatus();
 }
 
 absl::Status EmotionDetectionCalculator::CreateRenderTargetCpuImage(
     CalculatorContext* cc, std::unique_ptr<cv::Mat>& image_mat,
     ImageFormat::Format* target_format) {
+    LOG_FUNCTION_INFO();
   if (image_frame_available_) 
   {
     const auto& input_frame =
@@ -404,6 +421,7 @@ absl::Status EmotionDetectionCalculator::CreateRenderTargetCpuImage(
                    options_.canvas_color().b()));
     *target_format = ImageFormat::SRGB;
   }
+  LOG_FUNCTION_INFO();
   return absl::OkStatus();
 }
 
