@@ -124,7 +124,7 @@ class EmotionDetectionCalculator : public CalculatorBase {
 
   absl::Status Open(CalculatorContext* cc) override {
     cc->SetOffset(TimestampDiff(0));
-    options_ = cc->Options<EmotionDetectionCalculatorOptions>();
+    m_options = cc->Options<EmotionDetectionCalculatorOptions>();
     loadEmotionModel();
     return absl::OkStatus();
   }
@@ -248,35 +248,36 @@ class EmotionDetectionCalculator : public CalculatorBase {
 private:
   absl::Status loadEmotionModel()
   {
-    if(!options_.has_model_path())
+    if(!m_options.has_model_path())
     {
       printf("error: emotion mode path is empty.\n");
       return absl::InvalidArgumentError("model path is empty.");
     }
 
-    printf("emotion mode path:%s \n",options_.model_path().c_str());
+    printf("emotion mode path:%s \n",m_options.model_path().c_str());
 // Load the model
     std::unique_ptr<::tflite::FlatBufferModel> model =
-      ::tflite::FlatBufferModel::BuildFromFile(options_.model_path().c_str());
+      ::tflite::FlatBufferModel::BuildFromFile(m_options.model_path().c_str());
     RET_CHECK(model) << "Failed to load TfLite model from model path.";
-// Build the interpreter
+// Build the m_interpreter
     ::tflite::ops::builtin::BuiltinOpResolver resolver;
-    ::tflite::InterpreterBuilder(*model, resolver)(&interpreter);
-    RET_CHECK(interpreter);
+    ::tflite::InterpreterBuilder(*model, resolver)(&m_interpreter);
 
-    interpreter->SetNumThreads(m_tf_num_thread);
+    RET_CHECK(m_interpreter);
+    
+    m_interpreter->SetNumThreads(m_tf_num_thread);
 // Resize input tensors, if desired.
-    interpreter->AllocateTensors();
+    m_interpreter->AllocateTensors();
     printf("model load finised.\n");
-
+    m_interpreter->inputs();
+    m_interpreter->outputs();
     return absl::OkStatus();
   }
 
 private:
   // Options for the calculator.
-  EmotionDetectionCalculatorOptions options_;
-  std::unique_ptr<::tflite::Interpreter> interpreter;
-    
+  EmotionDetectionCalculatorOptions m_options;
+  std::unique_ptr<::tflite::Interpreter> m_interpreter; 
   int m_tf_num_thread=1;
 };
 REGISTER_CALCULATOR(EmotionDetectionCalculator);
