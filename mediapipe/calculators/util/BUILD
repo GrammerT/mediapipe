@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+load("@org_tensorflow//tensorflow/lite/core/shims:cc_library_with_tflite.bzl", "cc_library_with_tflite")
 
 licenses(["notice"])
 
@@ -291,6 +292,7 @@ cc_library(
         "//mediapipe/framework/port:point",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
+        "@org_tensorflow//tensorflow/lite:framework",
     ],
     alwayslink = 1,
 )

@@ -21,7 +21,9 @@
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
-
+#include "tensorflow/lite/model.h"
+#include "tensorflow/lite/core/api/op_resolver.h"
+#include "tensorflow/lite/kernels/register.h"
 namespace mediapipe {
 
 using ::mediapipe::NormalizedRect;
@@ -253,6 +255,19 @@ private:
     }
 
     printf("emotion mode path:%s \n",options_.model_path().c_str());
+// // Load the model
+  std::unique_ptr<::tflite::FlatBufferModel> model =
+    ::tflite::FlatBufferModel::BuildFromFile(options_.model_path().c_str());
+
+// Build the interpreter
+  ::tflite::ops::builtin::BuiltinOpResolver resolver;
+  std::unique_ptr<::tflite::Interpreter> interpreter;
+  ::tflite::InterpreterBuilder(*model, resolver)(&interpreter);
+
+// Resize input tensors, if desired.
+  interpreter->AllocateTensors();
+
+
     return absl::OkStatus();
   }
 
@@ -260,6 +275,7 @@ private:
   // Options for the calculator.
   EmotionDetectionCalculatorOptions options_;
 
+  int m_tf_num_thread=1;
 };
 REGISTER_CALCULATOR(EmotionDetectionCalculator);
 
