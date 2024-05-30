@@ -255,18 +255,19 @@ private:
     }
 
     printf("emotion mode path:%s \n",options_.model_path().c_str());
-// // Load the model
-  std::unique_ptr<::tflite::FlatBufferModel> model =
-    ::tflite::FlatBufferModel::BuildFromFile(options_.model_path().c_str());
-
+// Load the model
+    std::unique_ptr<::tflite::FlatBufferModel> model =
+      ::tflite::FlatBufferModel::BuildFromFile(options_.model_path().c_str());
+    RET_CHECK(model) << "Failed to load TfLite model from model path.";
 // Build the interpreter
-  ::tflite::ops::builtin::BuiltinOpResolver resolver;
-  std::unique_ptr<::tflite::Interpreter> interpreter;
-  ::tflite::InterpreterBuilder(*model, resolver)(&interpreter);
+    ::tflite::ops::builtin::BuiltinOpResolver resolver;
+    ::tflite::InterpreterBuilder(*model, resolver)(&interpreter);
+    RET_CHECK(interpreter);
 
+    interpreter->SetNumThreads(m_tf_num_thread);
 // Resize input tensors, if desired.
-  interpreter->AllocateTensors();
-
+    interpreter->AllocateTensors();
+    printf("model load finised.\n");
 
     return absl::OkStatus();
   }
@@ -274,7 +275,8 @@ private:
 private:
   // Options for the calculator.
   EmotionDetectionCalculatorOptions options_;
-
+  std::unique_ptr<::tflite::Interpreter> interpreter;
+    
   int m_tf_num_thread=1;
 };
 REGISTER_CALCULATOR(EmotionDetectionCalculator);
