@@ -48,7 +48,7 @@ node {
 }
 
 node {
-  calculator: "FaceLandmarkFrontCpu"
+  calculator: "FaceLandmarkFrontWithEmotionDetectionCpu"
   input_stream: "IMAGE:throttled_input_video"
   input_side_packet: "NUM_FACES:num_faces"
   input_side_packet: "WITH_ATTENTION:with_attention"

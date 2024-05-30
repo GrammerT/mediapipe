@@ -12,424 +12,255 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
+#include <cmath>
+#include <functional>
 #include <vector>
-#include "absl/log/absl_log.h"
-#include "absl/strings/str_cat.h"
+
 #include "mediapipe/calculators/util/emotion_detection_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/calculator_options.pb.h"
-#include "mediapipe/framework/formats/image.h"
-#include "mediapipe/framework/formats/image_format.pb.h"
-#include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/formats/image_frame_opencv.h"
-#include "mediapipe/framework/formats/image_opencv.h"
-#include "mediapipe/framework/formats/video_stream_header.h"
-#include "mediapipe/framework/port/opencv_core_inc.h"
-#include "mediapipe/framework/port/opencv_imgproc_inc.h"
-#include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/vector.h"
-#include "mediapipe/util/annotation_renderer.h"
-#include "mediapipe/util/color.pb.h"
-#include "mediapipe/util/render_data.pb.h"
-
-
-// #define LOG_FUNCTION_INFO() printf("Function: %s, File: %s, Line: %d\n", __FUNCTION__, __FILE__, __LINE__)
-#define LOG_FUNCTION_INFO()
-
-#define RENDER_RECT_AND_POINTS
+#include "mediapipe/framework/formats/landmark.pb.h"
+#include "mediapipe/framework/formats/rect.pb.h"
+#include "mediapipe/framework/port/ret_check.h"
 
 namespace mediapipe {
 
+using ::mediapipe::NormalizedRect;
+
 namespace {
 
-constexpr char kVectorTag[] = "VECTOR";
-constexpr char kGpuBufferTag[] = "IMAGE_GPU";
-constexpr char kImageFrameTag[] = "IMAGE";
-constexpr char kImageTag[] = "UIMAGE";  // Universal Image
+constexpr char kLandmarksTag[] = "NORM_LANDMARKS";
+constexpr char kRectTag[] = "NORM_RECT";
+constexpr char kProjectionMatrix[] = "PROJECTION_MATRIX";
 
-enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
-
-// Round up n to next multiple of m.
-size_t RoundUp(size_t n, size_t m) { return ((n + m - 1) / m) * m; }  // NOLINT
-
-// When using GPU, this color will become transparent when the calculator
-// merges the annotation overlay with the image frame. As a result, drawing in
-// this color is not supported and it should be set to something unlikely used.
-constexpr uchar kAnnotationBackgroundColor = 2;  // Grayscale value.
-
-// Future Image type.
-inline bool HasImageTag(mediapipe::CalculatorContext* cc) {
-  return cc->Inputs().HasTag(kImageTag);
-}
 }  // namespace
 
+// Projects normalized landmarks to its original coordinates.
+// Input:
+//   NORM_LANDMARKS - NormalizedLandmarkList
+//     Represents landmarks in a normalized rectangle if NORM_RECT is specified
+//     or landmarks that should be projected using PROJECTION_MATRIX if
+//     specified. (Prefer using PROJECTION_MATRIX as it eliminates need of
+//     letterbox removal step.)
+//   NORM_RECT - NormalizedRect
+//     Represents a normalized rectangle in image coordinates and results in
+//     landmarks with their locations adjusted to the image.
+//   PROJECTION_MATRIX - std::array<float, 16>
+//     A 4x4 row-major-order matrix that maps landmarks' locations from one
+//     coordinate system to another. In this case from the coordinate system of
+//     the normalized region of interest to the coordinate system of the image.
 //
+//   Note: either NORM_RECT or PROJECTION_MATRIX has to be specified.
+//   Note: landmark's Z is projected in a custom way - it's scaled by width of
+//     the normalized region of interest used during landmarks detection.
+//
+// Output:
+//   NORM_LANDMARKS - NormalizedLandmarkList
+//     Landmarks with their locations adjusted according to the inputs.
+//
+// Usage example:
+// node {
+//   calculator: "EmotionDetectionCalculator"
+//   input_stream: "NORM_LANDMARKS:landmarks"
+//   input_stream: "NORM_RECT:rect"
+//   output_stream: "NORM_LANDMARKS:projected_landmarks"
+// }
+//
+// node {
+//   calculator: "EmotionDetectionCalculator"
+//   input_stream: "NORM_LANDMARKS:0:landmarks_0"
+//   input_stream: "NORM_LANDMARKS:1:landmarks_1"
+//   input_stream: "NORM_RECT:rect"
+//   output_stream: "NORM_LANDMARKS:0:projected_landmarks_0"
+//   output_stream: "NORM_LANDMARKS:1:projected_landmarks_1"
+// }
+//
+// node {
+//   calculator: "EmotionDetectionCalculator"
+//   input_stream: "NORM_LANDMARKS:landmarks"
+//   input_stream: "PROECTION_MATRIX:matrix"
+//   output_stream: "NORM_LANDMARKS:projected_landmarks"
+// }
+//
+// node {
+//   calculator: "EmotionDetectionCalculator"
+//   input_stream: "NORM_LANDMARKS:0:landmarks_0"
+//   input_stream: "NORM_LANDMARKS:1:landmarks_1"
+//   input_stream: "PROECTION_MATRIX:matrix"
+//   output_stream: "NORM_LANDMARKS:0:projected_landmarks_0"
+//   output_stream: "NORM_LANDMARKS:1:projected_landmarks_1"
+// }
 class EmotionDetectionCalculator : public CalculatorBase {
  public:
-  EmotionDetectionCalculator() = default;
-  ~EmotionDetectionCalculator() override = default;
+  static absl::Status GetContract(CalculatorContract* cc) {
+    RET_CHECK(cc->Inputs().HasTag(kLandmarksTag))
+        << "Missing NORM_LANDMARKS input.";
 
-  static absl::Status GetContract(CalculatorContract* cc);
+    RET_CHECK_EQ(cc->Inputs().NumEntries(kLandmarksTag),
+                 cc->Outputs().NumEntries(kLandmarksTag))
+        << "Same number of input and output landmarks is required.";
 
-  // From Calculator.
-  absl::Status Open(CalculatorContext* cc) override;
-  absl::Status Process(CalculatorContext* cc) override;
-  absl::Status Close(CalculatorContext* cc) override;
+    for (CollectionItemId id = cc->Inputs().BeginId(kLandmarksTag);
+         id != cc->Inputs().EndId(kLandmarksTag); ++id) {
+      cc->Inputs().Get(id).Set<NormalizedLandmarkList>();
+    }
+    RET_CHECK(cc->Inputs().HasTag(kRectTag) ^
+              cc->Inputs().HasTag(kProjectionMatrix))
+        << "Either NORM_RECT or PROJECTION_MATRIX must be specified.";
+    if (cc->Inputs().HasTag(kRectTag)) {
+      cc->Inputs().Tag(kRectTag).Set<NormalizedRect>();
+    } else {
+      cc->Inputs().Tag(kProjectionMatrix).Set<std::array<float, 16>>();
+    }
 
- private:
-  absl::Status CreateRenderTargetCpu(CalculatorContext* cc,
-                                     std::unique_ptr<cv::Mat>& image_mat,
-                                     ImageFormat::Format* target_format);
-  absl::Status CreateRenderTargetCpuImage(CalculatorContext* cc,
-                                          std::unique_ptr<cv::Mat>& image_mat,
-                                          ImageFormat::Format* target_format);
+    for (CollectionItemId id = cc->Outputs().BeginId(kLandmarksTag);
+         id != cc->Outputs().EndId(kLandmarksTag); ++id) {
+      cc->Outputs().Get(id).Set<NormalizedLandmarkList>();
+    }
 
-  absl::Status RenderToCpu(CalculatorContext* cc,
-                           const ImageFormat::Format& target_format,
-                           uchar* data_image);
+    return absl::OkStatus();
+  }
 
-  absl::Status loadEmotionModel();
+  absl::Status Open(CalculatorContext* cc) override {
+    cc->SetOffset(TimestampDiff(0));
+    options_ = cc->Options<EmotionDetectionCalculatorOptions>();
+    loadEmotionModel();
+    return absl::OkStatus();
+  }
+
+  static void ProjectXY(const NormalizedLandmark& lm,
+                        const std::array<float, 16>& matrix,
+                        NormalizedLandmark* out) {
+    out->set_x(lm.x() * matrix[0] + lm.y() * matrix[1] + lm.z() * matrix[2] +
+               matrix[3]);
+    out->set_y(lm.x() * matrix[4] + lm.y() * matrix[5] + lm.z() * matrix[6] +
+               matrix[7]);
+  }
+
+  /**
+   * Landmark's Z scale is equal to a relative (to image) width of region of
+   * interest used during detection. To calculate based on matrix:
+   * 1. Project (0,0) --- (1,0) segment using matrix.
+   * 2. Calculate length of the projected segment.
+   */
+  static float CalculateZScale(const std::array<float, 16>& matrix) {
+    NormalizedLandmark a;
+    a.set_x(0.0f);
+    a.set_y(0.0f);
+    NormalizedLandmark b;
+    b.set_x(1.0f);
+    b.set_y(0.0f);
+    NormalizedLandmark a_projected;
+    ProjectXY(a, matrix, &a_projected);
+    NormalizedLandmark b_projected;
+    ProjectXY(b, matrix, &b_projected);
+    return std::sqrt(std::pow(b_projected.x() - a_projected.x(), 2) +
+                     std::pow(b_projected.y() - a_projected.y(), 2));
+  }
+
+  absl::Status Process(CalculatorContext* cc) override {
+    std::function<void(const NormalizedLandmark&, NormalizedLandmark*)>
+        project_fn;
+    if (cc->Inputs().HasTag(kRectTag)) {
+      if (cc->Inputs().Tag(kRectTag).IsEmpty()) {
+        return absl::OkStatus();
+      }
+      const auto& input_rect = cc->Inputs().Tag(kRectTag).Get<NormalizedRect>();
+      const auto& options =
+          cc->Options<mediapipe::EmotionDetectionCalculatorOptions>();
+      project_fn = [&input_rect, &options](const NormalizedLandmark& landmark,
+                                           NormalizedLandmark* new_landmark) {
+        // TODO: fix projection or deprecate (current projection
+        // calculations are incorrect for general case).
+        const float x = landmark.x() - 0.5f;
+        const float y = landmark.y() - 0.5f;
+        const float angle =
+            options.ignore_rotation() ? 0 : input_rect.rotation();
+        float new_x = std::cos(angle) * x - std::sin(angle) * y;
+        float new_y = std::sin(angle) * x + std::cos(angle) * y;
+
+        new_x = new_x * input_rect.width() + input_rect.x_center();
+        new_y = new_y * input_rect.height() + input_rect.y_center();
+        const float new_z =
+            landmark.z() * input_rect.width();  // Scale Z coordinate as X.
+
+        *new_landmark = landmark;
+        new_landmark->set_x(new_x);
+        new_landmark->set_y(new_y);
+        new_landmark->set_z(new_z);
+      };
+    } else if (cc->Inputs().HasTag(kProjectionMatrix)) {
+      if (cc->Inputs().Tag(kProjectionMatrix).IsEmpty()) {
+        return absl::OkStatus();
+      }
+      const auto& project_mat =
+          cc->Inputs().Tag(kProjectionMatrix).Get<std::array<float, 16>>();
+      const float z_scale = CalculateZScale(project_mat);
+      project_fn = [&project_mat, z_scale](const NormalizedLandmark& lm,
+                                           NormalizedLandmark* new_landmark) {
+        *new_landmark = lm;
+        ProjectXY(lm, project_mat, new_landmark);
+        new_landmark->set_z(z_scale * lm.z());
+      };
+    } else {
+      return absl::InternalError("Either rect or matrix must be specified.");
+    }
+
+    CollectionItemId input_id = cc->Inputs().BeginId(kLandmarksTag);
+    CollectionItemId output_id = cc->Outputs().BeginId(kLandmarksTag);
+    // Number of inputs and outpus is the same according to the contract.
+    for (; input_id != cc->Inputs().EndId(kLandmarksTag);
+         ++input_id, ++output_id) {
+      const auto& input_packet = cc->Inputs().Get(input_id);
+      if (input_packet.IsEmpty()) {
+        continue;
+      }
+
+      const auto& input_landmarks = input_packet.Get<NormalizedLandmarkList>();
+      NormalizedLandmarkList output_landmarks;
+      for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
+        const NormalizedLandmark& landmark = input_landmarks.landmark(i);
+        NormalizedLandmark* new_landmark = output_landmarks.add_landmark();
+        project_fn(landmark, new_landmark);
+      }
+
+      for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
+              const NormalizedLandmark& landmark = input_landmarks.landmark(i);
+              NormalizedLandmark* new_landmark = output_landmarks.add_landmark();
+              project_fn(landmark, new_landmark);
+            }
+#if 0
+      printf("land mark content [ \n");
+      for (int i = 0; i < output_landmarks.landmark_size(); ++i) {
+              const NormalizedLandmark& landmark = output_landmarks.landmark(i);
+              printf("x=%f,\n y=%f,\n z=%f \n",landmark.x(),landmark.y(),landmark.z());
+            }
+      printf("] \n");  
+#endif
+      cc->Outputs().Get(output_id).AddPacket(
+          MakePacket<NormalizedLandmarkList>(std::move(output_landmarks))
+              .At(cc->InputTimestamp()));
+    }
+    return absl::OkStatus();
+  }
+
 private:
+  absl::Status loadEmotionModel()
+  {
+    if(!options_.has_model_path())
+    {
+      printf("error: emotion mode path is empty.\n");
+      return absl::InvalidArgumentError("model path is empty.");
+    }
 
+    printf("emotion mode path:%s \n",options_.model_path().c_str());
+    return absl::OkStatus();
+  }
+
+private:
   // Options for the calculator.
   EmotionDetectionCalculatorOptions options_;
 
-  // Underlying helper renderer library.
-  std::unique_ptr<AnnotationRenderer> renderer_;
-
-  // Indicates if image frame is available as input.
-  bool image_frame_available_ = false;
-  bool use_gpu_ = false;
-  bool gpu_initialized_ = false;
-
-  //! emotion label
-// Angry
-// Happy
-// Neutral
-// Sad
-// Surprise
-  std::vector<std::string> m_emotions_vec={"Angry","Happy","Neutral","Sad","Surprise"};
-
 };
 REGISTER_CALCULATOR(EmotionDetectionCalculator);
-
-absl::Status EmotionDetectionCalculator::GetContract(CalculatorContract* cc) {
-  RET_CHECK_GE(cc->Inputs().NumEntries(), 1);
-  LOG_FUNCTION_INFO();
-  bool use_gpu = false;
-
-  RET_CHECK(cc->Inputs().HasTag(kImageFrameTag) +
-                cc->Inputs().HasTag(kGpuBufferTag) +
-                cc->Inputs().HasTag(kImageTag) <=
-            1);
-  RET_CHECK(cc->Outputs().HasTag(kImageFrameTag) +
-                cc->Outputs().HasTag(kGpuBufferTag) +
-                cc->Outputs().HasTag(kImageTag) ==
-            1);
-
-  // Input image to render onto copy of. Should be same type as output.
-
-  if (cc->Inputs().HasTag(kImageFrameTag)) {
-    cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
-    RET_CHECK(cc->Outputs().HasTag(kImageFrameTag));
-  }
-
-  if (cc->Inputs().HasTag(kImageTag)) {
-    cc->Inputs().Tag(kImageTag).Set<mediapipe::Image>();
-    RET_CHECK(cc->Outputs().HasTag(kImageTag));
-
-  }
-
-  // Data streams to render.
-  for (CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId();
-       ++id) {
-    auto tag_and_index = cc->Inputs().TagAndIndexFromId(id);
-    std::string tag = tag_and_index.first;
-    if (tag == kVectorTag) {
-      cc->Inputs().Get(id).Set<std::vector<RenderData>>();
-    } else if (tag.empty()) {
-      // Empty tag defaults to accepting a single object of RenderData type.
-      cc->Inputs().Get(id).Set<RenderData>();
-    }
-  }
-
-  // Rendered image. Should be same type as input.
-
-  if (cc->Outputs().HasTag(kImageFrameTag)) {
-    cc->Outputs().Tag(kImageFrameTag).Set<ImageFrame>();
-  }
-  if (cc->Outputs().HasTag(kImageTag)) {
-    cc->Outputs().Tag(kImageTag).Set<mediapipe::Image>();
-  }
-
-  LOG_FUNCTION_INFO();
-  return absl::OkStatus();
-}
-
-absl::Status EmotionDetectionCalculator::Open(CalculatorContext* cc) {
-
-  LOG_FUNCTION_INFO();
-  cc->SetOffset(TimestampDiff(0));
-  options_ = cc->Options<EmotionDetectionCalculatorOptions>();
-  if (cc->Inputs().HasTag(kGpuBufferTag) ||
-      cc->Inputs().HasTag(kImageFrameTag) || HasImageTag(cc)) {
-    image_frame_available_ = true;
-  } 
-
-  loadEmotionModel();
-
-#ifdef RENDER_RECT_AND_POINTS
-  // Initialize the helper renderer library.
-  renderer_ = absl::make_unique<AnnotationRenderer>();
-  renderer_->SetFlipTextVertically(options_.flip_text_vertically());
-  if (renderer_->GetScaleFactor() < 1.0 && HasImageTag(cc))
-    ABSL_LOG(WARNING) << "Annotation scale factor only supports GPU backed Image.";
-#endif
-  // Set the output header based on the input header (if present).
-  const char* tag = HasImageTag(cc) ? kImageTag
-                    : use_gpu_      ? kGpuBufferTag
-                                    : kImageFrameTag;
-  if (image_frame_available_ && !cc->Inputs().Tag(tag).Header().IsEmpty()) {
-    const auto& input_header =
-        cc->Inputs().Tag(tag).Header().Get<VideoHeader>();
-    auto* output_video_header = new VideoHeader(input_header);
-    cc->Outputs().Tag(tag).SetHeader(Adopt(output_video_header));
-  }
-  LOG_FUNCTION_INFO();
-  return absl::OkStatus();
-}
-
-absl::Status EmotionDetectionCalculator::Process(CalculatorContext* cc) 
-{
-  LOG_FUNCTION_INFO();
-  if (cc->Inputs().HasTag(kImageFrameTag) &&
-      cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
-    return absl::OkStatus();
-  }
-  if (cc->Inputs().HasTag(kImageTag) && cc->Inputs().Tag(kImageTag).IsEmpty()) {
-    return absl::OkStatus();
-  }
-  if (HasImageTag(cc)) {
-    use_gpu_ = cc->Inputs().Tag(kImageTag).Get<mediapipe::Image>().UsesGpu();
-  }
-
-  // Initialize render target, drawn with OpenCV.
-  std::unique_ptr<cv::Mat> image_mat;
-  ImageFormat::Format target_format;
-  //! only cpu
-  if (cc->Outputs().HasTag(kImageTag)) {
-    MP_RETURN_IF_ERROR(
-        CreateRenderTargetCpuImage(cc, image_mat, &target_format));
-  }
-  if (cc->Outputs().HasTag(kImageFrameTag)) {
-    MP_RETURN_IF_ERROR(CreateRenderTargetCpu(cc, image_mat, &target_format));
-  }
-#ifdef RENDER_RECT_AND_POINTS
-  // Reset the renderer with the image_mat. No copy here.
-  renderer_->AdoptImage(image_mat.get());
-#endif
-
-  // Render streams onto render target.
-  for (CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId();
-       ++id) {
-    auto tag_and_index = cc->Inputs().TagAndIndexFromId(id);
-    std::string tag = tag_and_index.first;
-    /**
-     * node {
-        calculator: "EmotionDetectionCalculator"
-        input_stream: "IMAGE:input_image"
-        input_stream: "detections_render_data"
-        input_stream: "VECTOR:0:multi_face_landmarks_render_data"
-        input_stream: "rects_render_data"
-        output_stream: "IMAGE:output_image"
-      }
-     * 
-     */
-    // printf("annotation tag: %s \n", tag.c_str()); //! 会打印IMAGE 和 VECTOR
-    if (!tag.empty() && tag != kVectorTag) {
-      continue;//! IMAGE 会走此处
-    }
-
-    /**
-     * 处理以下三个
-      input_stream: "detections_render_data"
-      input_stream: "VECTOR:0:multi_face_landmarks_render_data"
-      input_stream: "rects_render_data"
-     */
-
-    if (cc->Inputs().Get(id).IsEmpty()) {
-      continue; 
-    }
-    if (tag.empty()) {
-      // Empty tag defaults to accepting a single object of RenderData type.
-      const RenderData& render_data = cc->Inputs().Get(id).Get<RenderData>();
-#ifdef RENDER_RECT_AND_POINTS
-      renderer_->RenderDataOnImage(render_data);//! face mesh 中渲染 roi of face
-#endif
-    } else {
-      RET_CHECK_EQ(kVectorTag, tag);
-      const std::vector<RenderData>& render_data_vec =
-          cc->Inputs().Get(id).Get<std::vector<RenderData>>();
-      for (const RenderData& render_data : render_data_vec) {
-#ifdef RENDER_RECT_AND_POINTS
-        renderer_->RenderDataOnImage(render_data);//! face mesh中渲染所有landmark点 
-#endif
-      }
-    }
-  }
-  // Copy the rendered image to output.
-  uchar* image_mat_ptr = image_mat->data;
-#ifdef RENDER_RECT_AND_POINTS
-  MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr));
-#else
-  auto output_frame = absl::make_unique<ImageFrame>(target_format, image_mat->cols, image_mat->rows);
-  output_frame->CopyPixelData(target_format, 
-                                image_mat->cols,
-                                image_mat->rows,
-                                image_mat_ptr,
-                                ImageFrame::kDefaultAlignmentBoundary);
-  if (cc->Outputs().HasTag(kImageFrameTag)) {
-    cc->Outputs()
-        .Tag(kImageFrameTag)
-        .Add(output_frame.release(), cc->InputTimestamp());
-  }
-#endif
-  LOG_FUNCTION_INFO();
-  return absl::OkStatus();
-}
-
-absl::Status EmotionDetectionCalculator::Close(CalculatorContext* cc) {
-  LOG_FUNCTION_INFO();
-  return absl::OkStatus();
-}
-
-absl::Status EmotionDetectionCalculator::RenderToCpu(
-    CalculatorContext* cc, const ImageFormat::Format& target_format,
-    uchar* data_image) {
-    LOG_FUNCTION_INFO();
-
-  auto output_frame = absl::make_unique<ImageFrame>(target_format, renderer_->GetImageWidth(), renderer_->GetImageHeight());
-
-  output_frame->CopyPixelData(target_format, renderer_->GetImageWidth(),
-                              renderer_->GetImageHeight(), data_image,
-                              ImageFrame::kDefaultAlignmentBoundary);
-
-  if (HasImageTag(cc)) {
-    auto out = std::make_unique<mediapipe::Image>(std::move(output_frame));
-    cc->Outputs().Tag(kImageTag).Add(out.release(), cc->InputTimestamp());
-  }
-  if (cc->Outputs().HasTag(kImageFrameTag)) {
-    cc->Outputs()
-        .Tag(kImageFrameTag)
-        .Add(output_frame.release(), cc->InputTimestamp());
-  }
-  return absl::OkStatus();
-}
-
-
-absl::Status EmotionDetectionCalculator::loadEmotionModel()
-{
-  if(!options_.has_model_path())
-  {
-    printf("error: emotion mode path is empty.\n");
-    return absl::InvalidArgumentError("model path is empty.");
-  }
-
-  printf("emotion mode path:%s \n",options_.model_path().c_str());
-  return absl::OkStatus();
-}
-
-absl::Status EmotionDetectionCalculator::CreateRenderTargetCpu(
-    CalculatorContext* cc, std::unique_ptr<cv::Mat>& image_mat,
-    ImageFormat::Format* target_format) {
-      LOG_FUNCTION_INFO();
-  if (image_frame_available_) {
-    const auto& input_frame =
-        cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
-
-    int target_mat_type;
-    switch (input_frame.Format()) {
-      case ImageFormat::SRGBA:
-        *target_format = ImageFormat::SRGBA;
-        target_mat_type = CV_8UC4;
-        break;
-      case ImageFormat::SRGB:
-        *target_format = ImageFormat::SRGB;
-        target_mat_type = CV_8UC3;
-        break;
-      case ImageFormat::GRAY8:
-        *target_format = ImageFormat::SRGB;
-        target_mat_type = CV_8UC3;
-        break;
-      default:
-        return absl::UnknownError("Unexpected image frame format.");
-        break;
-    }
-
-    image_mat = absl::make_unique<cv::Mat>(
-        input_frame.Height(), input_frame.Width(), target_mat_type);
-
-    auto input_mat = formats::MatView(&input_frame);
-    if (input_frame.Format() == ImageFormat::GRAY8) {
-      cv::Mat rgb_mat;
-      cv::cvtColor(input_mat, rgb_mat, cv::COLOR_GRAY2RGB);
-      rgb_mat.copyTo(*image_mat);
-    } else {
-      input_mat.copyTo(*image_mat);
-    }
-  } 
-  LOG_FUNCTION_INFO();
-  return absl::OkStatus();
-}
-
-absl::Status EmotionDetectionCalculator::CreateRenderTargetCpuImage(
-    CalculatorContext* cc, std::unique_ptr<cv::Mat>& image_mat,
-    ImageFormat::Format* target_format) {
-    LOG_FUNCTION_INFO();
-  if (image_frame_available_) 
-  {
-    const auto& input_frame =
-        cc->Inputs().Tag(kImageTag).Get<mediapipe::Image>();
-
-    int target_mat_type;
-    switch (input_frame.image_format()) {
-      case ImageFormat::SRGBA:
-        *target_format = ImageFormat::SRGBA;
-        target_mat_type = CV_8UC4;
-        break;
-      case ImageFormat::SRGB:
-        *target_format = ImageFormat::SRGB;
-        target_mat_type = CV_8UC3;
-        break;
-      case ImageFormat::GRAY8:
-        *target_format = ImageFormat::SRGB;
-        target_mat_type = CV_8UC3;
-        break;
-      default:
-        return absl::UnknownError("Unexpected image frame format.");
-        break;
-    }
-
-    image_mat = absl::make_unique<cv::Mat>(
-        input_frame.height(), input_frame.width(), target_mat_type);
-
-    auto input_mat = formats::MatView(&input_frame);
-    if (input_frame.image_format() == ImageFormat::GRAY8) 
-    {
-      cv::Mat rgb_mat;
-      cv::cvtColor(*input_mat, rgb_mat, cv::COLOR_GRAY2RGB);
-      rgb_mat.copyTo(*image_mat);
-    } 
-    else 
-    {
-      input_mat->copyTo(*image_mat);
-    }
-  }
-
-  LOG_FUNCTION_INFO();
-  return absl::OkStatus();
-}
-
 
 }  // namespace mediapipe

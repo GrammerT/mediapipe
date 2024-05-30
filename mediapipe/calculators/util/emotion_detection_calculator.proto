@@ -24,22 +24,7 @@ message EmotionDetectionCalculatorOptions {
   extend CalculatorOptions {
     optional EmotionDetectionCalculatorOptions ext = 250607624;
   }
-
-  // The canvas width and height in pixels, and the background color. These
-  // options are used only if an input stream of ImageFrame isn't provided to
-  // the renderer calculator. If an input stream of ImageFrame is provided, then
-  // the calculator renders the annotations on top of the provided image, else a
-  // canvas is created with the dimensions and background color specified in
-  // these options and the annotations are rendered on top of this canvas.
-  optional Color canvas_color = 1;
-
-  // Whether text should be rendered upside down. When it's set to false, text
-  // is rendered normally assuming the underlying image has its origin at the
-  // top-left corner. Therefore, for images with the origin at the bottom-left
-  // corner this should be set to true.
-  optional bool flip_text_vertically = 2 [default = false];
-
-
-  optional string model_path = 3; 
-
+  optional string model_path = 1;
+  // Ignore the rotation field of rect proto for projection.
+  optional bool ignore_rotation = 2 [default = false];
 }

@@ -87,15 +87,10 @@ node {
 
 # Draws and emotion detection operation
 node {
-  calculator: "EmotionDetectionCalculator"
+  calculator: "AnnotationOverlayCalculator"
   input_stream: "IMAGE:input_image"
   input_stream: "detections_render_data"
   input_stream: "VECTOR:0:multi_face_landmarks_render_data"
   input_stream: "rects_render_data"
   output_stream: "IMAGE:output_image"
-  options {
-    [mediapipe.EmotionDetectionCalculatorOptions.ext] {
-        model_path:"mediapipe/modules/face_emotion_detect_self/keypoint_classifier.tflite"
-    }
-  }
 }
