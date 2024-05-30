@@ -31,15 +31,15 @@ message EmotionDetectionCalculatorOptions {
   // the calculator renders the annotations on top of the provided image, else a
   // canvas is created with the dimensions and background color specified in
   // these options and the annotations are rendered on top of this canvas.
-  optional Color canvas_color = 3;
+  optional Color canvas_color = 1;
 
   // Whether text should be rendered upside down. When it's set to false, text
   // is rendered normally assuming the underlying image has its origin at the
   // top-left corner. Therefore, for images with the origin at the bottom-left
   // corner this should be set to true.
-  optional bool flip_text_vertically = 4 [default = false];
+  optional bool flip_text_vertically = 2 [default = false];
 
 
-  optional string model_path = 5; 
+  optional string model_path = 3; 
 
 }

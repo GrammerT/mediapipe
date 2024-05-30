@@ -21,6 +21,9 @@ cmd
 
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="C://Python310//python.exe" mediapipe/examples/desktop/face_mesh:face_mesh_cpu
 @bazel-bin\mediapipe\examples\desktop\face_mesh\face_mesh_cpu.exe -calculator_graph_config_file=mediapipe\graphs\face_mesh\face_mesh_desktop_live.pbtxt 实时
+//! 自定义面部捕获功能
+@bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="C://Python310//python.exe" mediapipe/examples/desktop/face_mesh_self:face_mesh_cpu_self 
+@bazel-bin\mediapipe\examples\desktop\face_mesh_self\face_mesh_cpu_self.exe -calculator_graph_config_file=mediapipe\graphs\face_mesh_self\face_mesh_desktop_live.pbtxt
 
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="C://Python310//python.exe" mediapipe/examples/desktop/pose_tracking:pose_tracking_cpu
 @bazel-bin\mediapipe\examples\desktop\pose_tracking\pose_tracking_cpu.exe -calculator_graph_config_file=mediapipe\graphs\pose_tracking\pose_tracking_cpu.pbtxt 实时

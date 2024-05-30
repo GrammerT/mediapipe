@@ -85,7 +85,7 @@ node {
   }
 }
 
-# Draws annotations and overlays them on top of the input images.
+# Draws and emotion detection operation
 node {
   calculator: "EmotionDetectionCalculator"
   input_stream: "IMAGE:input_image"
