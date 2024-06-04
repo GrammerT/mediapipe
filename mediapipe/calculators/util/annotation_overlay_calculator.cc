@@ -391,6 +391,7 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
       RET_CHECK_EQ(kVectorTag, tag);
       const std::vector<RenderData>& render_data_vec =
           cc->Inputs().Get(id).Get<std::vector<RenderData>>();
+      // printf("render data vec size : %d \n",render_data_vec.size());//! 输出1
       for (const RenderData& render_data : render_data_vec) {
         renderer_->RenderDataOnImage(render_data);//! face mesh中渲染所有landmark点 
       }

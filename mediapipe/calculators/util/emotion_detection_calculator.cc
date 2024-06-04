@@ -248,18 +248,22 @@ class EmotionDetectionCalculator : public CalculatorBase {
         project_fn(landmark, new_landmark);
       }
 
-      for (int i = 0; i < input_landmarks.landmark_size(); ++i) {
-              const NormalizedLandmark& landmark = input_landmarks.landmark(i);
-              NormalizedLandmark* new_landmark = output_landmarks.add_landmark();
-              project_fn(landmark, new_landmark);
-            }
 #if 0
-      printf("land mark content [ \n");
+      printf("output land mark output_landmarks.landmark_size(%d) content [ \n",output_landmarks.landmark_size());
       for (int i = 0; i < output_landmarks.landmark_size(); ++i) {
               const NormalizedLandmark& landmark = output_landmarks.landmark(i);
-              printf("x=%f,\n y=%f,\n z=%f \n",landmark.x(),landmark.y(),landmark.z());
+              printf("index %d \n x=%f,\n y=%f,\n z=%f \n",i,landmark.x(),landmark.y(),landmark.z());
             }
       printf("] \n");  
+#endif
+      auto &landmarkVec = dealLandmarksAndRunTensor(output_landmarks);
+#if 1
+      if(landmarkVec.size()>0)
+      {
+        auto id = runTensor(landmarkVec);
+        printf("emotion = %s \n" ,m_emotion_vec[id].c_str());
+      }
+
 #endif
       cc->Outputs().Get(output_id).AddPacket(
           MakePacket<NormalizedLandmarkList>(std::move(output_landmarks))
@@ -286,21 +290,169 @@ private:
     ::tflite::ops::builtin::BuiltinOpResolver resolver;
     ::tflite::InterpreterBuilder(*model, resolver)(&m_interpreter);
 
-    RET_CHECK(m_interpreter);
-    
-    m_interpreter->SetNumThreads(m_tf_num_thread);
-// Resize input tensors, if desired.
-    m_interpreter->AllocateTensors();
-    printf("model load finised.\n");
-    m_interpreter->inputs();
-    m_interpreter->outputs();
+    RET_CHECK(m_interpreter)<<"m_interpreter build failure.";
+    if(m_interpreter)
+    {
+      m_interpreter->SetNumThreads(m_tf_num_thread);
+      // Resize input tensors, if desired.
+      if(m_interpreter->AllocateTensors()!=kTfLiteOk)
+      {
+        printf("interpreter allocate tensor error.");
+      }
+      else
+      {
+        printf("model load finised.\n");
+        m_input_details = m_interpreter->inputs();
+        
+        for (int tensor_index : m_input_details) {
+          
+            const TfLiteTensor* tensor = m_interpreter->tensor(tensor_index);
+            printf("input details name : %s %d %d \n",tensor->name, tensor->type, tensor->dims->size);
+            m_input_tensor_details.push_back({tensor->name, tensor->type, tensor->dims});
+        }
+
+        m_output_details = m_interpreter->outputs();
+        for (int tensor_index : m_output_details) {
+            const TfLiteTensor* tensor = m_interpreter->tensor(tensor_index);
+            
+            m_output_tensor_details.push_back({tensor->name, tensor->type, tensor->dims});
+        }
+
+        PrintTensorDetails();
+      }
+    }
+
     return absl::OkStatus();
   }
 
+  void PrintTensorDetails() const {
+        std::cout << "Input Tensor Details:" << std::endl;
+        for (const auto& detail : m_input_tensor_details) {
+            PrintTensorDetail(detail);
+        }
+
+        std::cout << "Output Tensor Details:" << std::endl;
+        for (const auto& detail : m_output_tensor_details) {
+            PrintTensorDetail(detail);
+        }
+    }
+
+  std::vector<float> dealLandmarksAndRunTensor(const NormalizedLandmarkList& landmarks)
+  {
+    if(landmarks.landmark_size()==0)
+    {
+      return {};
+    }
+    //! 计算特征点列表（landmark list）。
+    std::vector<std::vector<int32_t>> landmark_point;
+    std::vector<std::vector<int32_t>> temp_landmark_list;
+#if 0
+    printf("landmarks.landmark_size [%d] \n",landmarks.landmark_size());
+#endif
+    for (int i = 0; i < landmarks.landmark_size(); ++i) {
+      const NormalizedLandmark& landmark = landmarks.landmark(i);
+        int32_t landmark_x = std::min(static_cast<int>(landmark.x() * m_img_width), m_img_width - 1);
+        int32_t landmark_y = std::min(static_cast<int>(landmark.y() * m_img_height), m_img_height - 1);
+        landmark_point.push_back({landmark_x, landmark_y});
+        temp_landmark_list.push_back({landmark_x, landmark_y});
+    }
+
+    //! 预处理特征点列表，包括转换为相对坐标、展平为一维列表和归一化
+    int base_x = 0, base_y = 0;
+
+    for (size_t index = 0; index < temp_landmark_list.size(); ++index) {
+        if (index == 0) {
+            base_x = temp_landmark_list[index][0];
+            base_y = temp_landmark_list[index][1];
+        }
+
+        temp_landmark_list[index][0] -= base_x;
+        temp_landmark_list[index][1] -= base_y;
+    }
+#if 0
+    printf("landmark_point size [%d] \n",landmark_point.size());
+    printf("temp_landmark_list size [%d] \n",temp_landmark_list.size());
+#endif
+    std::vector<int32_t> flattened_landmark_list;
+    for (const auto& point : temp_landmark_list) {
+        flattened_landmark_list.insert(flattened_landmark_list.end(), point.begin(), point.end());
+    }
+
+    int32_t max_value = *std::max_element(flattened_landmark_list.begin(), flattened_landmark_list.end(), [](int a, int b) { return abs(a) < abs(b); });
+
+    std::vector<float> normalized_landmark_list;
+    transform(flattened_landmark_list.begin(), flattened_landmark_list.end(), back_inserter(normalized_landmark_list), [max_value](int n) {
+        return static_cast<float>(n) / max_value;
+    });
+
+#if 0
+    for(int i=0;i<normalized_landmark_list.size();i++)
+    {
+      printf("normalized_landmark_list[%d]=%f \n",i,normalized_landmark_list[i]);
+    }
+#endif
+    return std::move(normalized_landmark_list);
+  }
+
+  int32_t runTensor(const std::vector<float>& landmark_list)
+  {
+    int input_details_tensor_index = m_input_details[0];
+    int output_details_tensor_index = m_output_details[0];
+    // Set the input tensor
+    float* input_tensor = m_interpreter->typed_tensor<float>(input_details_tensor_index);
+    std::copy(landmark_list.begin(), landmark_list.end(), input_tensor);
+    // Invoke the interpreter
+    if (m_interpreter->Invoke() != kTfLiteOk) {
+        throw std::runtime_error("Failed to invoke interpreter");
+    }
+    // Get the output tensor
+    float* result = m_interpreter->typed_output_tensor<float>(output_details_tensor_index);
+
+    // Find the max value and its index
+    float max_value = -1.0;
+    int result_index = -1;
+    for (int i = 0; i < m_interpreter->tensor(output_details_tensor_index)->bytes / sizeof(float); ++i) 
+    {
+        if (result[i] > max_value) {
+            max_value = result[i];
+            result_index = i;
+        }
+    }
+    
+    if (max_value >= m_emotion_threshold) {
+        m_last_index = result_index;
+        return result_index;
+    } else {
+        return m_last_index;
+    }
+  }
+
 private:
+    struct TensorDetail {
+        const char* name;
+        TfLiteType type;
+        TfLiteIntArray* dims;
+    };
+  void PrintTensorDetail(const TensorDetail& detail) const {
+      std::cout << "Name: " << detail.name << ", Type: " << detail.type << ", Dims: [";
+      for (int i = 0; i < detail.dims->size; ++i) {
+          std::cout << detail.dims->data[i];
+          if (i < detail.dims->size - 1) {
+              std::cout << ", ";
+          }
+      }
+      std::cout << "]" << std::endl;
+  }
+
+private:
+
   // Options for the calculator.
   EmotionDetectionCalculatorOptions m_options;
   std::unique_ptr<::tflite::Interpreter> m_interpreter; 
+  std::vector<int> m_input_details;
+  std::vector<int> m_output_details;
+  std::vector<TensorDetail> m_input_tensor_details;
+  std::vector<TensorDetail> m_output_tensor_details;
   int m_tf_num_thread=1;
 
   int32_t m_img_width=0;
@@ -311,6 +463,8 @@ private:
 // Sad
 // Surprise
   std::vector<std::string> m_emotion_vec={"Angry","Happy","Neutral","Sad","Surprise"};
+  int m_last_index=2;
+  float m_emotion_threshold=0.75;
 };
 REGISTER_CALCULATOR(EmotionDetectionCalculator);
 
