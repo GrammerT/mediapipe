@@ -15,21 +15,26 @@
 #include <cmath>
 #include <functional>
 #include <vector>
+#include <algorithm>
 
 #include "mediapipe/calculators/util/emotion_detection_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include <tensorflow/lite/interpreter.h>
 #include "tensorflow/lite/model.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
 #include "tensorflow/lite/kernels/register.h"
+#include "mediapipe/framework/formats/image_frame.h"
+
 namespace mediapipe {
 
 using ::mediapipe::NormalizedRect;
 
 namespace {
 
+constexpr char kImageFrameTag[] = "IMAGE";
 constexpr char kLandmarksTag[] = "NORM_LANDMARKS";
 constexpr char kRectTag[] = "NORM_RECT";
 constexpr char kProjectionMatrix[] = "PROJECTION_MATRIX";
@@ -94,12 +99,20 @@ constexpr char kProjectionMatrix[] = "PROJECTION_MATRIX";
 class EmotionDetectionCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc) {
+
+    RET_CHECK(cc->Inputs().HasTag(kImageFrameTag))
+        << "Missing IMAGE input ,img width and height can't get.";
+
     RET_CHECK(cc->Inputs().HasTag(kLandmarksTag))
         << "Missing NORM_LANDMARKS input.";
 
     RET_CHECK_EQ(cc->Inputs().NumEntries(kLandmarksTag),
                  cc->Outputs().NumEntries(kLandmarksTag))
         << "Same number of input and output landmarks is required.";
+
+    if (cc->Inputs().HasTag(kImageFrameTag)) {
+      cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
+    }
 
     for (CollectionItemId id = cc->Inputs().BeginId(kLandmarksTag);
          id != cc->Inputs().EndId(kLandmarksTag); ++id) {
@@ -166,6 +179,16 @@ class EmotionDetectionCalculator : public CalculatorBase {
       if (cc->Inputs().Tag(kRectTag).IsEmpty()) {
         return absl::OkStatus();
       }
+      if(m_img_width==0||m_img_height==0)
+      {
+        const auto& input_img = cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
+        printf("input image width and height [%d %d] \n",
+                input_img.Width(),input_img.Height());
+        m_img_height = input_img.Height();
+        m_img_width = input_img.Width();
+      }
+
+
       const auto& input_rect = cc->Inputs().Tag(kRectTag).Get<NormalizedRect>();
       const auto& options =
           cc->Options<mediapipe::EmotionDetectionCalculatorOptions>();
@@ -279,6 +302,15 @@ private:
   EmotionDetectionCalculatorOptions m_options;
   std::unique_ptr<::tflite::Interpreter> m_interpreter; 
   int m_tf_num_thread=1;
+
+  int32_t m_img_width=0;
+  int32_t m_img_height=0;
+//   Angry
+// Happy
+// Neutral
+// Sad
+// Surprise
+  std::vector<std::string> m_emotion_vec={"Angry","Happy","Neutral","Sad","Surprise"};
 };
 REGISTER_CALCULATOR(EmotionDetectionCalculator);
 

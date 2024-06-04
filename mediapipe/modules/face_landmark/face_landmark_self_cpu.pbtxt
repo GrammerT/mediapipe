@@ -185,6 +185,7 @@ node {
 
 node {
   calculator: "EmotionDetectionCalculator"
+  input_stream: "IMAGE:image" 
   input_stream: "NORM_LANDMARKS:landmarks"
   input_stream: "NORM_RECT:roi"
   output_stream: "NORM_LANDMARKS:face_landmarks"
