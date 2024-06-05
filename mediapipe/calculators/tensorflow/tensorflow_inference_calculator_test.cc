@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "absl/flags/flag.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "mediapipe/calculators/tensorflow/tensorflow_inference_calculator.pb.h"
@@ -26,13 +26,13 @@
 #include "mediapipe/framework/deps/file_path.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
 #include "mediapipe/framework/tool/validate_type.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/framework/tensor_testutil.h"
 #include "tensorflow/core/framework/types.h"
+#include "testing/base/public/gunit.h"
 
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
@@ -67,7 +67,7 @@ std::string GetGraphDefPath() {
                                    "testdata/frozen_graph_def.pb");
 #else
   return mediapipe::file::JoinPath(
-      "./",
+      ::testing::SrcDir(),
       // This should match the path of the output files
       // of the genrule() that generates test model files.
       "mediapipe/calculators/tensorflow/testdata/", "frozen_graph_def.pb");

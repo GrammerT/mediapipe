@@ -14,6 +14,8 @@
 
 #include "mediapipe/objc/util.h"
 
+#include <cstdint>
+
 #include "absl/base/macros.h"
 #include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
@@ -639,7 +641,7 @@ std::unique_ptr<mediapipe::ImageFrame> CreateImageFrameForCVPixelBuffer(
   } else {
     frame = absl::make_unique<mediapipe::ImageFrame>(
         image_format, width, height, bytes_per_row,
-        reinterpret_cast<uint8*>(base_address), [image_buffer](uint8* x) {
+        reinterpret_cast<uint8_t*>(base_address), [image_buffer](uint8_t* x) {
           CVPixelBufferUnlockBaseAddress(image_buffer,
                                          kCVPixelBufferLock_ReadOnly);
           CVPixelBufferRelease(image_buffer);
@@ -660,22 +662,21 @@ CFDictionaryRef GetCVPixelBufferAttributesForGlCompatibility() {
     // actually causes CVOpenGLESTextureCache to fail. b/144850076
     const void* keys[] = {
 #if !TARGET_IPHONE_SIMULATOR
-      kCVPixelBufferIOSurfacePropertiesKey,
+        kCVPixelBufferIOSurfacePropertiesKey,
 #endif  // !TARGET_IPHONE_SIMULATOR
 
 #if TARGET_OS_OSX
-      kCVPixelFormatOpenGLCompatibility,
+        kCVPixelFormatOpenGLCompatibility,
 #else
-      kCVPixelFormatOpenGLESCompatibility,
+        kCVPixelFormatOpenGLESCompatibility,
 #endif  // TARGET_OS_OSX
     };
 
     const void* values[] = {
 #if !TARGET_IPHONE_SIMULATOR
-      empty_dict,
+        empty_dict,
 #endif  // !TARGET_IPHONE_SIMULATOR
-      kCFBooleanTrue
-    };
+        kCFBooleanTrue};
 
     attrs = CFDictionaryCreate(
         kCFAllocatorDefault, keys, values, ABSL_ARRAYSIZE(values),

@@ -138,6 +138,7 @@ cc_library(
     hdrs = ["benchmark.h"],
     deps = [
         "@com_google_benchmark//:benchmark",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -209,6 +210,7 @@ cc_library(
     deps = [
         "//mediapipe/framework:port",
         "//third_party:glog",
+        "@com_google_absl//absl/strings:has_ostream_operator",
         "@com_google_absl//absl/time",
     ],
 )

@@ -32,6 +32,7 @@ enum DiffuserModelType {
   kDiffuserModelTypeDistilledGldm,
   kDiffuserModelTypeSd2Base,
   kDiffuserModelTypeTigo,
+  kDiffuserModelTypeTigoUfo,
 };
 
 enum DiffuserPriorityHint {
@@ -61,6 +62,7 @@ typedef struct {
   int image_width;
   int image_height;
   int run_unet_with_plugins;
+  int run_unet_with_masked_image;
   DiffuserEnvironmentOptions env_options;
 } DiffuserConfig;
 

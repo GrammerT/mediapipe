@@ -15,6 +15,7 @@
 #ifndef MEDIAPIPE_UTIL_TIME_SERIES_TEST_UTIL_H_
 #define MEDIAPIPE_UTIL_TIME_SERIES_TEST_UTIL_H_
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -31,7 +32,6 @@
 #include "mediapipe/framework/formats/time_series_header.pb.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
-#include "mediapipe/framework/port/integral_types.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_matchers.h"
@@ -292,7 +292,7 @@ class TimeSeriesCalculatorTest : public ::testing::Test {
 
   // Overload to allow explicit conversion from int64 to Timestamp
   template <typename T>
-  void AppendInputPacket(const T* payload, const int64 timestamp,
+  void AppendInputPacket(const T* payload, const int64_t timestamp,
                          const size_t input_index = 0) {
     AppendInputPacket(payload, Timestamp(timestamp), input_index);
   }
@@ -305,7 +305,7 @@ class TimeSeriesCalculatorTest : public ::testing::Test {
   }
 
   template <typename T>
-  void AppendInputPacket(const T* payload, const int64 timestamp,
+  void AppendInputPacket(const T* payload, const int64_t timestamp,
                          const std::string& input_tag) {
     AppendInputPacket(payload, Timestamp(timestamp), input_tag);
   }
@@ -450,7 +450,7 @@ class MultiStreamTimeSeriesCalculatorTest
 
   // Overload to allow explicit conversion from int64 to Timestamp
   void AppendInputPacket(const std::vector<Matrix>* input_vector,
-                         const int64 timestamp) {
+                         const int64_t timestamp) {
     AppendInputPacket(input_vector, Timestamp(timestamp));
   }
 

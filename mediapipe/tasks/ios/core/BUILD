@@ -38,7 +38,10 @@ objc_library(
 objc_library(
     name = "MPPTaskOptionsProtocol",
     hdrs = ["sources/MPPTaskOptionsProtocol.h"],
-    deps = ["//mediapipe/framework:calculator_options_cc_proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "@com_google_protobuf//:protobuf",
+    ],
 )
 
 objc_library(
@@ -84,9 +87,22 @@ objc_library(
         "-std=c++17",
     ],
     deps = [
+        ":MPPTaskInfo",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/tasks/cc/core:mediapipe_builtin_op_resolver",
         "//mediapipe/tasks/cc/core:task_runner",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
+        "@com_google_protobuf//:protobuf",
     ],
+)
+
+objc_library(
+    name = "MPPPacketCreator",
+    srcs = ["sources/MPPPacketCreator.mm"],
+    hdrs = ["sources/MPPPacketCreator.h"],
+    copts = [
+        "-ObjC++",
+        "-std=c++17",
+    ],
+    deps = ["//mediapipe/framework:packet"],
 )

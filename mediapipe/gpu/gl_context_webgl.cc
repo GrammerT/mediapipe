@@ -32,7 +32,7 @@ namespace mediapipe {
 // TODO: Handle webGL "context lost" and "context restored" events.
 GlContext::StatusOrGlContext GlContext::Create(std::nullptr_t nullp,
                                                bool create_thread) {
-  return Create(0, create_thread);
+  return Create(static_cast<EMSCRIPTEN_WEBGL_CONTEXT_HANDLE>(0), create_thread);
 }
 
 GlContext::StatusOrGlContext GlContext::Create(const GlContext& share_context,
@@ -68,6 +68,14 @@ absl::Status GlContext::CreateContextInternal(
 
   // TODO: Investigate this option in more detail, esp. on Safari.
   attrs.preserveDrawingBuffer = 0;
+
+  // TODO: Investigate making this toggle-able, so clients can choose
+  // to hint for dual-GPU platforms according to their individual needs. For
+  // now, we prefer highest performance at the expense of more power, since most
+  // use cases are realtime ML and rendering, where speed is essential. However,
+  // clients can override this if necessary by requesting their canvas' WebGL
+  // context manually before initializing the graph.
+  attrs.powerPreference = EM_WEBGL_POWER_PREFERENCE_HIGH_PERFORMANCE;
 
   // Quick patch for -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR so it also
   // looks for our #canvas target in Module.canvas, where we expect it to be.

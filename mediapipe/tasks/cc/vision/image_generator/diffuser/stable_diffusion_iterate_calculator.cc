@@ -121,6 +121,8 @@ class StableDiffusionIterateCalculator : public Node {
     if (handle_) dlclose(handle_);
   }
 
+  static absl::Status UpdateContract(CalculatorContract* cc);
+
   absl::Status Open(CalculatorContext* cc) override;
   absl::Status Process(CalculatorContext* cc) override;
 
@@ -188,6 +190,11 @@ class StableDiffusionIterateCalculator : public Node {
   bool emit_empty_packet_;
 };
 
+absl::Status StableDiffusionIterateCalculator::UpdateContract(
+    CalculatorContract* cc) {
+  return absl::OkStatus();
+}
+
 absl::Status StableDiffusionIterateCalculator::Open(CalculatorContext* cc) {
   StableDiffusionIterateCalculatorOptions options;
   if (kOptionsIn(cc).IsEmpty()) {
@@ -202,10 +209,19 @@ absl::Status StableDiffusionIterateCalculator::Open(CalculatorContext* cc) {
 
   DiffuserConfig config;
   config.model_type = ToDiffuserModelType(options.model_type());
+  if (config.model_type == kDiffuserModelTypeTigo) {
+    config.run_unet_with_masked_image = 1;
+  } else {
+    config.run_unet_with_masked_image = 0;
+  }
   if (options.file_folder().empty()) {
     std::strcpy(config.model_dir, "bins/");  // NOLINT
   } else {
-    std::strcpy(config.model_dir, options.file_folder().c_str());  // NOLINT
+    std::string file_folder = options.file_folder();
+    if (!file_folder.empty() && file_folder.back() != '/') {
+      file_folder.push_back('/');
+    }
+    std::strcpy(config.model_dir, file_folder.c_str());  // NOLINT
   }
   MP_RETURN_IF_ERROR(mediapipe::file::Exists(config.model_dir))
       << config.model_dir;

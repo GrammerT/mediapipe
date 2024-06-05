@@ -12,20 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <memory>
+#include <string>
 
+#include "absl/types/span.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_runner.h"
+#include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status_matchers.h"  // NOLINT
-#include "tensorflow/lite/model.h"
+#include "tensorflow/lite/model_builder.h"
+#include "tensorflow/lite/schema/schema_generated.h"
 
 namespace mediapipe {
 
 TEST(TfLiteModelCalculatorTest, SmokeTest) {
-  // Prepare single calculator graph to and wait for packets.
+  // Prepare single calculator graph and wait for packets.
   CalculatorGraphConfig graph_config = ParseTextProtoOrDie<
       CalculatorGraphConfig>(
       R"pb(
@@ -56,9 +61,8 @@ TEST(TfLiteModelCalculatorTest, SmokeTest) {
   CalculatorGraph graph(graph_config);
   MP_ASSERT_OK(graph.StartRun({}));
   MP_ASSERT_OK(graph.WaitUntilIdle());
-  auto status_or_packet = graph.GetOutputSidePacket("model");
-  MP_ASSERT_OK(status_or_packet);
-  auto model_packet = status_or_packet.value();
+  MP_ASSERT_OK_AND_ASSIGN(auto model_packet,
+                          graph.GetOutputSidePacket("model"));
   const auto& model = model_packet.Get<
       std::unique_ptr<tflite::FlatBufferModel,
                       std::function<void(tflite::FlatBufferModel*)>>>();
@@ -83,6 +87,85 @@ TEST(TfLiteModelCalculatorTest, SmokeTest) {
                 expected_subgraph->tensors()->Get(j)->name()->str());
     }
   }
+}
+
+void VerifySubgraphs(const tflite::Model& actual_model) {
+  auto expected_model_ptr = tflite::FlatBufferModel::BuildFromFile(
+      "mediapipe/calculators/tflite/testdata/add.bin");
+  const tflite::Model* expected_model = expected_model_ptr->GetModel();
+
+  EXPECT_EQ(actual_model.version(), expected_model->version());
+  EXPECT_EQ(actual_model.buffers()->size(), expected_model->buffers()->size());
+  const int num_subgraphs = expected_model->subgraphs()->size();
+  EXPECT_EQ(actual_model.subgraphs()->size(), num_subgraphs);
+  for (int i = 0; i < num_subgraphs; ++i) {
+    const auto* expected_subgraph = expected_model->subgraphs()->Get(i);
+    const auto* subgraph = actual_model.subgraphs()->Get(i);
+    const int num_tensors = expected_subgraph->tensors()->size();
+    EXPECT_EQ(subgraph->tensors()->size(), num_tensors);
+  }
+}
+
+TEST(TfLiteModelCalculatorTest, ModelSpanToUniqueModel) {
+  std::string model_content;
+  MP_ASSERT_OK(mediapipe::file::GetContents(
+      "mediapipe/calculators/tflite/testdata/add.bin", &model_content));
+
+  // Prepare single calculator graph and wait for packets.
+  CalculatorGraphConfig graph_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(
+          R"pb(
+            input_side_packet: "model_span"
+            node {
+              calculator: "TfLiteModelCalculator"
+              input_side_packet: "MODEL_SPAN:model_span"
+              output_side_packet: "MODEL:model"
+            }
+          )pb");
+  CalculatorGraph graph(graph_config);
+  MP_ASSERT_OK(graph.StartRun(
+      {{"model_span",
+        mediapipe::MakePacket<absl::Span<const uint8_t>>(
+            reinterpret_cast<const uint8_t*>(model_content.data()),
+            model_content.size())}}));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK_AND_ASSIGN(auto model_packet,
+                          graph.GetOutputSidePacket("model"));
+  const auto& model = model_packet.Get<
+      std::unique_ptr<tflite::FlatBufferModel,
+                      std::function<void(tflite::FlatBufferModel*)>>>();
+
+  VerifySubgraphs(*model->GetModel());
+}
+
+TEST(TfLiteModelCalculatorTest, ModelSpanToSharedModel) {
+  std::string model_content;
+  MP_ASSERT_OK(mediapipe::file::GetContents(
+      "mediapipe/calculators/tflite/testdata/add.bin", &model_content));
+
+  // Prepare single calculator graph and wait for packets.
+  CalculatorGraphConfig graph_config =
+      ParseTextProtoOrDie<CalculatorGraphConfig>(
+          R"pb(
+            input_side_packet: "model_span"
+            node {
+              calculator: "TfLiteModelCalculator"
+              input_side_packet: "MODEL_SPAN:model_span"
+              output_side_packet: "SHARED_MODEL:model"
+            }
+          )pb");
+  CalculatorGraph graph(graph_config);
+  MP_ASSERT_OK(graph.StartRun(
+      {{"model_span",
+        mediapipe::MakePacket<absl::Span<const uint8_t>>(
+            reinterpret_cast<const uint8_t*>(model_content.data()),
+            model_content.size())}}));
+  MP_ASSERT_OK(graph.WaitUntilIdle());
+  MP_ASSERT_OK_AND_ASSIGN(auto model_packet,
+                          graph.GetOutputSidePacket("model"));
+  auto model = model_packet.Get<std::shared_ptr<tflite::FlatBufferModel>>();
+
+  VerifySubgraphs(*model->GetModel());
 }
 
 }  // namespace mediapipe

@@ -15,10 +15,11 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-#import "mediapipe/tasks/ios/core/sources/MPPTaskInfo.h"
 #import "mediapipe/tasks/ios/core/sources/MPPTaskRunner.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPImage.h"
 #import "mediapipe/tasks/ios/vision/core/sources/MPPRunningMode.h"
+
+#include "mediapipe/framework/packet.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -29,11 +30,11 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MPPVisionTaskRunner : MPPTaskRunner
 
 /**
- * Initializes a new `MPPVisionTaskRunner` with the taskInfo, running mode, whether task supports
- * region of interest, packets callback, image and norm rect input stream names. Make sure that the
- * packets callback is set properly based on the vision task's running mode. In case of live stream
- * running mode, a C++ packets callback that is intended to deliver inference results must be
- * provided. In case of image or video running mode, packets callback must be set to nil.
+ * Initializes a new `MPPVisionTaskRunner` with the given task info, running mode, whether task
+ * supports region of interest, packets callback, image and norm rect input stream names. Make sure
+ * that the packets callback is set properly based on the vision task's running mode. In case of
+ * live stream running mode, a C++ packets callback that is intended to deliver inference results
+ * must be provided. In case of image or video running mode, packets callback must be set to nil.
  *
  * @param taskInfo A `MPPTaskInfo` initialized by the task.
  * @param runningMode MediaPipe vision task running mode.
@@ -50,9 +51,9 @@ NS_ASSUME_NONNULL_BEGIN
  * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
  * error will be saved.
  *
- * @return An instance of `MPPVisionTaskRunner` initialized with the given the taskInfo, running
- * mode, whether task supports region of interest, packets callback, image and norm rect input
- * stream names.
+ * @return An instance of `MPPVisionTaskRunner` initialized with the given task info, running mode,
+ * whether task supports region of interest, packets callback, image and norm rect input stream
+ * names.
  */
 
 - (nullable instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
@@ -60,7 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
                                roiAllowed:(BOOL)roiAllowed
                           packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
                      imageInputStreamName:(NSString *)imageInputStreamName
-                  normRectInputStreamName:(NSString *)normRectInputStreamName
+                  normRectInputStreamName:(nullable NSString *)normRectInputStreamName
                                     error:(NSError **)error NS_DESIGNATED_INITIALIZER;
 
 /**
@@ -191,6 +192,26 @@ NS_ASSUME_NONNULL_BEGIN
                          error:(NSError **)error;
 
 /**
+ * This method creates an input packet map to the C++ task runner with the image and normalized rect
+ * calculated from the region of interest specified within the bounds of an image. Tasks which need
+ * to add more entries to the input packet map and build their own custom logic for processing
+ * images can use this method.
+ *
+ * @param image An `MPPImage` input to the task.
+ * @param regionOfInterest A `CGRect` specifying the region of interest within the given image data
+ * of type `MPPImage`, on which inference should be performed.
+ * @param error Pointer to the memory location where errors if any should be saved. If @c NULL, no
+ * error will be saved.
+ *
+ * @return A `BOOL` indicating if the creation of the input packet map with the image and the
+ * normalized rect calculated from the region of interest was successful.
+ */
+- (std::optional<std::map<std::string, mediapipe::Packet>>)
+    inputPacketMapWithMPPImage:(MPPImage *)image
+              regionOfInterest:(CGRect)roi
+                         error:(NSError **)error;
+
+/**
  * This method returns a unique dispatch queue name by adding the given suffix and a `UUID` to the
  * pre-defined queue name prefix for vision tasks. The vision tasks can use this method to get
  * unique dispatch queue names which are consistent with other vision tasks.
@@ -204,10 +225,9 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (const char *)uniqueDispatchQueueNameWithSuffix:(NSString *)suffix;
 
-- (instancetype)initWithCalculatorGraphConfig:(mediapipe::CalculatorGraphConfig)graphConfig
-                              packetsCallback:
-                                  (mediapipe::tasks::core::PacketsCallback)packetsCallback
-                                        error:(NSError **)error NS_UNAVAILABLE;
+- (instancetype)initWithTaskInfo:(MPPTaskInfo *)taskInfo
+                 packetsCallback:(mediapipe::tasks::core::PacketsCallback)packetsCallback
+                           error:(NSError **)error NS_UNAVAILABLE;
 
 - (instancetype)init NS_UNAVAILABLE;
 

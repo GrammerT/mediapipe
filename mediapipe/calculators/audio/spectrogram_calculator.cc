@@ -18,6 +18,7 @@
 #include <complex>
 #include <deque>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "absl/strings/string_view.h"
@@ -198,6 +199,8 @@ class SpectrogramCalculator : public CalculatorBase {
   bool allow_multichannel_input_;
   // Vector of Spectrogram objects, one for each channel.
   std::vector<std::unique_ptr<audio_dsp::Spectrogram>> spectrogram_generators_;
+  // Fixed scale factor applied to input values.
+  float input_scale_;
   // Fixed scale factor applied to output values (regardless of type).
   double output_scale_;
 
@@ -281,6 +284,7 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
   output_type_ = spectrogram_options.output_type();
   allow_multichannel_input_ = spectrogram_options.allow_multichannel_input();
 
+  input_scale_ = spectrogram_options.input_scale();
   output_scale_ = spectrogram_options.output_scale();
 
   auto window_fun = MakeWindowFun(spectrogram_options.window_type());
@@ -293,11 +297,17 @@ absl::Status SpectrogramCalculator::Open(CalculatorContext* cc) {
   window_fun->GetPeriodicSamples(frame_duration_samples_, &window);
 
   // Propagate settings down to the actual Spectrogram object.
+  std::optional<int> fft_size;
+  if (spectrogram_options.fft_size() > 0) {
+    fft_size = spectrogram_options.fft_size();
+  }
+
   spectrogram_generators_.clear();
   for (int i = 0; i < num_input_channels_; i++) {
     spectrogram_generators_.push_back(
         std::unique_ptr<audio_dsp::Spectrogram>(new audio_dsp::Spectrogram()));
-    spectrogram_generators_[i]->Initialize(window, frame_step_samples());
+    spectrogram_generators_[i]->Initialize(window, frame_step_samples(),
+                                           fft_size);
   }
 
   num_output_channels_ =
@@ -375,7 +385,7 @@ absl::Status SpectrogramCalculator::ProcessVectorToOutput(
     // Copy one row (channel) of the input matrix into the std::vector.
     std::vector<float> input_vector(input_stream.cols());
     Eigen::Map<Matrix>(&input_vector[0], 1, input_vector.size()) =
-        input_stream.row(channel);
+        input_stream.row(channel) * input_scale_;
 
     if (!spectrogram_generators_[channel]->ComputeSpectrogram(
             input_vector, &output_vectors)) {
@@ -436,9 +446,9 @@ absl::Status SpectrogramCalculator::ProcessVectorToOutput(
 absl::Status SpectrogramCalculator::ProcessVector(const Matrix& input_stream,
                                                   CalculatorContext* cc) {
   switch (output_type_) {
-      // These blocks deliberately ignore clang-format to preserve the
-      // "silhouette" of the different cases.
-      // clang-format off
+    // These blocks deliberately ignore clang-format to preserve the
+    // "silhouette" of the different cases.
+    // clang-format off
     case SpectrogramCalculatorOptions::COMPLEX: {
       return ProcessVectorToOutput(
           input_stream,

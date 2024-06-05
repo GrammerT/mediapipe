@@ -35,6 +35,8 @@
 #include "mediapipe/framework/formats/matrix.h"
 #include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/formats/time_series_header.pb.h"
+#include "mediapipe/framework/memory_manager.h"
+#include "mediapipe/framework/memory_manager_service.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/util/time_series_util.h"
 #include "pffft.h"
@@ -109,7 +111,7 @@ bool IsValidFftSize(int size) {
 //   Non-streaming mode: when "stream_mode" is set to false in the calculator
 //     options, the calculators treats the packets in the input audio stream as
 //     a batch of unrelated audio buffers. In each Process() call, the input
-//     buffer will be frist resampled, and framed as fixed-sized, possibly
+//     buffer will be first resampled, and framed as fixed-sized, possibly
 //     overlapping tensors. The last tensor produced by a Process() invocation
 //     will be zero-padding if the remaining samples are insufficient. As the
 //     calculator treats the input packets as unrelated, all samples will be
@@ -159,7 +161,7 @@ class AudioToTensorCalculator : public Node {
  public:
   static constexpr Input<Matrix> kAudioIn{"AUDIO"};
   // TODO: Removes this optional input stream when the "AUDIO" stream
-  // uses the new mediapipe audio data containers that carry audio metatdata,
+  // uses the new mediapipe audio data containers that carry audio metadata,
   // such as sample rate.
   static constexpr Input<double>::Optional kAudioSampleRateIn{"SAMPLE_RATE"};
   static constexpr Output<std::vector<Tensor>> kTensorsOut{"TENSORS"};
@@ -206,6 +208,9 @@ class AudioToTensorCalculator : public Node {
   int processed_buffer_cols_ = 0;
   double gain_ = 1.0;
 
+  // Enable pooling of AHWBs in Tensor instances.
+  MemoryManager* memory_manager_ = nullptr;
+
   // The internal state of the FFT library.
   PFFFT_Setup* fft_state_ = nullptr;
   int fft_size_ = 0;
@@ -236,7 +241,7 @@ absl::Status AudioToTensorCalculator::UpdateContract(CalculatorContract* cc) {
   if (!options.has_num_channels() || !options.has_num_samples() ||
       !options.has_target_sample_rate()) {
     return absl::InvalidArgumentError(
-        "AudioToTensorCalculatorOptions must specifiy "
+        "AudioToTensorCalculatorOptions must specify "
         "`num_channels`, `num_samples`, and `target_sample_rate`.");
   }
   if (options.stream_mode()) {
@@ -255,10 +260,14 @@ absl::Status AudioToTensorCalculator::UpdateContract(CalculatorContract* cc) {
       options.flush_mode() != Options::PROCEED_AS_USUAL) {
     return absl::InvalidArgumentError("Unsupported flush mode");
   }
+  cc->UseService(kMemoryManagerService).Optional();
   return absl::OkStatus();
 }
 
 absl::Status AudioToTensorCalculator::Open(CalculatorContext* cc) {
+  if (cc->Service(kMemoryManagerService).IsAvailable()) {
+    memory_manager_ = &cc->Service(kMemoryManagerService).GetObject();
+  }
   const auto& options =
       cc->Options<mediapipe::AudioToTensorCalculatorOptions>();
   num_channels_ = options.num_channels();
@@ -475,7 +484,8 @@ void AudioToTensorCalculator::AppendToSampleBuffer(Matrix buffer_to_append) {
 
 absl::StatusOr<std::vector<Tensor>> AudioToTensorCalculator::ConvertToTensor(
     const Matrix& block, std::vector<int> tensor_dims) {
-  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape(tensor_dims));
+  Tensor tensor(Tensor::ElementType::kFloat32, Tensor::Shape(tensor_dims),
+                memory_manager_);
   auto buffer_view = tensor.GetCpuWriteView();
   int total_size = 1;
   for (int dim : tensor_dims) {

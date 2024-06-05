@@ -122,7 +122,7 @@ class VirtualBackgroundCalculator : public CalculatorBase {
   void GlRender();
 
   bool initialized_ = false;
-  std::vector<uint8> color_;
+  std::vector<uint8_t> color_;
   mediapipe::VirtualBackgroundCalculatorOptions::MaskChannel mask_channel_;
 
   bool use_gpu_ = false;

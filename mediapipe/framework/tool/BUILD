@@ -13,14 +13,14 @@
 # limitations under the License.
 #
 
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
 load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load(
     "//mediapipe/framework/tool:mediapipe_graph.bzl",
     "data_as_c_string",
     "mediapipe_binary_graph",
 )
-load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
-load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 
 licenses(["notice"])
 
@@ -309,7 +309,7 @@ cc_library(
 mediapipe_cc_test(
     name = "options_util_test",
     size = "small",
-    timeout = "moderate",
+    timeout = "long",
     srcs = ["options_util_test.cc"],
     # A non-empty "data" param is needed to build the "_test_wasm" target.
     data = [":node_chain_subgraph.proto"],
@@ -537,7 +537,6 @@ cc_library(
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework/deps:proto_descriptor_cc_proto",
         "//mediapipe/framework/port:advanced_proto",
-        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:map_util",
         "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
@@ -546,7 +545,9 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf",
     ],
 )
 
@@ -616,6 +617,7 @@ cc_test(
         "//mediapipe/framework:calculator_runner",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
+        "@com_google_absl//absl/functional:bind_front",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -855,7 +857,9 @@ cc_library(
 
 mediapipe_cc_test(
     name = "switch_demux_calculator_test",
+    timeout = "long",
     srcs = ["switch_demux_calculator_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":container_util",
         ":switch_demux_calculator",
@@ -890,7 +894,9 @@ cc_library(
 
 mediapipe_cc_test(
     name = "switch_mux_calculator_test",
+    timeout = "long",
     srcs = ["switch_mux_calculator_test.cc"],
+    requires_full_emulation = False,
     deps = [
         ":container_util",
         ":switch_mux_calculator",

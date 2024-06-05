@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Placeholder: load py_library
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load("//mediapipe/framework:mediapipe_cc_test.bzl", "mediapipe_cc_test")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
+# Placeholder: load py_library
 
 licenses(["notice"])
 
@@ -176,6 +176,36 @@ cc_library(
         "//mediapipe/framework/port:vector",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
+    ],
+)
+
+cc_library(
+    name = "sync_wait",
+    srcs = ["sync_wait.cc"],
+    hdrs = ["sync_wait.h"],
+    visibility = ["//mediapipe:__subpackages__"],
+    deps = [
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/cleanup",
+        "@com_google_absl//absl/log:absl_log",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings:str_format",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_test(
+    name = "sync_wait_test",
+    srcs = ["sync_wait_test.cc"],
+    deps = [
+        ":sync_wait",
+        "//mediapipe/framework:port",
+        "//mediapipe/framework/port:benchmark",
+        "//mediapipe/framework/port:gtest_main",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -415,6 +445,9 @@ cc_library(
         "//mediapipe/framework/port:opencv_core",
         "//mediapipe/framework/port:opencv_imgcodecs",
         "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/gpu:gpu_buffer",
+        "//mediapipe/gpu:gpu_buffer_format",
+        "//mediapipe/gpu:gpu_buffer_storage_image_frame",
         "@com_google_absl//absl/log:absl_log",
     ],
 )

@@ -14,8 +14,8 @@
 
 """Building MediaPipe Tasks AARs."""
 
-load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_java_proto_src_extractor", "mediapipe_java_proto_srcs", "mediapipe_logging_java_proto_srcs")
 load("@build_bazel_rules_android//android:rules.bzl", "android_library")
+load("//mediapipe/java/com/google/mediapipe:mediapipe_aar.bzl", "mediapipe_build_aar_with_jni", "mediapipe_java_proto_src_extractor", "mediapipe_java_proto_srcs", "mediapipe_logging_java_proto_srcs")
 
 _CORE_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/gpu:gpu_origin_java_proto_lite",
@@ -47,13 +47,15 @@ _VISION_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_embedder_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:gesture_recognizer_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/gesture_recognizer/proto:hand_gesture_recognizer_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_roi_refinement_graph_options_java_proto_lite",
+    "//mediapipe/tasks/cc/vision/holistic_landmarker/proto:holistic_landmarker_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_classifier/proto:image_classifier_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_embedder/proto:image_embedder_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_segmenter/proto:image_segmenter_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/image_segmenter/proto:segmenter_options_java_proto_lite",
-    "//mediapipe/tasks/cc/vision/hand_detector/proto:hand_detector_graph_options_java_proto_lite",
-    "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarker_graph_options_java_proto_lite",
-    "//mediapipe/tasks/cc/vision/hand_landmarker/proto:hand_landmarks_detector_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/object_detector/proto:object_detector_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/pose_detector/proto:pose_detector_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/vision/pose_landmarker/proto:pose_landmarker_graph_options_java_proto_lite",
@@ -89,6 +91,11 @@ _VISION_TASKS_IMAGE_GENERATOR_JAVA_PROTO_LITE_TARGETS = [
 _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS = [
     "//mediapipe/tasks/cc/text/text_classifier/proto:text_classifier_graph_options_java_proto_lite",
     "//mediapipe/tasks/cc/text/text_embedder/proto:text_embedder_graph_options_java_proto_lite",
+]
+
+_GENAI_TASKS_JAVA_PROTO_LITE_TARGETS = [
+    "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_java_proto_lite",
+    "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_java_proto_lite",
 ]
 
 def mediapipe_tasks_core_aar(name, srcs, manifest):
@@ -310,7 +317,6 @@ cat > $(OUTS) <<EOF
 EOF
 """,
     )
-
     _mediapipe_tasks_aar(
         name = name,
         srcs = srcs,
@@ -349,6 +355,50 @@ EOF
         srcs = srcs,
         manifest = "AndroidManifest.xml",
         java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _TEXT_TASKS_JAVA_PROTO_LITE_TARGETS,
+        native_library = native_library,
+    )
+
+def mediapipe_tasks_genai_aar(name, srcs, native_library):
+    """Builds medaipipe tasks text text generator AAR.
+
+    Args:
+      name: The bazel target name.
+      srcs: MediaPipe Text Generator Tasks' source files.
+      native_library: The native library that contains text generator task's graph and calculators.
+    """
+
+    native.genrule(
+        name = name + "tasks_manifest_generator",
+        outs = ["AndroidManifest.xml"],
+        cmd = """
+cat > $(OUTS) <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.google.mediapipe.tasks.genai">
+    <uses-sdk
+        android:minSdkVersion="24"
+        android:targetSdkVersion="30" />
+</manifest>
+EOF
+""",
+    )
+
+    mediapipe_genai_java_proto_srcs = []
+    mediapipe_genai_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_options_java_proto_lite",
+        src_out = "com/google/mediapipe/tasks/core/jni/proto/LlmOptionsProto.java",
+    ))
+
+    mediapipe_genai_java_proto_srcs.append(mediapipe_java_proto_src_extractor(
+        target = "//mediapipe/tasks/java/com/google/mediapipe/tasks/core/jni/proto:llm_response_context_java_proto_lite",
+        src_out = "com/google/mediapipe/tasks/core/jni/proto/LlmResponseContextProto.java",
+    ))
+
+    _mediapipe_tasks_aar(
+        name = name,
+        srcs = srcs + mediapipe_genai_java_proto_srcs,
+        manifest = "AndroidManifest.xml",
+        java_proto_lite_targets = _CORE_TASKS_JAVA_PROTO_LITE_TARGETS + _GENAI_TASKS_JAVA_PROTO_LITE_TARGETS,
         native_library = native_library,
     )
 
@@ -407,6 +457,7 @@ def _mediapipe_tasks_aar(name, srcs, manifest, java_proto_lite_targets, native_l
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/containers:normalized_landmark",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/processors:classifieroptions",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/components/utils:cosinesimilarity",
+            "//mediapipe/tasks/java/com/google/mediapipe/tasks/core:logging",
             "//mediapipe/tasks/java/com/google/mediapipe/tasks/core",
             "//mediapipe/util:color_java_proto_lite",
             "//mediapipe/util:label_map_java_proto_lite",

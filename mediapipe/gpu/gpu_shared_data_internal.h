@@ -21,13 +21,19 @@
 #ifndef MEDIAPIPE_GPU_GPU_SHARED_DATA_INTERNAL_H_
 #define MEDIAPIPE_GPU_GPU_SHARED_DATA_INTERNAL_H_
 
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_node.h"
 #include "mediapipe/framework/executor.h"
-#include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gpu_buffer_multi_pool.h"
+#include "mediapipe/gpu/multi_pool.h"
 
 #ifdef __APPLE__
 #include "mediapipe/gpu/cv_texture_cache_manager.h"
@@ -45,7 +51,11 @@ class GpuResources {
   using StatusOrGpuResources = absl::StatusOr<std::shared_ptr<GpuResources>>;
 
   static StatusOrGpuResources Create();
-  static StatusOrGpuResources Create(PlatformGlContext external_context);
+  // Optional gpu_buffer_pool_options argument allows to configure the
+  // GpuBufferMultiPool instance.
+  static StatusOrGpuResources Create(
+      PlatformGlContext external_context,
+      const MultiPoolOptions* gpu_buffer_pool_options = nullptr);
 
   // The destructor must be defined in the implementation file so that on iOS
   // the correct ARC release calls are generated.
@@ -68,6 +78,8 @@ class GpuResources {
 
   absl::Status PrepareGpuNode(CalculatorNode* node);
 
+  absl::StatusOr<std::shared_ptr<Executor>> GetDefaultGpuExecutor() const;
+
   // If the node requires custom GPU executors in the current configuration,
   // returns the executor's names and the executors themselves.
   const std::map<std::string, std::shared_ptr<Executor>>& GetGpuExecutors() {
@@ -76,13 +88,17 @@ class GpuResources {
 
  private:
   GpuResources() = delete;
-  explicit GpuResources(std::shared_ptr<GlContext> gl_context);
+  explicit GpuResources(std::shared_ptr<GlContext> gl_context,
+                        const MultiPoolOptions* gpu_buffer_pool_options);
 
   GlContext::StatusOrGlContext GetOrCreateGlContext(const std::string& key);
   const std::string& ContextKey(const std::string& canonical_node_name);
 
   std::map<std::string, std::string> node_key_;
-  std::map<std::string, std::shared_ptr<GlContext>> gl_key_context_;
+
+  using GlContextMapType = std::map<std::string, std::shared_ptr<GlContext>>;
+  std::unique_ptr<GlContextMapType, void (*)(GlContextMapType*)>
+      gl_key_context_;
 
 #ifdef MEDIAPIPE_GPU_BUFFER_USE_CV_PIXEL_BUFFER
   std::shared_ptr<CvTextureCacheManager> texture_caches_;

@@ -14,6 +14,7 @@
 
 
 from absl.testing import parameterized
+import numpy as np
 import tensorflow as tf
 
 from mediapipe.model_maker.python.core.utils import metrics
@@ -23,19 +24,22 @@ class SparseMetricTest(tf.test.TestCase, parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
-    self.y_true = [0, 0, 1, 1, 0, 1]
-    self.y_pred = [
+    self.y_true = np.array([0, 0, 1, 1, 0, 1])
+    self.y_pred = np.array([
         [0.9, 0.1],  # 0, 0 y
         [0.8, 0.2],  # 0, 0 y
         [0.7, 0.3],  # 0, 1 n
         [0.6, 0.4],  # 0, 1 n
         [0.3, 0.7],  # 1, 0 y
         [0.3, 0.7],  # 1, 1 y
-    ]
-    self.num_classes = 3
+    ])
 
-  def _assert_metric_equals(self, metric, value):
-    metric.update_state(self.y_true, self.y_pred)
+  def _assert_metric_equals(self, metric, value, sparse=True):
+    if not sparse:
+      y_true = tf.one_hot(self.y_true, 2)
+      metric.update_state(y_true, self.y_pred)
+    else:
+      metric.update_state(self.y_true, self.y_pred)
     self.assertEqual(metric.result(), value)
 
   def test_sparse_recall(self):
@@ -68,6 +72,14 @@ class SparseMetricTest(tf.test.TestCase, parameterized.TestCase):
         ' supported for class_id=1, got class_id=2 instead',
     ):
       _ = metrics.BinarySparsePrecisionAtRecall(1.0, class_id=2)
+
+  def test_binary_auc(self):
+    metric = metrics.BinaryAUC(num_thresholds=1000, class_id=1)
+    self._assert_metric_equals(metric, 0.7222222, sparse=False)
+
+  def test_binary_sparse_auc(self):
+    metric = metrics.BinarySparseAUC(num_thresholds=1000)
+    self._assert_metric_equals(metric, 0.7222222)
 
 
 if __name__ == '__main__':

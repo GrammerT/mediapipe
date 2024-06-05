@@ -15,8 +15,8 @@
 # Description:
 #   The dependencies of mediapipe.
 
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 
 licenses(["notice"])
 
@@ -114,9 +114,11 @@ cc_library(
     name = "file_helpers",
     srcs = ["file_helpers.cc"],
     hdrs = ["file_helpers.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":file_path",
         "//mediapipe/framework/port:status",
+        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )

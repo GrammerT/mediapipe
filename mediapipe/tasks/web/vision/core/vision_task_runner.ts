@@ -21,9 +21,9 @@ import {MPImage} from '../../../../tasks/web/vision/core/image';
 import {ImageProcessingOptions} from '../../../../tasks/web/vision/core/image_processing_options';
 import {MPImageShaderContext} from '../../../../tasks/web/vision/core/image_shader_context';
 import {MPMask} from '../../../../tasks/web/vision/core/mask';
-import {GraphRunner, ImageSource, WasmMediaPipeConstructor} from '../../../../web/graph_runner/graph_runner';
+import {getImageSourceSize, GraphRunner, ImageSource, WasmMediaPipeConstructor} from '../../../../web/graph_runner/graph_runner';
 import {SupportImage, WasmImage} from '../../../../web/graph_runner/graph_runner_image_lib';
-import {isWebKit} from '../../../../web/graph_runner/platform_utils';
+import {supportsOffscreenCanvas} from '../../../../web/graph_runner/platform_utils';
 import {SupportModelResourcesGraphService} from '../../../../web/graph_runner/register_model_resources_graph_service';
 
 import {VisionTaskOptions} from './vision_task_options';
@@ -43,13 +43,10 @@ export class VisionGraphRunner extends GraphRunnerVisionType {}
  * GraphRunner should create its own canvas.
  */
 function createCanvas(): HTMLCanvasElement|OffscreenCanvas|undefined {
-  const supportsWebGL2ForOffscreenCanvas =
-      typeof OffscreenCanvas !== 'undefined' && !isWebKit();
-
   // Returns an HTML canvas or `undefined` if OffscreenCanvas is fully supported
   // (since the graph runner can initialize its own OffscreenCanvas).
-  return supportsWebGL2ForOffscreenCanvas ? undefined :
-                                            document.createElement('canvas');
+  return supportsOffscreenCanvas() ? undefined :
+                                     document.createElement('canvas');
 }
 
 /** Base class for all MediaPipe Vision Tasks. */
@@ -134,22 +131,6 @@ export abstract class VisionTaskRunner extends TaskRunner {
     this.process(imageFrame, imageProcessingOptions, timestamp);
   }
 
-  private getImageSourceSize(imageSource: ImageSource): [number, number] {
-    if ((imageSource as HTMLVideoElement).videoWidth !== undefined) {
-      return [
-        (imageSource as HTMLVideoElement).videoWidth,
-        (imageSource as HTMLVideoElement).videoHeight
-      ];
-    } else if ((imageSource as HTMLImageElement).naturalWidth !== undefined) {
-      return [
-        (imageSource as HTMLImageElement).naturalWidth,
-        (imageSource as HTMLImageElement).naturalHeight
-      ];
-    } else {
-      return [imageSource.width, imageSource.height];
-    }
-  }
-
   private convertToNormalizedRect(
       imageSource: ImageSource,
       imageProcessingOptions?: ImageProcessingOptions): NormalizedRect {
@@ -199,7 +180,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
       //   uses this for cropping,
       // - then finally rotates this back.
       if (imageProcessingOptions?.rotationDegrees % 180 !== 0) {
-        const [imageWidth, imageHeight] = this.getImageSourceSize(imageSource);
+        const [imageWidth, imageHeight] = getImageSourceSize(imageSource);
         // tslint:disable:no-unnecessary-type-assertion
         const width = normalizedRect.getHeight()! * imageHeight / imageWidth;
         const height = normalizedRect.getWidth()! * imageWidth / imageHeight;
@@ -274,8 +255,9 @@ export abstract class VisionTaskRunner extends TaskRunner {
   }
 
   /** Converts a WasmImage to an MPMask.  */
-  protected convertToMPMask(wasmImage: WasmImage, shouldCopyData: boolean):
-      MPMask {
+  protected convertToMPMask(
+      wasmImage: WasmImage, interpolateValues: boolean,
+      shouldCopyData: boolean): MPMask {
     const {data, width, height} = wasmImage;
     const pixels = width * height;
 
@@ -291,7 +273,7 @@ export abstract class VisionTaskRunner extends TaskRunner {
     }
 
     const mask = new MPMask(
-        [container],
+        [container], interpolateValues,
         /* ownsWebGLTexture= */ false, this.graphRunner.wasmModule.canvas!,
         this.shaderContext, width, height);
     return shouldCopyData ? mask.clone() : mask;
