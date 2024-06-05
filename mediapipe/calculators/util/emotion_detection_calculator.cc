@@ -409,10 +409,9 @@ struct Landmark {
     auto normalize = [max_value](int32_t n) {
         return (float)n / (float)max_value;
     };
-    std::vector<float> tmp;
-    abs_values.swap(tmp);
+
     // 对列表中的每个元素进行归一化
-    std::vector<float> &normalized_landmark_list=abs_values; //! 复用vect
+    std::vector<float> normalized_landmark_list(flattened_landmark_list.size());
     std::transform(flattened_landmark_list.begin(), flattened_landmark_list.end(), normalized_landmark_list.begin(), normalize);
 #if 0
     int index = 0;
