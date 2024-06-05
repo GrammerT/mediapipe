@@ -23,12 +23,17 @@ cmd
 @bazel-bin\mediapipe\examples\desktop\selfie_segmentation\selfie_segmentation_cpu.exe -calculator_graph_config_file=mediapipe\graphs\selfie_segmentation\selfie_segmentation_cpu.pbtxt 实时
 
 
-@如果编译出错,很有可能还需要开启vpn下载代码再编译 面部识别
+@如果编译出错,很有可能还需要开启vpn下载代码再编译 面部识别 使用自定义，此demo暂不可用
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/face_mesh:face_mesh_cpu 
 @bazel-bin\mediapipe\examples\desktop\face_mesh\face_mesh_cpu.exe -calculator_graph_config_file=mediapipe\graphs\face_mesh\face_mesh_desktop_live.pbtxt 实时
+//! 文件
+@bazel-bin\mediapipe\examples\desktop\face_mesh\face_mesh_cpu.exe -calculator_graph_config_file=mediapipe\graphs\face_mesh\face_mesh_desktop.pbtxt -input_video_path=C:/Users/tangzhiqiang/Videos/2024-05-20 17-53-04.mp4
 //! 自定义面部捕获功能
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/face_mesh_self:face_mesh_cpu_self 
-@bazel-bin\mediapipe\examples\desktop\face_mesh_self\face_mesh_cpu_self.exe -calculator_graph_config_file=mediapipe\graphs\face_mesh_self\face_mesh_desktop_live.pbtxt
+//! 文件
+@bazel-bin\mediapipe\examples\desktop\face_mesh_self\face_mesh_cpu_self.exe -calculator_graph_config_file=mediapipe\graphs\face_mesh_self\face_mesh_desktop.pbtxt -input_video_path=C:/Users/tangzhiqiang/Videos/2024-05-20 17-53-04.mp4
+//! 实时
+@bazel-bin\mediapipe\examples\desktop\face_mesh_self\face_mesh_cpu_self.exe -calculator_graph_config_file=mediapipe\graphs\face_mesh_self\face_mesh_desktop_live.pbtxt -input_video_path=C:/Users/tangzhiqiang/Videos/2024-05-20 17-53-04.mp4
 //! 可以编译，但是运行有问题
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/face_mesh:face_mesh_tflite
 @bazel-bin\mediapipe\examples\desktop\face_mesh\face_mesh_tflite.exe -calculator_graph_config_file=mediapipe\graphs\face_mesh\face_mesh_desktop_live.pbtxt
