@@ -261,7 +261,7 @@ class EmotionDetectionCalculator : public CalculatorBase {
       if(landmarkVec.size()>0)
       {
         auto id = runTensor(landmarkVec);
-        // printf("emotion = %s \n" ,m_emotion_vec[id].c_str());
+        printf("emotion = %s \n" ,m_emotion_vec[id].c_str());
       }
 
 #endif
@@ -356,15 +356,20 @@ struct Landmark {
     // print("push tensor landmar list :{landmark_list}")
 #endif
 
-    std::vector<std::vector<int>> landmark_point;
+    std::vector<std::vector<int32_t>> landmark_point;
     // 计算特征点列表（landmark list）
     for (const auto& landmark : landmarks.landmark()) {
-        int landmark_x = std::min(static_cast<int>(landmark.x() * m_img_width), m_img_width - 1);
-        int landmark_y = std::min(static_cast<int>(landmark.y() * m_img_height), m_img_height - 1);
+        int32_t landmark_x = std::min(static_cast<int>(landmark.x() * (float)m_img_width), m_img_width - 1);
+        int32_t landmark_y = std::min(static_cast<int>(landmark.y() * (float)m_img_height), m_img_height - 1);
         landmark_point.push_back({landmark_x, landmark_y});
     }
-
-    std::vector<std::vector<int>> temp_landmark_list = landmark_point;
+#if 0
+    int index = 0;
+    for (const auto& landmark : landmark_point) {
+      printf("landmark_point[%d] x=%d -- y=%d\n\n",index++,landmark[0],landmark[1]);
+    }
+#endif
+    std::vector<std::vector<int32_t>> temp_landmark_list = landmark_point;
 
     // 转换为相对坐标
     int base_x = 0, base_y = 0;
@@ -373,33 +378,46 @@ struct Landmark {
             base_x = temp_landmark_list[index][0];
             base_y = temp_landmark_list[index][1];
         }
-
         temp_landmark_list[index][0] -= base_x;
         temp_landmark_list[index][1] -= base_y;
     }
-
+#if 0
+    int index = 0;
+    for (const auto& landmark : temp_landmark_list) {
+      printf("temp_landmark_list[%d] x=%d -- y=%d\n\n",index++,landmark[0],landmark[1]);
+    }
+#endif
     // 转换为一维列表
-    std::vector<int> flattened_landmark_list;
+    std::vector<int32_t> flattened_landmark_list;
     for (const auto& point : temp_landmark_list) {
         flattened_landmark_list.insert(flattened_landmark_list.end(), point.begin(), point.end());
     }
-
-    // 归一化
-    int max_value = *std::max_element(flattened_landmark_list.begin(), flattened_landmark_list.end(), 
-                                      [](int a, int b) { return std::abs(a) < std::abs(b); });
-
-    if (max_value == 0) {
-        max_value = 1; // 防止除零
+#if 0
+    int index = 0;
+    for (const auto& landmark : flattened_landmark_list) {
+      printf("flattened_landmark_list[%d] value= %d\n",index++,landmark);
     }
+#endif
+    std::vector<float> abs_values(flattened_landmark_list.size()); 
+    std::transform(flattened_landmark_list.begin(), flattened_landmark_list.end(), abs_values.begin(), [](float n) {
+        return std::abs(n);
+    });
 
-    std::vector<float> normalized_landmark_list;
-    std::transform(flattened_landmark_list.begin(), flattened_landmark_list.end(), 
-                   std::back_inserter(normalized_landmark_list), 
-                   [max_value](int n) { return static_cast<float>(n) / max_value; });
+    // 找到绝对值中的最大值
+    float max_value = *std::max_element(abs_values.begin(), abs_values.end());
+    // 归一化函数
+    auto normalize = [max_value](int32_t n) {
+        return (float)n / (float)max_value;
+    };
+    std::vector<float> tmp;
+    abs_values.swap(tmp);
+    // 对列表中的每个元素进行归一化
+    std::vector<float> &normalized_landmark_list=abs_values; //! 复用vect
+    std::transform(flattened_landmark_list.begin(), flattened_landmark_list.end(), normalized_landmark_list.begin(), normalize);
 #if 0
     int index = 0;
     for (const auto& landmark : normalized_landmark_list) {
-      printf("index[%d] value= %.16f\n\n",index++,landmark);
+      printf("s temp_landmark_list[%d] value= %.16f\n\n",index++,landmark);
     }
 #endif
     return std::move(normalized_landmark_list);
