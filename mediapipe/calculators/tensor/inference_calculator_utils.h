@@ -70,9 +70,9 @@ absl::Status SetTfLiteCustomAllocation(tflite::Interpreter& interpreter,
   RET_CHECK(IsAlignedWithTFLiteDefaultAlignment(data_ptr))
       << "data_ptr must be aligned to " << tflite::kDefaultTensorAlignment
       << " bytes.";
-  TfLiteCustomAllocation allocation = {
-      .data = const_cast<void*>(reinterpret_cast<const void*>(data_ptr)),
-      .bytes = size_bytes};
+    TfLiteCustomAllocation allocation;
+    allocation.data = const_cast<void*>(reinterpret_cast<const void*>(data_ptr));
+    allocation.bytes = size_bytes;
   RET_CHECK_EQ(
       interpreter.SetCustomAllocationForTensor(tensor_index, allocation),
       kTfLiteOk);
