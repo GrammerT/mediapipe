@@ -261,7 +261,7 @@ class EmotionDetectionCalculator : public CalculatorBase {
       if(landmarkVec.size()>0)
       {
         auto id = runTensor(landmarkVec);
-        printf("emotion = %s \n" ,m_emotion_vec[id].c_str());
+        // printf("emotion = %s \n" ,m_emotion_vec[id].c_str());
       }
 
 #endif
@@ -282,11 +282,11 @@ private:
     }
 
     printf("emotion mode path:%s \n",m_options.model_path().c_str());
-// Load the model
+    // Load the model
     std::unique_ptr<::tflite::FlatBufferModel> model =
       ::tflite::FlatBufferModel::BuildFromFile(m_options.model_path().c_str());
     RET_CHECK(model) << "Failed to load TfLite model from model path.";
-// Build the m_interpreter
+    // Build the m_interpreter
     ::tflite::ops::builtin::BuiltinOpResolver resolver;
     ::tflite::InterpreterBuilder(*model, resolver)(&m_interpreter);
 
@@ -337,29 +337,37 @@ private:
         }
     }
 
+struct Landmark {
+    float x;
+    float y;
+};
   std::vector<float> dealLandmarksAndRunTensor(const NormalizedLandmarkList& landmarks)
   {
     if(landmarks.landmark_size()==0)
     {
       return {};
     }
-    //! 计算特征点列表（landmark list）。
-    std::vector<std::vector<int32_t>> landmark_point;
-    std::vector<std::vector<int32_t>> temp_landmark_list;
+
 #if 0
-    printf("landmarks.landmark_size [%d] \n",landmarks.landmark_size());
+    int index = 0;
+    for (const auto& landmark : landmarks.landmark()) {
+      printf("index[%d] x=%f --- y=%f\n ",index++,landmark.x(),landmark.y());
+    }
+    // print("push tensor landmar list :{landmark_list}")
 #endif
-    for (int i = 0; i < landmarks.landmark_size(); ++i) {
-      const NormalizedLandmark& landmark = landmarks.landmark(i);
-        int32_t landmark_x = std::min(static_cast<int>(landmark.x() * m_img_width), m_img_width - 1);
-        int32_t landmark_y = std::min(static_cast<int>(landmark.y() * m_img_height), m_img_height - 1);
+
+    std::vector<std::vector<int>> landmark_point;
+    // 计算特征点列表（landmark list）
+    for (const auto& landmark : landmarks.landmark()) {
+        int landmark_x = std::min(static_cast<int>(landmark.x() * m_img_width), m_img_width - 1);
+        int landmark_y = std::min(static_cast<int>(landmark.y() * m_img_height), m_img_height - 1);
         landmark_point.push_back({landmark_x, landmark_y});
-        temp_landmark_list.push_back({landmark_x, landmark_y});
     }
 
-    //! 预处理特征点列表，包括转换为相对坐标、展平为一维列表和归一化
-    int base_x = 0, base_y = 0;
+    std::vector<std::vector<int>> temp_landmark_list = landmark_point;
 
+    // 转换为相对坐标
+    int base_x = 0, base_y = 0;
     for (size_t index = 0; index < temp_landmark_list.size(); ++index) {
         if (index == 0) {
             base_x = temp_landmark_list[index][0];
@@ -369,26 +377,29 @@ private:
         temp_landmark_list[index][0] -= base_x;
         temp_landmark_list[index][1] -= base_y;
     }
-#if 0
-    printf("landmark_point size [%d] \n",landmark_point.size());
-    printf("temp_landmark_list size [%d] \n",temp_landmark_list.size());
-#endif
-    std::vector<int32_t> flattened_landmark_list;
+
+    // 转换为一维列表
+    std::vector<int> flattened_landmark_list;
     for (const auto& point : temp_landmark_list) {
         flattened_landmark_list.insert(flattened_landmark_list.end(), point.begin(), point.end());
     }
 
-    int32_t max_value = *std::max_element(flattened_landmark_list.begin(), flattened_landmark_list.end(), [](int a, int b) { return abs(a) < abs(b); });
+    // 归一化
+    int max_value = *std::max_element(flattened_landmark_list.begin(), flattened_landmark_list.end(), 
+                                      [](int a, int b) { return std::abs(a) < std::abs(b); });
+
+    if (max_value == 0) {
+        max_value = 1; // 防止除零
+    }
 
     std::vector<float> normalized_landmark_list;
-    transform(flattened_landmark_list.begin(), flattened_landmark_list.end(), back_inserter(normalized_landmark_list), [max_value](int n) {
-        return static_cast<float>(n) / max_value;
-    });
-
+    std::transform(flattened_landmark_list.begin(), flattened_landmark_list.end(), 
+                   std::back_inserter(normalized_landmark_list), 
+                   [max_value](int n) { return static_cast<float>(n) / max_value; });
 #if 0
-    for(int i=0;i<normalized_landmark_list.size();i++)
-    {
-      printf("normalized_landmark_list[%d]=%f \n",i,normalized_landmark_list[i]);
+    int index = 0;
+    for (const auto& landmark : normalized_landmark_list) {
+      printf("index[%d] value= %.16f\n\n",index++,landmark);
     }
 #endif
     return std::move(normalized_landmark_list);
@@ -396,6 +407,13 @@ private:
 
   int32_t runTensor(const std::vector<float>& landmark_list)
   {
+#if 0
+    for(int i=0;i<landmark_list.size();i++)
+    {
+      printf( "landmark_list[%d]=%f \n",i,landmark_list[i]);
+    }
+    // print("push tensor landmar list :{landmark_list}")
+#endif
     int input_details_tensor_index = m_input_details[0];
     int output_details_tensor_index = m_output_details[0];
     // Set the input tensor
@@ -407,23 +425,18 @@ private:
     }
     // Get the output tensor
     float* result = m_interpreter->typed_output_tensor<float>(output_details_tensor_index);
-
-    // Find the max value and its index
-    float max_value = -1.0;
-    int result_index = -1;
-    for (int i = 0; i < m_interpreter->tensor(output_details_tensor_index)->bytes / sizeof(float); ++i) 
-    {
-        if (result[i] > max_value) {
-            max_value = result[i];
-            result_index = i;
-        }
-    }
-    
+    // 找到最大值及其索引
+    int num_output_elements = m_interpreter->tensor(output_details_tensor_index)->bytes / sizeof(float);
+    auto max_it = std::max_element(result, result + num_output_elements);
+    float max_value = *max_it;
+    int result_index = std::distance(result, max_it);
+    int last_index=2;
+    // printf("result_index=%d max_value=%f \n",result_index,max_value);
     if (max_value >= m_emotion_threshold) {
-        m_last_index = result_index;
+        last_index = result_index;
         return result_index;
     } else {
-        return m_last_index;
+        return last_index;
     }
   }
 
@@ -463,8 +476,8 @@ private:
 // Sad
 // Surprise
   std::vector<std::string> m_emotion_vec={"Angry","Happy","Neutral","Sad","Surprise"};
-  int m_last_index=2;
-  float m_emotion_threshold=0.75;
+  
+  float m_emotion_threshold=0.85;
 };
 REGISTER_CALCULATOR(EmotionDetectionCalculator);
 
