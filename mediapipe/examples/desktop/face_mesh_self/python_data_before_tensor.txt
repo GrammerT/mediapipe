@@ -1,0 +1,1911 @@
+index[0] value= 0.0
+
+index[1] value= 0.0
+
+index[2] value= -0.03333333333333333
+
+index[3] value= -0.12666666666666668
+
+index[4] value= -0.03333333333333333
+
+index[5] value= -0.08
+
+index[6] value= -0.11333333333333333
+
+index[7] value= -0.32
+
+index[8] value= -0.04
+
+index[9] value= -0.18666666666666668
+
+index[10] value= -0.05333333333333334
+
+index[11] value= -0.26666666666666666
+
+index[12] value= -0.09333333333333334
+
+index[13] value= -0.4666666666666667
+
+index[14] value= -0.47333333333333333
+
+index[15] value= -0.44
+
+index[16] value= -0.11333333333333333
+
+index[17] value= -0.6133333333333333
+
+index[18] value= -0.12666666666666668
+
+index[19] value= -0.6933333333333334
+
+index[20] value= -0.18
+
+index[21] value= -0.98
+
+index[22] value= 0.0
+
+index[23] value= 0.013333333333333334
+
+index[24] value= 0.0
+
+index[25] value= 0.02666666666666667
+
+index[26] value= 0.0
+
+index[27] value= 0.04
+
+index[28] value= 0.02
+
+index[29] value= 0.12
+
+index[30] value= 0.02
+
+index[31] value= 0.14
+
+index[32] value= 0.02666666666666667
+
+index[33] value= 0.16666666666666666
+
+index[34] value= 0.02666666666666667
+
+index[35] value= 0.2
+
+index[36] value= 0.02666666666666667
+
+index[37] value= 0.2866666666666667
+
+index[38] value= -0.02666666666666667
+
+index[39] value= -0.09333333333333334
+
+index[40] value= -0.08666666666666667
+
+index[41] value= -0.09333333333333334
+
+index[42] value= -0.7333333333333333
+
+index[43] value= -0.6266666666666667
+
+index[44] value= -0.31333333333333335
+
+index[45] value= -0.42
+
+index[46] value= -0.36666666666666664
+
+index[47] value= -0.4066666666666667
+
+index[48] value= -0.42
+
+index[49] value= -0.4
+
+index[50] value= -0.49333333333333335
+
+index[51] value= -0.41333333333333333
+
+index[52] value= -0.2733333333333333
+
+index[53] value= -0.44
+
+index[54] value= -0.42
+
+index[55] value= -0.5533333333333333
+
+index[56] value= -0.36
+
+index[57] value= -0.5533333333333333
+
+index[58] value= -0.4666666666666667
+
+index[59] value= -0.5333333333333333
+
+index[60] value= -0.5
+
+index[61] value= -0.5066666666666667
+
+index[62] value= -0.54
+
+index[63] value= -0.37333333333333335
+
+index[64] value= -0.17333333333333334
+
+index[65] value= 0.3933333333333333
+
+index[66] value= -0.49333333333333335
+
+index[67] value= -0.44666666666666666
+
+index[68] value= -0.7133333333333334
+
+index[69] value= -0.37333333333333335
+
+index[70] value= -0.6133333333333333
+
+index[71] value= -0.4
+
+index[72] value= -0.34
+
+index[73] value= -0.16
+
+index[74] value= -0.08666666666666667
+
+index[75] value= 0.006666666666666667
+
+index[76] value= -0.08
+
+index[77] value= 0.04
+
+index[78] value= -0.16666666666666666
+
+index[79] value= 0.03333333333333333
+
+index[80] value= -0.22
+
+index[81] value= 0.05333333333333334
+
+index[82] value= -0.14666666666666667
+
+index[83] value= 0.05333333333333334
+
+index[84] value= -0.19333333333333333
+
+index[85] value= 0.06666666666666667
+
+index[86] value= -0.29333333333333333
+
+index[87] value= 0.17333333333333334
+
+index[88] value= -0.08
+
+index[89] value= -0.12
+
+index[90] value= -0.09333333333333334
+
+index[91] value= -0.18
+
+index[92] value= -0.5933333333333334
+
+index[93] value= -0.5533333333333333
+
+index[94] value= -0.24
+
+index[95] value= -0.32
+
+index[96] value= -0.22666666666666666
+
+index[97] value= -0.14
+
+index[98] value= -0.23333333333333334
+
+index[99] value= -0.17333333333333334
+
+index[100] value= -0.5133333333333333
+
+index[101] value= -0.15333333333333332
+
+index[102] value= -0.10666666666666667
+
+index[103] value= -0.25333333333333335
+
+index[104] value= -0.47333333333333333
+
+index[105] value= -0.6333333333333333
+
+index[106] value= -0.5466666666666666
+
+index[107] value= -0.6
+
+index[108] value= -0.6933333333333334
+
+index[109] value= -0.7333333333333333
+
+index[110] value= -0.23333333333333334
+
+index[111] value= -0.6266666666666667
+
+index[112] value= -0.30666666666666664
+
+index[113] value= -0.5466666666666666
+
+index[114] value= -0.35333333333333333
+
+index[115] value= 0.10666666666666667
+
+index[116] value= -0.5733333333333334
+
+index[117] value= 0.16666666666666666
+
+index[118] value= -0.18
+
+index[119] value= -0.10666666666666667
+
+index[120] value= -0.13333333333333333
+
+index[121] value= -0.09333333333333334
+
+index[122] value= -0.2866666666666667
+
+index[123] value= 0.08666666666666667
+
+index[124] value= -0.2733333333333333
+
+index[125] value= 0.08666666666666667
+
+index[126] value= -0.5866666666666667
+
+index[127] value= -0.6333333333333333
+
+index[128] value= -0.23333333333333334
+
+index[129] value= -0.12
+
+index[130] value= -0.37333333333333335
+
+index[131] value= -0.6466666666666666
+
+index[132] value= -0.38666666666666666
+
+index[133] value= -0.6933333333333334
+
+index[134] value= -0.4866666666666667
+
+index[135] value= -0.9
+
+index[136] value= -0.64
+
+index[137] value= -0.68
+
+index[138] value= -0.43333333333333335
+
+index[139] value= -0.7933333333333333
+
+index[140] value= -0.6333333333333333
+
+index[141] value= -0.5733333333333334
+
+index[142] value= -0.68
+
+index[143] value= -0.5933333333333334
+
+index[144] value= -0.08
+
+index[145] value= 0.02666666666666667
+
+index[146] value= -0.15333333333333332
+
+index[147] value= 0.04
+
+index[148] value= -0.20666666666666667
+
+index[149] value= 0.06
+
+index[150] value= -0.16666666666666666
+
+index[151] value= -0.1
+
+index[152] value= -0.28
+
+index[153] value= 0.08666666666666667
+
+index[154] value= -0.24
+
+index[155] value= 0.11333333333333333
+
+index[156] value= -0.26
+
+index[157] value= 0.08666666666666667
+
+index[158] value= -0.14666666666666667
+
+index[159] value= -0.12
+
+index[160] value= -0.18666666666666668
+
+index[161] value= 0.06666666666666667
+
+index[162] value= -0.13333333333333333
+
+index[163] value= 0.05333333333333334
+
+index[164] value= -0.07333333333333333
+
+index[165] value= 0.04666666666666667
+
+index[166] value= -0.06
+
+index[167] value= 0.29333333333333333
+
+index[168] value= -0.05333333333333334
+
+index[169] value= 0.20666666666666667
+
+index[170] value= -0.06
+
+index[171] value= 0.17333333333333334
+
+index[172] value= -0.05333333333333334
+
+index[173] value= 0.14666666666666667
+
+index[174] value= -0.05333333333333334
+
+index[175] value= 0.12666666666666668
+
+index[176] value= -0.17333333333333334
+
+index[177] value= 0.11333333333333333
+
+index[178] value= -0.18
+
+index[179] value= 0.12666666666666668
+
+index[180] value= -0.19333333333333333
+
+index[181] value= 0.14
+
+index[182] value= -0.2
+
+index[183] value= 0.16
+
+index[184] value= -0.29333333333333333
+
+index[185] value= 0.02666666666666667
+
+index[186] value= -0.68
+
+index[187] value= -0.11333333333333333
+
+index[188] value= -0.02666666666666667
+
+index[189] value= -0.08666666666666667
+
+index[190] value= -0.21333333333333335
+
+index[191] value= 0.10666666666666667
+
+index[192] value= -0.22666666666666666
+
+index[193] value= 0.10666666666666667
+
+index[194] value= -0.11333333333333333
+
+index[195] value= -0.07333333333333333
+
+index[196] value= -0.21333333333333335
+
+index[197] value= -0.09333333333333334
+
+index[198] value= -0.12
+
+index[199] value= -0.08666666666666667
+
+index[200] value= -0.29333333333333333
+
+index[201] value= -0.28
+
+index[202] value= -0.38666666666666666
+
+index[203] value= -0.23333333333333334
+
+index[204] value= -0.24666666666666667
+
+index[205] value= -0.14666666666666667
+
+index[206] value= -0.6133333333333333
+
+index[207] value= -0.8266666666666667
+
+index[208] value= -0.56
+
+index[209] value= -0.7466666666666667
+
+index[210] value= -0.5
+
+index[211] value= -0.68
+
+index[212] value= -0.23333333333333334
+
+index[213] value= 0.22666666666666666
+
+index[214] value= -0.26
+
+index[215] value= -0.7
+
+index[216] value= -0.30666666666666664
+
+index[217] value= -0.82
+
+index[218] value= -0.3466666666666667
+
+index[219] value= -0.9466666666666667
+
+index[220] value= -0.4666666666666667
+
+index[221] value= -0.4
+
+index[222] value= -0.6
+
+index[223] value= -0.32666666666666666
+
+index[224] value= -0.24666666666666667
+
+index[225] value= -0.46
+
+index[226] value= -0.56
+
+index[227] value= -0.48
+
+index[228] value= -0.2
+
+index[229] value= -0.36
+
+index[230] value= -0.18666666666666668
+
+index[231] value= -0.15333333333333332
+
+index[232] value= -0.6533333333333333
+
+index[233] value= -0.2733333333333333
+
+index[234] value= -0.5533333333333333
+
+index[235] value= -0.29333333333333333
+
+index[236] value= -0.47333333333333333
+
+index[237] value= -0.2866666666666667
+
+index[238] value= -0.37333333333333335
+
+index[239] value= -0.30666666666666664
+
+index[240] value= -0.3
+
+index[241] value= -0.34
+
+index[242] value= -0.24666666666666667
+
+index[243] value= -0.37333333333333335
+
+index[244] value= -0.14
+
+index[245] value= -0.44
+
+index[246] value= -0.6333333333333333
+
+index[247] value= -0.15333333333333332
+
+index[248] value= -0.6066666666666667
+
+index[249] value= -0.48
+
+index[250] value= -0.06
+
+index[251] value= -0.09333333333333334
+
+index[252] value= -0.22666666666666666
+
+index[253] value= -0.26
+
+index[254] value= -0.74
+
+index[255] value= -0.38
+
+index[256] value= -0.20666666666666667
+
+index[257] value= -0.4066666666666667
+
+index[258] value= -0.25333333333333335
+
+index[259] value= -0.14666666666666667
+
+index[260] value= -0.52
+
+index[261] value= -0.44
+
+index[262] value= -0.19333333333333333
+
+index[263] value= -0.19333333333333333
+
+index[264] value= -0.64
+
+index[265] value= 0.02666666666666667
+
+index[266] value= -0.25333333333333335
+
+index[267] value= -0.47333333333333333
+
+index[268] value= -0.15333333333333332
+
+index[269] value= -0.22666666666666666
+
+index[270] value= -0.43333333333333335
+
+index[271] value= 0.28
+
+index[272] value= -0.4066666666666667
+
+index[273] value= 0.35333333333333333
+
+index[274] value= -0.68
+
+index[275] value= -0.12666666666666668
+
+index[276] value= -0.52
+
+index[277] value= 0.22
+
+index[278] value= -0.7
+
+index[279] value= -0.49333333333333335
+
+index[280] value= -0.16666666666666666
+
+index[281] value= 0.4533333333333333
+
+index[282] value= -0.05333333333333334
+
+index[283] value= -0.08666666666666667
+
+index[284] value= -0.28
+
+index[285] value= -0.22
+
+index[286] value= -0.66
+
+index[287] value= -0.38666666666666666
+
+index[288] value= -0.41333333333333333
+
+index[289] value= -0.44
+
+index[290] value= -0.36666666666666664
+
+index[291] value= -0.44
+
+index[292] value= -0.24666666666666667
+
+index[293] value= 0.12
+
+index[294] value= -0.6133333333333333
+
+index[295] value= -0.04
+
+index[296] value= -0.04666666666666667
+
+index[297] value= 0.52
+
+index[298] value= -0.22
+
+index[299] value= 0.46
+
+index[300] value= -0.30666666666666664
+
+index[301] value= 0.41333333333333333
+
+index[302] value= -0.15333333333333332
+
+index[303] value= -0.84
+
+index[304] value= 0.06666666666666667
+
+index[305] value= 0.5133333333333333
+
+index[306] value= -0.32666666666666666
+
+index[307] value= -0.4533333333333333
+
+index[308] value= -0.29333333333333333
+
+index[309] value= -0.4666666666666667
+
+index[310] value= -0.26666666666666666
+
+index[311] value= -0.47333333333333333
+
+index[312] value= -0.6533333333333333
+
+index[313] value= -0.4866666666666667
+
+index[314] value= -0.30666666666666664
+
+index[315] value= -0.4866666666666667
+
+index[316] value= -0.3466666666666667
+
+index[317] value= -0.48
+
+index[318] value= -0.3933333333333333
+
+index[319] value= -0.47333333333333333
+
+index[320] value= -0.43333333333333335
+
+index[321] value= -0.46
+
+index[322] value= -0.46
+
+index[323] value= -0.4533333333333333
+
+index[324] value= -0.7466666666666667
+
+index[325] value= -0.5133333333333333
+
+index[326] value= -0.44666666666666666
+
+index[327] value= -0.44
+
+index[328] value= -0.02666666666666667
+
+index[329] value= -0.04
+
+index[330] value= -0.23333333333333334
+
+index[331] value= -0.006666666666666667
+
+index[332] value= -0.18
+
+index[333] value= -0.11333333333333333
+
+index[334] value= -0.11333333333333333
+
+index[335] value= -0.02666666666666667
+
+index[336] value= -0.10666666666666667
+
+index[337] value= -0.54
+
+index[338] value= -0.34
+
+index[339] value= 0.3466666666666667
+
+index[340] value= -0.25333333333333335
+
+index[341] value= 0.4
+
+index[342] value= -0.06
+
+index[343] value= 0.4866666666666667
+
+index[344] value= -0.49333333333333335
+
+index[345] value= 0.2733333333333333
+
+index[346] value= -0.2733333333333333
+
+index[347] value= -0.48
+
+index[348] value= -0.16
+
+index[349] value= -0.34
+
+index[350] value= 0.06
+
+index[351] value= 0.48
+
+index[352] value= -0.14
+
+index[353] value= 0.5
+
+index[354] value= -0.64
+
+index[355] value= 0.0
+
+index[356] value= -0.12
+
+index[357] value= 0.12666666666666668
+
+index[358] value= -0.12666666666666668
+
+index[359] value= 0.14
+
+index[360] value= -0.13333333333333333
+
+index[361] value= 0.16
+
+index[362] value= -0.13333333333333333
+
+index[363] value= 0.18666666666666668
+
+index[364] value= -0.15333333333333332
+
+index[365] value= 0.26666666666666666
+
+index[366] value= -0.24
+
+index[367] value= 0.07333333333333333
+
+index[368] value= -0.24666666666666667
+
+index[369] value= 0.07333333333333333
+
+index[370] value= -0.26
+
+index[371] value= 0.07333333333333333
+
+index[372] value= -0.34
+
+index[373] value= 0.06
+
+index[374] value= -0.5466666666666666
+
+index[375] value= -0.02
+
+index[376] value= -0.17333333333333334
+
+index[377] value= -0.4066666666666667
+
+index[378] value= -0.22
+
+index[379] value= -0.5266666666666666
+
+index[380] value= -0.25333333333333335
+
+index[381] value= -0.5066666666666667
+
+index[382] value= -0.22666666666666666
+
+index[383] value= 0.08
+
+index[384] value= -0.5266666666666666
+
+index[385] value= 0.12666666666666668
+
+index[386] value= -0.17333333333333334
+
+index[387] value= -0.5333333333333333
+
+index[388] value= -0.16666666666666666
+
+index[389] value= 0.3333333333333333
+
+index[390] value= -0.06666666666666667
+
+index[391] value= -0.3333333333333333
+
+index[392] value= -0.12666666666666668
+
+index[393] value= -0.38
+
+index[394] value= -0.08
+
+index[395] value= -0.3933333333333333
+
+index[396] value= -0.18666666666666668
+
+index[397] value= -0.24666666666666667
+
+index[398] value= 0.04666666666666667
+
+index[399] value= 0.42
+
+index[400] value= 0.03333333333333333
+
+index[401] value= 0.3466666666666667
+
+index[402] value= -0.06666666666666667
+
+index[403] value= 0.36
+
+index[404] value= -0.32
+
+index[405] value= 0.21333333333333335
+
+index[406] value= -0.29333333333333333
+
+index[407] value= -0.09333333333333334
+
+index[408] value= -0.24666666666666667
+
+index[409] value= 0.28
+
+index[410] value= -0.4266666666666667
+
+index[411] value= -0.08666666666666667
+
+index[412] value= -0.3466666666666667
+
+index[413] value= -0.03333333333333333
+
+index[414] value= -0.4666666666666667
+
+index[415] value= 0.013333333333333334
+
+index[416] value= -0.06666666666666667
+
+index[417] value= 0.43333333333333335
+
+index[418] value= -0.22
+
+index[419] value= -0.22
+
+index[420] value= -0.3466666666666667
+
+index[421] value= 0.2733333333333333
+
+index[422] value= -0.26
+
+index[423] value= 0.34
+
+index[424] value= -0.38666666666666666
+
+index[425] value= 0.14
+
+index[426] value= -0.5866666666666667
+
+index[427] value= 0.06666666666666667
+
+index[428] value= -0.44666666666666666
+
+index[429] value= 0.17333333333333334
+
+index[430] value= -0.5933333333333334
+
+index[431] value= 0.12
+
+index[432] value= -0.3933333333333333
+
+index[433] value= 0.03333333333333333
+
+index[434] value= -0.19333333333333333
+
+index[435] value= -0.3
+
+index[436] value= -0.16666666666666666
+
+index[437] value= -0.12666666666666668
+
+index[438] value= -0.20666666666666667
+
+index[439] value= -0.12
+
+index[440] value= -0.14
+
+index[441] value= -0.16666666666666666
+
+index[442] value= -0.2733333333333333
+
+index[443] value= -0.5733333333333334
+
+index[444] value= -0.36666666666666664
+
+index[445] value= -0.5933333333333334
+
+index[446] value= -0.44
+
+index[447] value= -0.5866666666666667
+
+index[448] value= -0.5
+
+index[449] value= -0.56
+
+index[450] value= -0.54
+
+index[451] value= -0.5266666666666666
+
+index[452] value= -0.56
+
+index[453] value= -0.4266666666666667
+
+index[454] value= -0.7
+
+index[455] value= -0.24666666666666667
+
+index[456] value= -0.5066666666666667
+
+index[457] value= -0.35333333333333333
+
+index[458] value= -0.44666666666666666
+
+index[459] value= -0.3466666666666667
+
+index[460] value= -0.37333333333333335
+
+index[461] value= -0.36
+
+index[462] value= -0.30666666666666664
+
+index[463] value= -0.38666666666666666
+
+index[464] value= -0.26
+
+index[465] value= -0.4066666666666667
+
+index[466] value= -0.22666666666666666
+
+index[467] value= -0.43333333333333335
+
+index[468] value= -0.7133333333333334
+
+index[469] value= -0.24666666666666667
+
+index[470] value= -0.20666666666666667
+
+index[471] value= -0.10666666666666667
+
+index[472] value= -0.15333333333333332
+
+index[473] value= -0.2866666666666667
+
+index[474] value= -0.12
+
+index[475] value= -0.12
+
+index[476] value= -0.09333333333333334
+
+index[477] value= -0.1
+
+index[478] value= -0.12666666666666668
+
+index[479] value= -0.11333333333333333
+
+index[480] value= -0.19333333333333333
+
+index[481] value= -0.09333333333333334
+
+index[482] value= -0.08
+
+index[483] value= -0.09333333333333334
+
+index[484] value= -0.07333333333333333
+
+index[485] value= -0.08666666666666667
+
+index[486] value= -0.23333333333333334
+
+index[487] value= -0.47333333333333333
+
+index[488] value= -0.20666666666666667
+
+index[489] value= -0.4666666666666667
+
+index[490] value= -0.18
+
+index[491] value= -0.46
+
+index[492] value= -0.48
+
+index[493] value= -0.44666666666666666
+
+index[494] value= -0.5266666666666666
+
+index[495] value= -0.48
+
+index[496] value= -0.02
+
+index[497] value= -0.3333333333333333
+
+index[498] value= 0.2733333333333333
+
+index[499] value= -0.5666666666666667
+
+index[500] value= 0.02666666666666667
+
+index[501] value= -0.11333333333333333
+
+index[502] value= 0.43333333333333335
+
+index[503] value= -0.82
+
+index[504] value= 0.13333333333333333
+
+index[505] value= -0.49333333333333335
+
+index[506] value= 0.18666666666666668
+
+index[507] value= -0.5
+
+index[508] value= 0.23333333333333334
+
+index[509] value= -0.5133333333333333
+
+index[510] value= 0.3
+
+index[511] value= -0.5533333333333333
+
+index[512] value= 0.08666666666666667
+
+index[513] value= -0.5
+
+index[514] value= 0.19333333333333333
+
+index[515] value= -0.66
+
+index[516] value= 0.14
+
+index[517] value= -0.64
+
+index[518] value= 0.25333333333333335
+
+index[519] value= -0.6533333333333333
+
+index[520] value= 0.2866666666666667
+
+index[521] value= -0.64
+
+index[522] value= 0.3466666666666667
+
+index[523] value= -0.5266666666666666
+
+index[524] value= 0.24666666666666667
+
+index[525] value= 0.32666666666666666
+
+index[526] value= 0.29333333333333333
+
+index[527] value= -0.58
+
+index[528] value= 0.5
+
+index[529] value= -0.5733333333333334
+
+index[530] value= 0.4
+
+index[531] value= -0.5733333333333334
+
+index[532] value= 0.23333333333333334
+
+index[533] value= -0.26
+
+index[534] value= 0.08
+
+index[535] value= -0.02666666666666667
+
+index[536] value= 0.08
+
+index[537] value= 0.013333333333333334
+
+index[538] value= 0.15333333333333332
+
+index[539] value= -0.02666666666666667
+
+index[540] value= 0.2
+
+index[541] value= -0.02666666666666667
+
+index[542] value= 0.13333333333333333
+
+index[543] value= 0.0
+
+index[544] value= 0.18
+
+index[545] value= -0.006666666666666667
+
+index[546] value= 0.2733333333333333
+
+index[547] value= 0.07333333333333333
+
+index[548] value= 0.013333333333333334
+
+index[549] value= -0.13333333333333333
+
+index[550] value= 0.013333333333333334
+
+index[551] value= -0.19333333333333333
+
+index[552] value= 0.36
+
+index[553] value= -0.7066666666666667
+
+index[554] value= 0.08666666666666667
+
+index[555] value= -0.37333333333333335
+
+index[556] value= 0.14
+
+index[557] value= -0.19333333333333333
+
+index[558] value= 0.13333333333333333
+
+index[559] value= -0.23333333333333334
+
+index[560] value= 0.4
+
+index[561] value= -0.30666666666666664
+
+index[562] value= -0.006666666666666667
+
+index[563] value= -0.2733333333333333
+
+index[564] value= 0.22666666666666666
+
+index[565] value= -0.7466666666666667
+
+index[566] value= 0.30666666666666664
+
+index[567] value= -0.7333333333333333
+
+index[568] value= 0.36666666666666664
+
+index[569] value= -0.9066666666666666
+
+index[570] value= -0.006666666666666667
+
+index[571] value= -0.6666666666666666
+
+index[572] value= 0.08666666666666667
+
+index[573] value= -0.6133333333333333
+
+index[574] value= 0.31333333333333335
+
+index[575] value= -0.006666666666666667
+
+index[576] value= 0.52
+
+index[577] value= -0.02
+
+index[578] value= 0.10666666666666667
+
+index[579] value= -0.15333333333333332
+
+index[580] value= 0.06
+
+index[581] value= -0.12666666666666668
+
+index[582] value= 0.26
+
+index[583] value= -0.013333333333333334
+
+index[584] value= 0.24666666666666667
+
+index[585] value= -0.006666666666666667
+
+index[586] value= 0.32666666666666666
+
+index[587] value= -0.78
+
+index[588] value= 0.14666666666666667
+
+index[589] value= -0.18
+
+index[590] value= 0.12666666666666668
+
+index[591] value= -0.7333333333333333
+
+index[592] value= 0.12666666666666668
+
+index[593] value= -0.78
+
+index[594] value= 0.13333333333333333
+
+index[595] value= -1.0
+
+index[596] value= 0.34
+
+index[597] value= -0.84
+
+index[598] value= 0.12
+
+index[599] value= -0.8866666666666667
+
+index[600] value= 0.38666666666666666
+
+index[601] value= -0.74
+
+index[602] value= 0.4066666666666667
+
+index[603] value= -0.7733333333333333
+
+index[604] value= 0.08
+
+index[605] value= -0.006666666666666667
+
+index[606] value= 0.14666666666666667
+
+index[607] value= -0.013333333333333334
+
+index[608] value= 0.19333333333333333
+
+index[609] value= -0.013333333333333334
+
+index[610] value= 0.09333333333333334
+
+index[611] value= -0.14
+
+index[612] value= 0.25333333333333335
+
+index[613] value= -0.006666666666666667
+
+index[614] value= 0.23333333333333334
+
+index[615] value= 0.03333333333333333
+
+index[616] value= 0.24
+
+index[617] value= -0.006666666666666667
+
+index[618] value= 0.07333333333333333
+
+index[619] value= -0.15333333333333332
+
+index[620] value= 0.16666666666666666
+
+index[621] value= 0.0
+
+index[622] value= 0.12666666666666668
+
+index[623] value= 0.006666666666666667
+
+index[624] value= 0.07333333333333333
+
+index[625] value= 0.02
+
+index[626] value= 0.11333333333333333
+
+index[627] value= 0.26
+
+index[628] value= 0.10666666666666667
+
+index[629] value= 0.17333333333333334
+
+index[630] value= 0.1
+
+index[631] value= 0.14666666666666667
+
+index[632] value= 0.09333333333333334
+
+index[633] value= 0.12
+
+index[634] value= 0.08666666666666667
+
+index[635] value= 0.1
+
+index[636] value= 0.17333333333333334
+
+index[637] value= 0.05333333333333334
+
+index[638] value= 0.18666666666666668
+
+index[639] value= 0.06
+
+index[640] value= 0.2
+
+index[641] value= 0.06666666666666667
+
+index[642] value= 0.21333333333333335
+
+index[643] value= 0.08666666666666667
+
+index[644] value= 0.23333333333333334
+
+index[645] value= -0.06666666666666667
+
+index[646] value= 0.5266666666666666
+
+index[647] value= -0.32
+
+index[648] value= 0.2
+
+index[649] value= 0.03333333333333333
+
+index[650] value= 0.22
+
+index[651] value= 0.02666666666666667
+
+index[652] value= 0.04666666666666667
+
+index[653] value= -0.1
+
+index[654] value= 0.13333333333333333
+
+index[655] value= -0.14666666666666667
+
+index[656] value= 0.05333333333333334
+
+index[657] value= -0.11333333333333333
+
+index[658] value= 0.15333333333333332
+
+index[659] value= -0.35333333333333333
+
+index[660] value= 0.25333333333333335
+
+index[661] value= -0.34
+
+index[662] value= 0.14666666666666667
+
+index[663] value= -0.21333333333333335
+
+index[664] value= 0.2733333333333333
+
+index[665] value= -0.9733333333333334
+
+index[666] value= 0.25333333333333335
+
+index[667] value= -0.8866666666666667
+
+index[668] value= 0.24
+
+index[669] value= -0.8
+
+index[670] value= 0.24
+
+index[671] value= 0.14666666666666667
+
+index[672] value= 0.0
+
+index[673] value= -0.7466666666666667
+
+index[674] value= -0.006666666666666667
+
+index[675] value= -0.8666666666666667
+
+index[676] value= -0.006666666666666667
+
+index[677] value= -1.0
+
+index[678] value= 0.2733333333333333
+
+index[679] value= -0.5266666666666666
+
+index[680] value= 0.4066666666666667
+
+index[681] value= -0.5
+
+index[682] value= 0.06
+
+index[683] value= -0.5066666666666667
+
+index[684] value= 0.34
+
+index[685] value= -0.6266666666666667
+
+index[686] value= 0.04666666666666667
+
+index[687] value= -0.4
+
+index[688] value= 0.1
+
+index[689] value= -0.2
+
+index[690] value= 0.48
+
+index[691] value= -0.46
+
+index[692] value= 0.38
+
+index[693] value= -0.4533333333333333
+
+index[694] value= 0.31333333333333335
+
+index[695] value= -0.41333333333333333
+
+index[696] value= 0.21333333333333335
+
+index[697] value= -0.4066666666666667
+
+index[698] value= 0.14
+
+index[699] value= -0.41333333333333333
+
+index[700] value= 0.08
+
+index[701] value= -0.4266666666666667
+
+index[702] value= -0.04
+
+index[703] value= -0.46
+
+index[704] value= 0.5
+
+index[705] value= -0.3466666666666667
+
+index[706] value= 0.38
+
+index[707] value= -0.6466666666666666
+
+index[708] value= 0.0
+
+index[709] value= -0.10666666666666667
+
+index[710] value= 0.1
+
+index[711] value= -0.31333333333333335
+
+index[712] value= 0.5
+
+index[713] value= -0.5866666666666667
+
+index[714] value= 0.03333333333333333
+
+index[715] value= -0.44666666666666666
+
+index[716] value= 0.15333333333333332
+
+index[717] value= -0.21333333333333335
+
+index[718] value= 0.32
+
+index[719] value= -0.5866666666666667
+
+index[720] value= 0.09333333333333334
+
+index[721] value= -0.24
+
+index[722] value= 0.5333333333333333
+
+index[723] value= -0.17333333333333334
+
+index[724] value= 0.06
+
+index[725] value= -0.5266666666666666
+
+index[726] value= 0.04666666666666667
+
+index[727] value= -0.26
+
+index[728] value= 0.44
+
+index[729] value= 0.13333333333333333
+
+index[730] value= 0.43333333333333335
+
+index[731] value= 0.2
+
+index[732] value= 0.54
+
+index[733] value= -0.3333333333333333
+
+index[734] value= 0.49333333333333335
+
+index[735] value= 0.04
+
+index[736] value= 0.4533333333333333
+
+index[737] value= -0.68
+
+index[738] value= 0.25333333333333335
+
+index[739] value= 0.38
+
+index[740] value= -0.006666666666666667
+
+index[741] value= -0.09333333333333334
+
+index[742] value= 0.15333333333333332
+
+index[743] value= -0.2866666666666667
+
+index[744] value= 0.44666666666666666
+
+index[745] value= -0.58
+
+index[746] value= 0.22666666666666666
+
+index[747] value= -0.54
+
+index[748] value= 0.18
+
+index[749] value= -0.5333333333333333
+
+index[750] value= 0.24
+
+index[751] value= 0.03333333333333333
+
+index[752] value= 0.52
+
+index[753] value= -0.22666666666666666
+
+index[754] value= 0.17333333333333334
+
+index[755] value= 0.48
+
+index[756] value= 0.30666666666666664
+
+index[757] value= 0.36666666666666664
+
+index[758] value= 0.36
+
+index[759] value= 0.29333333333333333
+
+index[760] value= 0.14
+
+index[761] value= -0.5333333333333333
+
+index[762] value= 0.1
+
+index[763] value= -0.5266666666666666
+
+index[764] value= 0.07333333333333333
+
+index[765] value= -0.5266666666666666
+
+index[766] value= 0.41333333333333333
+
+index[767] value= -0.6733333333333333
+
+index[768] value= 0.10666666666666667
+
+index[769] value= -0.5666666666666667
+
+index[770] value= 0.14666666666666667
+
+index[771] value= -0.58
+
+index[772] value= 0.19333333333333333
+
+index[773] value= -0.5866666666666667
+
+index[774] value= 0.23333333333333334
+
+index[775] value= -0.5933333333333334
+
+index[776] value= 0.26
+
+index[777] value= -0.5866666666666667
+
+index[778] value= 0.47333333333333333
+
+index[779] value= -0.72
+
+index[780] value= 0.25333333333333335
+
+index[781] value= -0.5533333333333333
+
+index[782] value= 0.17333333333333334
+
+index[783] value= -0.07333333333333333
+
+index[784] value= 0.1
+
+index[785] value= -0.16
+
+index[786] value= 0.06
+
+index[787] value= -0.06
+
+index[788] value= 0.37333333333333335
+
+index[789] value= 0.22666666666666666
+
+index[790] value= 0.31333333333333335
+
+index[791] value= 0.3
+
+index[792] value= 0.17333333333333334
+
+index[793] value= 0.44666666666666666
+
+index[794] value= 0.48
+
+index[795] value= 0.10666666666666667
+
+index[796] value= 0.07333333333333333
+
+index[797] value= -0.54
+
+index[798] value= 0.013333333333333334
+
+index[799] value= -0.37333333333333335
+
+index[800] value= 0.24666666666666667
+
+index[801] value= 0.4266666666666667
+
+index[802] value= 0.54
+
+index[803] value= -0.2
+
+index[804] value= 0.13333333333333333
+
+index[805] value= 0.08
+
+index[806] value= 0.14666666666666667
+
+index[807] value= 0.09333333333333334
+
+index[808] value= 0.16
+
+index[809] value= 0.10666666666666667
+
+index[810] value= 0.17333333333333334
+
+index[811] value= 0.13333333333333333
+
+index[812] value= 0.18666666666666668
+
+index[813] value= 0.20666666666666667
+
+index[814] value= 0.22
+
+index[815] value= -0.006666666666666667
+
+index[816] value= 0.22666666666666666
+
+index[817] value= -0.013333333333333334
+
+index[818] value= 0.24
+
+index[819] value= -0.02
+
+index[820] value= 0.2866666666666667
+
+index[821] value= -0.04666666666666667
+
+index[822] value= 0.4666666666666667
+
+index[823] value= -0.18666666666666668
+
+index[824] value= 0.0
+
+index[825] value= -0.43333333333333335
+
+index[826] value= 0.013333333333333334
+
+index[827] value= -0.5666666666666667
+
+index[828] value= 0.04666666666666667
+
+index[829] value= -0.5666666666666667
+
+index[830] value= 0.20666666666666667
+
+index[831] value= 0.0
+
+index[832] value= 0.48
+
+index[833] value= -0.04666666666666667
+
+index[834] value= -0.03333333333333333
+
+index[835] value= -0.56
+
+index[836] value= 0.21333333333333335
+
+index[837] value= 0.26
+
+index[838] value= -0.02666666666666667
+
+index[839] value= -0.3933333333333333
+
+index[840] value= 0.06666666666666667
+
+index[841] value= -0.29333333333333333
+
+index[842] value= 0.13333333333333333
+
+index[843] value= 0.32
+
+index[844] value= 0.31333333333333335
+
+index[845] value= 0.1
+
+index[846] value= 0.20666666666666667
+
+index[847] value= -0.18
+
+index[848] value= 0.2733333333333333
+
+index[849] value= 0.18666666666666668
+
+index[850] value= 0.34
+
+index[851] value= -0.21333333333333335
+
+index[852] value= 0.2733333333333333
+
+index[853] value= -0.13333333333333333
+
+index[854] value= 0.4
+
+index[855] value= -0.13333333333333333
+
+index[856] value= 0.16
+
+index[857] value= 0.3933333333333333
+
+index[858] value= 0.10666666666666667
+
+index[859] value= -0.2733333333333333
+
+index[860] value= 0.36
+
+index[861] value= 0.15333333333333332
+
+index[862] value= 0.3
+
+index[863] value= 0.24
+
+index[864] value= 0.35333333333333333
+
+index[865] value= 0.013333333333333334
+
+index[866] value= 0.52
+
+index[867] value= -0.12666666666666668
+
+index[868] value= 0.42
+
+index[869] value= 0.02666666666666667
+
+index[870] value= 0.5333333333333333
+
+index[871] value= -0.07333333333333333
+
+index[872] value= 0.3333333333333333
+
+index[873] value= -0.08666666666666667
+
+index[874] value= 0.05333333333333334
+
+index[875] value= -0.3466666666666667
+
+index[876] value= 0.08666666666666667
+
+index[877] value= -0.16666666666666666
+
+index[878] value= 0.12666666666666668
+
+index[879] value= -0.17333333333333334
+
+index[880] value= 0.06
+
+index[881] value= -0.2
+
+index[882] value= 0.04666666666666667
+
+index[883] value= -0.6266666666666667
+
+index[884] value= 0.13333333333333333
+
+index[885] value= -0.6733333333333333
+
+index[886] value= 0.20666666666666667
+
+index[887] value= -0.6933333333333334
+
+index[888] value= 0.2733333333333333
+
+index[889] value= -0.6866666666666666
+
+index[890] value= 0.32
+
+index[891] value= -0.6666666666666666
+
+index[892] value= 0.35333333333333333
+
+index[893] value= -0.58
+
+index[894] value= 0.52
+
+index[895] value= -0.4533333333333333
+
+index[896] value= 0.32
+
+index[897] value= -0.49333333333333335
+
+index[898] value= 0.2733333333333333
+
+index[899] value= -0.4666666666666667
+
+index[900] value= 0.2
+
+index[901] value= -0.46
+
+index[902] value= 0.13333333333333333
+
+index[903] value= -0.46
+
+index[904] value= 0.08
+
+index[905] value= -0.4666666666666667
+
+index[906] value= 0.04666666666666667
+
+index[907] value= -0.48
+
+index[908] value= 0.5133333333333333
+
+index[909] value= -0.46
+
+index[910] value= 0.12666666666666668
+
+index[911] value= -0.16
+
+index[912] value= 0.02666666666666667
+
+index[913] value= -0.32
+
+index[914] value= 0.05333333333333334
+
+index[915] value= -0.15333333333333332
+
+index[916] value= 0.02666666666666667
+
+index[917] value= -0.12
+
+index[918] value= 0.05333333333333334
+
+index[919] value= -0.14666666666666667
+
+index[920] value= 0.11333333333333333
+
+index[921] value= -0.14666666666666667
+
+index[922] value= 0.02
+
+index[923] value= -0.11333333333333333
+
+index[924] value= 0.013333333333333334
+
+index[925] value= -0.1
+
+index[926] value= 0.04
+
+index[927] value= -0.5266666666666666
+
+index[928] value= 0.013333333333333334
+
+index[929] value= -0.5066666666666667
+
+index[930] value= 0.0
+
+index[931] value= -0.4866666666666667
+
+index[932] value= 0.28
+
+index[933] value= -0.58
+
+index[934] value= 0.31333333333333335
+
+index[935] value= -0.62
+
+index[936] value= -0.37333333333333335
+
+index[937] value= -0.46
+
+index[938] value= -0.32
+
+index[939] value= -0.47333333333333333
+
+index[940] value= -0.38
+
+index[941] value= -0.5066666666666667
+
+index[942] value= -0.42
+
+index[943] value= -0.4533333333333333
+
+index[944] value= -0.36666666666666664
+
+index[945] value= -0.42
+
+index[946] value= 0.18
+
+index[947] value= -0.56
+
+index[948] value= 0.23333333333333334
+
+index[949] value= -0.5733333333333334
+
+index[950] value= 0.16666666666666666
+
+index[951] value= -0.6133333333333333
+
+index[952] value= 0.12666666666666668
+
+index[953] value= -0.5533333333333333
+
+index[954] value= 0.18666666666666668
+
+index[955] value= -0.5133333333333333
