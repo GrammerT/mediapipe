@@ -448,7 +448,12 @@ struct Landmark {
     float max_value = *max_it;
     int result_index = std::distance(result, max_it);
     int last_index=2;
-    // printf("result_index=%d max_value=%f \n",result_index,max_value);
+#if 0
+    for (size_t i = 0; i < num_output_elements; i++)
+    {
+      printf("result_index=%d value=%f \n",i,result[i]);
+    }
+#endif
     if (max_value >= m_emotion_threshold) {
         last_index = result_index;
         return result_index;
