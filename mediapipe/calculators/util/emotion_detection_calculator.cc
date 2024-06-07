@@ -474,23 +474,12 @@ struct Landmark {
     TfLiteStatus status_code = kTfLiteOk;
     tflite::Subgraph* subgraph = m_interpreter->subgraph(0);
     status_code = subgraph->Invoke();
-
     for (int tensor_index : subgraph->outputs()) {
       subgraph->EnsureTensorDataIsReadable(tensor_index);
     }
-    // if (m_interpreter->Invoke() != kTfLiteOk) {
-    //     throw std::runtime_error("Failed to invoke interpreter");
-    // }
     // Get the output tensor
     auto tensor = m_interpreter->subgraph(0)->tensor(output_details_tensor_index);
-    void* data = malloc(tensor->bytes);
-    if (!data) {
-      std::cout<<"data mallloc error."<<std::endl;
-      return 2;
-    }
-    memcpy(data, tensor->data.raw, tensor->bytes);
-
-    float* result = (float*)data;//m_interpreter->typed_output_tensor<float>(output_details_tensor_index);
+    float* result = (float*)tensor->data.raw;
     // 找到最大值及其索引
     int num_output_elements = m_interpreter->tensor(output_details_tensor_index)->bytes / sizeof(float);
     auto max_it = std::max_element(result, result + num_output_elements);
@@ -503,7 +492,6 @@ struct Landmark {
       printf("result_index=%d value=%f \n",i,result[i]);
     }
 #endif
-    free(data);
     if (max_value >= m_emotion_threshold) {
         last_index = result_index;
         return result_index;
