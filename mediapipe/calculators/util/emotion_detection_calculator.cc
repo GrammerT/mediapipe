@@ -289,8 +289,12 @@ private:
       ::tflite::FlatBufferModel::BuildFromFile(m_options.model_path().c_str());
     RET_CHECK(m_model) << "Failed to load TfLite model from model path.";
     // Build the m_interpreter
+    tflite::InterpreterOptions options;
+    options.SetPreserveAllTensors(false);
+    options.SetDisableDelegateClustering(false);
+    tflite::InterpreterBuilder builder(*m_model, m_resolver, &options);
     
-    if(::tflite::InterpreterBuilder(*m_model, m_resolver)(&m_interpreter)==kTfLiteOk)
+    if(builder(&m_interpreter)==kTfLiteOk)
     {
       std::cout<<"m_interpreter build success."<<std::endl;
       if(m_interpreter)
@@ -303,10 +307,6 @@ private:
         }
         else
         {
-          tflite::InterpreterOptions tf_options;
-          tf_options.SetPreserveAllTensors(true);
-          // 启用保留所有张量的选项
-          m_interpreter->ApplyOptions(&tf_options);
 
           printf("model load finised.\n");
           m_input_details = m_interpreter->inputs();
