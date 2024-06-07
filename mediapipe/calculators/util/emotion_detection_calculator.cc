@@ -283,44 +283,64 @@ private:
 
     printf("emotion mode path:%s \n",m_options.model_path().c_str());
     // Load the model
-    std::unique_ptr<::tflite::FlatBufferModel> model =
+     m_model =
       ::tflite::FlatBufferModel::BuildFromFile(m_options.model_path().c_str());
-    RET_CHECK(model) << "Failed to load TfLite model from model path.";
+    RET_CHECK(m_model) << "Failed to load TfLite model from model path.";
     // Build the m_interpreter
-    ::tflite::ops::builtin::BuiltinOpResolver resolver;
-    ::tflite::InterpreterBuilder(*model, resolver)(&m_interpreter);
-
-    RET_CHECK(m_interpreter)<<"m_interpreter build failure.";
-    if(m_interpreter)
+    
+    if(::tflite::InterpreterBuilder(*m_model, m_resolver)(&m_interpreter)==kTfLiteOk)
     {
-      m_interpreter->SetNumThreads(m_tf_num_thread);
-      // Resize input tensors, if desired.
-      if(m_interpreter->AllocateTensors()!=kTfLiteOk)
+      std::cout<<"m_interpreter build success."<<std::endl;
+      if(m_interpreter)
       {
-        printf("interpreter allocate tensor error.");
-      }
-      else
-      {
-        printf("model load finised.\n");
-        m_input_details = m_interpreter->inputs();
-        
-        for (int tensor_index : m_input_details) {
+        m_interpreter->SetNumThreads(m_tf_num_thread);
+        // Resize input tensors, if desired.
+        if(m_interpreter->AllocateTensors()!=kTfLiteOk)
+        {
+          printf("interpreter allocate tensor error.");
+        }
+        else
+        {
+          tflite::InterpreterOptions tf_options;
+          tf_options.SetPreserveAllTensors(true);
+          // 启用保留所有张量的选项
+          m_interpreter->ApplyOptions(&tf_options);
+
+          printf("model load finised.\n");
+          m_input_details = m_interpreter->inputs();
           
-            const TfLiteTensor* tensor = m_interpreter->tensor(tensor_index);
-            printf("input details name : %s %d %d \n",tensor->name, tensor->type, tensor->dims->size);
-            m_input_tensor_details.push_back({tensor->name, tensor->type, tensor->dims});
-        }
-
-        m_output_details = m_interpreter->outputs();
-        for (int tensor_index : m_output_details) {
-            const TfLiteTensor* tensor = m_interpreter->tensor(tensor_index);
+          for (int tensor_index : m_input_details) {
             
-            m_output_tensor_details.push_back({tensor->name, tensor->type, tensor->dims});
-        }
+              const TfLiteTensor* tensor = m_interpreter->tensor(tensor_index);
+              printf("input details name :%d %s %d %d %d\n",tensor_index,tensor->name, tensor->type, tensor->dims->size,tensor->bytes);
+              m_input_tensor_details.push_back({tensor->name, tensor->type, tensor->dims});
+          }
 
-        PrintTensorDetails();
+          m_output_details = m_interpreter->outputs();
+          for (int tensor_index : m_output_details) {
+              const TfLiteTensor* tensor = m_interpreter->tensor(tensor_index);
+              printf("output details name :%d %s %d %d %d\n",tensor_index, tensor->name, tensor->type, tensor->dims->size,tensor->bytes);
+              m_output_tensor_details.push_back({tensor->name, tensor->type, tensor->dims});
+          }
+
+          PrintTensorDetails();
+
+          std::vector<int> output_indices_excluding_feedback_tensors;
+          output_indices_excluding_feedback_tensors.reserve(
+              m_interpreter->outputs().size());
+          for (int i = 0; i < m_interpreter->outputs().size(); ++i) {
+            output_indices_excluding_feedback_tensors.push_back(i);
+          }
+
+        }
       }
     }
+    else
+    {
+      std::cout<<"m_interpreter build failure."<<std::endl;
+    }
+
+
 
     return absl::OkStatus();
   }
@@ -436,6 +456,13 @@ struct Landmark {
     // Set the input tensor
     float* input_tensor = m_interpreter->typed_tensor<float>(input_details_tensor_index);
     std::copy(landmark_list.begin(), landmark_list.end(), input_tensor);
+#if 0
+    for(int i=0;i<landmark_list.size();i++)
+    {
+      printf( "input_tensor[%d]=%f \n",i,input_tensor[i]); //! 验证成功
+    }
+    // print("push tensor landmar list :{landmark_list}")
+#endif
     // Invoke the interpreter
     if (m_interpreter->Invoke() != kTfLiteOk) {
         throw std::runtime_error("Failed to invoke interpreter");
@@ -483,6 +510,8 @@ private:
 
   // Options for the calculator.
   EmotionDetectionCalculatorOptions m_options;
+  std::unique_ptr<::tflite::FlatBufferModel> m_model;
+  ::tflite::ops::builtin::BuiltinOpResolver m_resolver;
   std::unique_ptr<::tflite::Interpreter> m_interpreter; 
   std::vector<int> m_input_details;
   std::vector<int> m_output_details;
