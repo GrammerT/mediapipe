@@ -23,6 +23,7 @@
 std::string calculator_graph_config_contents = R"pb(
   input_stream: "input_video"
   output_stream: "output_video"
+
   node{
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
@@ -38,11 +39,12 @@ node {
   input_stream: "IMAGE:throttled_input_video"
   output_stream: "SEGMENTATION_MASK:segmentation_mask"
 }
+
 node {
   calculator: "VirtualBackgroundCalculator"
   input_stream: "IMAGE:throttled_input_video"
   input_stream: "MASK:segmentation_mask"
-  output_stream: "IMAGE:output_video"
+  output_stream: "IMAGE:virtual_bk_video_1"
   node_options: {
     [type.googleapis.com/mediapipe.VirtualBackgroundCalculatorOptions] {
       mask_channel: UNKNOWN
@@ -51,7 +53,40 @@ node {
       background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg"
     }
   }
-})pb";
+}
+
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:0:num_faces"
+  output_side_packet: "PACKET:1:with_attention"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { int_value: 1 }
+      packet { bool_value: true }
+    }
+  }
+}
+
+node {
+  calculator: "FaceLandmarkFrontWithEmotionDetectionCpu"
+  input_stream: "IMAGE:throttled_input_video"
+  input_side_packet: "NUM_FACES:num_faces"
+  input_side_packet: "WITH_ATTENTION:with_attention"
+  output_stream: "LANDMARKS:multi_face_landmarks"
+  output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
+  output_stream: "DETECTIONS:face_detections"
+  output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
+}
+
+node {
+  calculator: "FaceRendererCpu"
+  input_stream: "IMAGE:virtual_bk_video_1"
+  input_stream: "LANDMARKS:multi_face_landmarks"
+  input_stream: "NORM_RECTS:face_rects_from_landmarks"
+  input_stream: "DETECTIONS:face_detections"
+  output_stream: "IMAGE:output_video"
+}
+)pb";
 
 
 constexpr char kInputStream[] = "input_video";

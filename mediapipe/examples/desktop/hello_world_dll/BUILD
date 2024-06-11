@@ -24,9 +24,12 @@ cc_binary(
             "VideoEffectImpl.h","VideoEffectImpl.cpp",
             "MemoryPool.h","MemoryPool.cpp"
             ],
-    data = ["//mediapipe/modules/selfie_segmentation:selfie_segmentation.tflite"],
-    # data = ["//ACData:selfie_segmentation.tflite"], 
+    data = ["//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite",
+            "//mediapipe/modules/selfie_segmentation:selfie_segmentation.tflite",
+            "//mediapipe/modules/face_emotion_detect_self:keypoint_classifier.tflite"
+        ],
     deps = [
+        "//mediapipe/graphs/face_mesh_self:desktop_live_calculators",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:image_frame_opencv",
@@ -40,6 +43,18 @@ cc_binary(
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
         "//mediapipe/graphs/selfie_segmentation_image:selfie_segmentation_cpu_deps",
+
+        "//mediapipe/calculators/core:constant_side_packet_calculator",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/graphs/face_mesh_self/subgraphs:face_renderer_cpu",
+        "//mediapipe/modules/face_landmark:face_landmark_front_with_emotion_detection_cpu",
+
+        "//mediapipe/calculators/core:split_proto_list_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/calculators/util:landmarks_to_render_data_calculator",
+        "//mediapipe/calculators/util:rect_to_render_data_calculator",
+        "//mediapipe/graphs/face_mesh_self/calculators:face_landmarks_to_render_data_calculator",
     ],
     linkshared=True,
 )
