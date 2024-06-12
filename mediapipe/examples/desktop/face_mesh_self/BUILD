@@ -30,7 +30,8 @@ cc_binary(
     data = [
         "//mediapipe/modules/face_landmark:face_landmark_with_attention.tflite",
         "//mediapipe/modules/selfie_segmentation:selfie_segmentation.tflite",
-        "//mediapipe/modules/face_emotion_detect_self:keypoint_classifier.tflite"
+        "//mediapipe/modules/face_emotion_detect_self:keypoint_classifier.tflite",
+        "//mediapipe/modules/face_detection:face_detection_short_range.tflite"
     ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",

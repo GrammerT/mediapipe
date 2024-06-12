@@ -21,10 +21,9 @@
 
 
 std::string calculator_graph_config_contents = R"pb(
-  input_stream: "input_video"
-  output_stream: "output_video"
-
-  node{
+input_stream: "input_video"
+output_stream: "output_video"
+node{
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
   input_stream: "FINISHED:output_video"
@@ -34,13 +33,12 @@ std::string calculator_graph_config_contents = R"pb(
   }
   output_stream: "throttled_input_video"
 }
-node {
+node{
   calculator: "SelfieSegmentationCpu"
   input_stream: "IMAGE:throttled_input_video"
   output_stream: "SEGMENTATION_MASK:segmentation_mask"
 }
-
-node {
+node{
   calculator: "VirtualBackgroundCalculator"
   input_stream: "IMAGE:throttled_input_video"
   input_stream: "MASK:segmentation_mask"
@@ -54,7 +52,6 @@ node {
     }
   }
 }
-
 node {
   calculator: "ConstantSidePacketCalculator"
   output_side_packet: "PACKET:0:num_faces"
@@ -66,7 +63,6 @@ node {
     }
   }
 }
-
 node {
   calculator: "FaceLandmarkFrontWithEmotionDetectionCpu"
   input_stream: "IMAGE:throttled_input_video"
@@ -77,7 +73,6 @@ node {
   output_stream: "DETECTIONS:face_detections"
   output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
 }
-
 node {
   calculator: "FaceRendererCpu"
   input_stream: "IMAGE:virtual_bk_video_1"
@@ -85,13 +80,14 @@ node {
   input_stream: "NORM_RECTS:face_rects_from_landmarks"
   input_stream: "DETECTIONS:face_detections"
   output_stream: "IMAGE:output_video"
-}
-)pb";
+})pb";
+
 
 
 constexpr char kInputStream[] = "input_video";
 constexpr char kOutputStream[] = "output_video";
 constexpr char kWindowName[] = "MediaPipe";
+
 
 // #define OUT_YUV_FILE
 #ifdef OUT_YUV_FILE
@@ -138,6 +134,7 @@ bool VideoEffectImpl::initVideoEffect(std::shared_ptr<SVideoEffectParam> param)
     {
       ABSL_LOG(INFO)<<"init param : user_pure_color:"<<m_param->user_pure_color<<"  pure_color_value:"<<(int)m_param->pure_color;
     }
+
     return true;
 }
 
@@ -262,13 +259,14 @@ void VideoEffectImpl::startGraphThread()
   }
   ABSL_LOG(INFO) << "Starting graph success: " << m_graph_thread.get_id();
 #ifdef SHOW_CV_WINDOW
+  ABSL_LOG(INFO) << "capture will opene."; 
   m_capture.open(0);
-  m_capture.isOpened();
+  ABSL_LOG(INFO) << "capture opened : "<< m_capture.isOpened();
   cv::namedWindow(kWindowName, /*flags=WINDOW_AUTOSIZE*/ 1);
 #if (CV_MAJOR_VERSION >= 3) && (CV_MINOR_VERSION >= 2)
     m_capture.set(cv::CAP_PROP_FRAME_WIDTH, 640);
     m_capture.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
-    m_capture.set(cv::CAP_PROP_FPS, 30);
+    m_capture.set(cv::CAP_PROP_FPS, 10);
 #endif 
 #endif
   ABSL_LOG(INFO) << "frame queue size:" << m_frame_queue.size();
@@ -277,6 +275,7 @@ void VideoEffectImpl::startGraphThread()
   std::unique_lock<std::mutex> locker(m_frame_queue_mutex);
   m_frame_queue.swap(t);
   locker.unlock();  
+  ABSL_LOG(INFO) << "while m_is_graph_running will running.";
   while (m_is_graph_running) {
     // Capture opencv camera or video frame.
 #ifdef  SHOW_CV_WINDOW
@@ -290,6 +289,7 @@ void VideoEffectImpl::startGraphThread()
     cv::Mat camera_frame;
     cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
     cv::flip(camera_frame, camera_frame, /*flipcode=HORIZONTAL*/ 1);
+    uint64_t frame_index=0;
 #else
     uint64_t frame_index=0;
     cv::Mat camera_frame = PopVideoFrameQueueToCVMat(frame_index);
@@ -316,18 +316,20 @@ void VideoEffectImpl::startGraphThread()
                           .At(mediapipe::Timestamp(frame_timestamp_us)));
     if (!addRetStatus.ok())
     {
-      ABSL_LOG(WARNING) << "addRetStatus return false.";
+      ABSL_LOG(WARNING) << "addRetStatus return false."<<addRetStatus.ToString();
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
       continue;
     }
     // Get the graph result packet, or stop if that fails.
     mediapipe::Packet packet;
+    ABSL_LOG(INFO) << "before poller next. ";
     if (!m_stream_poller->Next(&packet)) 
     {
       ABSL_LOG(WARNING) << "m_stream_poller->Next return false.";
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
       continue;
     }
+    ABSL_LOG(INFO) << "after poller next. ";
     auto& output_frame = packet.Get<mediapipe::ImageFrame>();
     // Convert back to opencv for display or saving
     cv::Mat output_frame_mat = mediapipe::formats::MatView(&output_frame);
