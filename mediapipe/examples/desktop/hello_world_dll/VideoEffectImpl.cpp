@@ -69,16 +69,16 @@ node {
   input_side_packet: "NUM_FACES:num_faces"
   input_side_packet: "WITH_ATTENTION:with_attention"
   output_stream: "LANDMARKS:multi_face_landmarks"
-  output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
+ #output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
   output_stream: "DETECTIONS:face_detections"
   output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
 }
 node {
   calculator: "FaceRendererCpu"
   input_stream: "IMAGE:virtual_bk_video_1"
-  input_stream: "LANDMARKS:multi_face_landmarks"
-  input_stream: "NORM_RECTS:face_rects_from_landmarks"
-  input_stream: "DETECTIONS:face_detections"
+  #input_stream: "LANDMARKS:multi_face_landmarks"
+  #input_stream: "NORM_RECTS:face_rects_from_landmarks"
+  #input_stream: "DETECTIONS:face_detections"
   output_stream: "IMAGE:output_video"
 })pb";
 
@@ -322,14 +322,12 @@ void VideoEffectImpl::startGraphThread()
     }
     // Get the graph result packet, or stop if that fails.
     mediapipe::Packet packet;
-    ABSL_LOG(INFO) << "before poller next. ";
     if (!m_stream_poller->Next(&packet)) 
     {
       ABSL_LOG(WARNING) << "m_stream_poller->Next return false.";
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
       continue;
     }
-    ABSL_LOG(INFO) << "after poller next. ";
     auto& output_frame = packet.Get<mediapipe::ImageFrame>();
     // Convert back to opencv for display or saving
     cv::Mat output_frame_mat = mediapipe::formats::MatView(&output_frame);
