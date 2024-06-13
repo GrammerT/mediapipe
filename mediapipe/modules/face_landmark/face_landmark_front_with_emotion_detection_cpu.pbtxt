@@ -49,6 +49,9 @@ input_side_packet: "WITH_ATTENTION:with_attention"
 # this packet so that they don't wait for it unnecessarily.
 output_stream: "LANDMARKS:multi_face_landmarks"
 
+# output emotion_type_str (string)
+output_stream: "EMOTION:emotion_type_str"
+
 # Extra outputs (for debugging, for instance).
 # Detected faces. (std::vector<Detection>)
 output_stream: "DETECTIONS:face_detections"
@@ -199,6 +202,7 @@ node {
   input_stream: "ROI:face_rect"
   input_side_packet: "WITH_ATTENTION:with_attention"
   output_stream: "LANDMARKS:face_landmarks"
+  output_stream: "EMOTION:emotion_type_str"
 }
 
 # Calculates region of interest based on face landmarks, so that can be reused

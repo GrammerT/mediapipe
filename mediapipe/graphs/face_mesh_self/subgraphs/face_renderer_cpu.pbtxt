@@ -4,17 +4,21 @@ type: "FaceRendererCpu"
 
 # CPU image. (ImageFrame)
 input_stream: "IMAGE:input_image"
+# about emotion
+input_stream: "EMOTION:emotion_type_str"
 # Collection of detected/predicted faces, each represented as a list of
 # landmarks. (std::vector<NormalizedLandmarkList>)
 #input_stream: "LANDMARKS:multi_face_landmarks"
 # Regions of interest calculated based on palm detections.
 # (std::vector<NormalizedRect>)
-#input_stream: "NORM_RECTS:rects"
+input_stream: "NORM_RECTS:rects"
 # Detected palms. (std::vector<Detection>)
 #input_stream: "DETECTIONS:detections"
 
 # CPU image with rendered data. (ImageFrame)
 output_stream: "IMAGE:output_image"
+
+
 
 #node {
 #  calculator: "ImagePropertiesCalculator"
@@ -72,25 +76,26 @@ output_stream: "IMAGE:output_image"
 #}
 
 # Converts normalized rects to drawing primitives for annotation overlay.
-#node {
-#  calculator: "RectToRenderDataCalculator"
-#  input_stream: "NORM_RECTS:rects"
-#  output_stream: "RENDER_DATA:rects_render_data"
-# # node_options: {
-#    [type.googleapis.com/mediapipe.RectToRenderDataCalculatorOptions] {
-#      filled: false
-#      color { r: 255 g: 0 b: 0 }
-#      thickness: 4.0
-#    }
-#  }
-#}
+node {
+  calculator: "RectToRenderDataCalculator"
+  input_stream: "NORM_RECTS:rects"
+  output_stream: "RENDER_DATA:rects_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.RectToRenderDataCalculatorOptions] {
+      filled: false
+      color { r: 255 g: 0 b: 0 }
+      thickness: 4.0
+    }
+  }
+}
 
 # Draws and emotion detection operation
 node {
   calculator: "AnnotationOverlayCalculator"
   input_stream: "IMAGE:input_image"
+  input_stream: "EMOTION:emotion_type_str"
 #  input_stream: "detections_render_data"
 #  input_stream: "VECTOR:0:multi_face_landmarks_render_data"
-#  input_stream: "rects_render_data"
+  input_stream: "rects_render_data"
   output_stream: "IMAGE:output_image"
 }

@@ -41,6 +41,8 @@ input_side_packet: "WITH_ATTENTION:with_attention"
 # the MediaPipe framework will internally inform the downstream calculators of
 # the absence of this packet so that they don't wait for it unnecessarily.
 output_stream: "LANDMARKS:face_landmarks"
+# output emotion_type_str (string)
+output_stream: "EMOTION:emotion_type_str"
 
 # Transforms the input image into a 192x192 tensor.
 node: {
@@ -188,6 +190,7 @@ node {
   input_stream: "IMAGE:image" 
   input_stream: "NORM_LANDMARKS:landmarks"
   input_stream: "NORM_RECT:roi"
+  output_stream: "EMOTION:emotion_type_str"
   output_stream: "NORM_LANDMARKS:face_landmarks"
   options {
     [mediapipe.EmotionDetectionCalculatorOptions.ext] {

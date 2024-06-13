@@ -49,6 +49,7 @@ constexpr char kVectorTag[] = "VECTOR";
 constexpr char kGpuBufferTag[] = "IMAGE_GPU";
 constexpr char kImageFrameTag[] = "IMAGE";
 constexpr char kImageTag[] = "UIMAGE";  // Universal Image
+constexpr char kEmotionTag[] = "EMOTION";
 
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
 
@@ -204,6 +205,11 @@ absl::Status AnnotationOverlayCalculator::GetContract(CalculatorContract* cc) {
     use_gpu = true;
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
+  if(cc->Inputs().HasTag(kEmotionTag))
+  {
+    printf("have emotion tag.\n");
+    cc->Inputs().Tag(kEmotionTag).Set<std::string>();
+  }
   if (cc->Inputs().HasTag(kImageFrameTag)) {
     cc->Inputs().Tag(kImageFrameTag).Set<ImageFrame>();
     RET_CHECK(cc->Outputs().HasTag(kImageFrameTag));
@@ -222,6 +228,7 @@ absl::Status AnnotationOverlayCalculator::GetContract(CalculatorContract* cc) {
        ++id) {
     auto tag_and_index = cc->Inputs().TagAndIndexFromId(id);
     std::string tag = tag_and_index.first;
+    printf("tag is %s \n",tag.c_str());
     if (tag == kVectorTag) {
       cc->Inputs().Get(id).Set<std::vector<RenderData>>();
     } else if (tag.empty()) {
@@ -248,6 +255,7 @@ absl::Status AnnotationOverlayCalculator::GetContract(CalculatorContract* cc) {
     MP_RETURN_IF_ERROR(mediapipe::GlCalculatorHelper::UpdateContract(cc));
 #endif  // !MEDIAPIPE_DISABLE_GPU
   }
+
 
   return absl::OkStatus();
 }
@@ -313,7 +321,15 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
   if (HasImageTag(cc)) {
     use_gpu_ = cc->Inputs().Tag(kImageTag).Get<mediapipe::Image>().UsesGpu();
   }
-
+  std::string emotion_str = "normal";
+  printf("will render emotion str \n");
+  if(cc->Inputs().HasTag(kEmotionTag))
+  {
+    emotion_str = cc->Inputs().Tag(kEmotionTag).Get<std::string>();
+    ABSL_LOG(INFO) << "render emotion str is :"<<emotion_str;
+    printf("render emotion str is :%s\n",emotion_str.c_str());
+  }
+  
   // Initialize render target, drawn with OpenCV.
   std::unique_ptr<cv::Mat> image_mat;
   ImageFormat::Format target_format;

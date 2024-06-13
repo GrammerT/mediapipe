@@ -16,12 +16,14 @@
 #include <functional>
 #include <vector>
 #include <algorithm>
-
+#include <string>
+#include "absl/log/absl_check.h"
 #include "mediapipe/calculators/util/emotion_detection_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/packet.h"
 #include <tensorflow/lite/interpreter.h>
 #include "tensorflow/lite/model.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -40,6 +42,7 @@ constexpr char kImageFrameTag[] = "IMAGE";
 constexpr char kLandmarksTag[] = "NORM_LANDMARKS";
 constexpr char kRectTag[] = "NORM_RECT";
 constexpr char kProjectionMatrix[] = "PROJECTION_MATRIX";
+constexpr char kEmotionTag[] = "EMOTION";
 
 }  // namespace
 
@@ -134,6 +137,10 @@ class EmotionDetectionCalculator : public CalculatorBase {
       cc->Outputs().Get(id).Set<NormalizedLandmarkList>();
     }
 
+    if (cc->Outputs().HasTag(kEmotionTag)) {
+      printf("will set emotion str.\n");
+      cc->Outputs().Tag(kEmotionTag).Set<std::string>();
+    }
     return absl::OkStatus();
   }
 
@@ -232,7 +239,7 @@ class EmotionDetectionCalculator : public CalculatorBase {
     } else {
       return absl::InternalError("Either rect or matrix must be specified.");
     }
-
+    const Timestamp timestamp = cc->InputTimestamp();
     CollectionItemId input_id = cc->Inputs().BeginId(kLandmarksTag);
     CollectionItemId output_id = cc->Outputs().BeginId(kLandmarksTag);
     // Number of inputs and outpus is the same according to the contract.
@@ -250,7 +257,6 @@ class EmotionDetectionCalculator : public CalculatorBase {
         NormalizedLandmark* new_landmark = output_landmarks.add_landmark();
         project_fn(landmark, new_landmark);
       }
-
 #if 0
       printf("output land mark output_landmarks.landmark_size(%d) content [ \n",output_landmarks.landmark_size());
       for (int i = 0; i < output_landmarks.landmark_size(); ++i) {
@@ -263,15 +269,19 @@ class EmotionDetectionCalculator : public CalculatorBase {
 #if 1
       if(landmarkVec.size()>0)
       {
-        auto id = runTensor(landmarkVec);
+        m_last_id = runTensor(landmarkVec);
         // printf("emotion = %s \n" ,m_emotion_vec[id].c_str());
       }
-
 #endif
-      cc->Outputs().Get(output_id).AddPacket(
-          MakePacket<NormalizedLandmarkList>(std::move(output_landmarks))
-              .At(cc->InputTimestamp()));
+    cc->Outputs().Get(output_id).AddPacket(
+        MakePacket<NormalizedLandmarkList>(std::move(output_landmarks))
+            .At(timestamp));
+
     }
+    cc->Outputs()
+        .Tag(kEmotionTag)
+        .Add(new std::string(m_emotion_vec[m_last_id]),timestamp);
+    m_last_id = 2;
     return absl::OkStatus();
   }
 
@@ -536,9 +546,10 @@ private:
 // Neutral
 // Sad
 // Surprise
-  std::vector<std::string> m_emotion_vec={"Angry","Happy","Neutral","Sad","Surprise"};
+  std::vector<std::string> m_emotion_vec={"Angry","Happy","Normal","Sad","Surprise"};
   
   float m_emotion_threshold=0.85;
+  int32_t m_last_id = 2;
 };
 REGISTER_CALCULATOR(EmotionDetectionCalculator);
 
