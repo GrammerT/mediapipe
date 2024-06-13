@@ -264,7 +264,7 @@ class EmotionDetectionCalculator : public CalculatorBase {
       if(landmarkVec.size()>0)
       {
         auto id = runTensor(landmarkVec);
-        printf("emotion = %s \n" ,m_emotion_vec[id].c_str());
+        // printf("emotion = %s \n" ,m_emotion_vec[id].c_str());
       }
 
 #endif
@@ -485,7 +485,7 @@ struct Landmark {
     float max_value = *max_it;
     int result_index = std::distance(result, max_it);
     static int last_index=2;
-#if 1
+#if 0
     for (size_t i = 0; i < num_output_elements; i++)
     {
       printf("result_index=%d value=%f \n",i,result[i]);
