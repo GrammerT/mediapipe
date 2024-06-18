@@ -69,7 +69,7 @@ node {
   input_side_packet: "NUM_FACES:num_faces"
   input_side_packet: "WITH_ATTENTION:with_attention"
   output_stream: "LANDMARKS:multi_face_landmarks"
-  output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
+  #output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
   output_stream: "DETECTIONS:face_detections"
   output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
 }
@@ -77,7 +77,7 @@ node {
   calculator: "FaceRendererCpu"
   input_stream: "IMAGE:virtual_bk_video_1"
   #input_stream: "LANDMARKS:multi_face_landmarks"
-  input_stream: "NORM_RECTS:face_rects_from_landmarks"
+  #input_stream: "NORM_RECTS:face_rects_from_landmarks"
   #input_stream: "DETECTIONS:face_detections"
   output_stream: "IMAGE:output_video"
 })pb";

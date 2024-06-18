@@ -57,7 +57,7 @@ output_stream: "EMOTION:emotion_type_str"
 output_stream: "DETECTIONS:face_detections"
 # Regions of interest calculated based on landmarks.
 # (std::vector<NormalizedRect>)
-output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
+#output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
 # Regions of interest calculated based on face detections.
 # (std::vector<NormalizedRect>)
 output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
