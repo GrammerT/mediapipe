@@ -20,6 +20,7 @@
 #include "absl/log/absl_check.h"
 #include "mediapipe/calculators/util/emotion_detection_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/calculator_graph.h"
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
@@ -282,7 +283,7 @@ class EmotionDetectionCalculator : public CalculatorBase {
       //     .AddPacket(MakePacket<std::string>(m_emotion_vec[m_last_id]).At(timestamp));
           // .Add(new std::string(m_emotion_vec[m_last_id]),timestamp);
       // printf("finished set output emotion tag.\n");
-      cc->CreateAndGetGlobaData()->emotion_type=(EEmotionType)m_last_id;
+      CalculatorGraph::CreateAndGetGlobaData()->emotion_type=(EEmotionType)m_last_id;
       m_last_id = 2;
     }
 

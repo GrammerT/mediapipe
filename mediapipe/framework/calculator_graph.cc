@@ -95,7 +95,7 @@ constexpr absl::StatusToStringMode kStatusLogFlags =
     (~absl::StatusToStringMode::kWithPayload);
 
 }  // namespace
-
+std::unique_ptr<SGlobalData> CalculatorGraph::global_data_=nullptr;
 void CalculatorGraph::ScheduleAllOpenableNodes() {
   // This method can only be called before the scheduler_.Start() call and the
   // graph input streams' SetHeader() calls because it is safe to call
@@ -1477,5 +1477,15 @@ absl::Status CalculatorGraph::GetCalculatorProfiles(
     std::vector<CalculatorProfile>* profiles) const {
   return profiler_->GetCalculatorProfiles(profiles);
 }
+
+SGlobalData* CalculatorGraph::CreateAndGetGlobaData()
+{
+  if(global_data_==nullptr) 
+  {
+    global_data_= std::make_unique<SGlobalData>();
+  }
+  return global_data_.get();
+}
+
 
 }  // namespace mediapipe

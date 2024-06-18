@@ -286,6 +286,7 @@ cc_library(
     deps = [
         ":emotion_detection_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_graph",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:location",
         "//mediapipe/framework/formats:rect_cc_proto",

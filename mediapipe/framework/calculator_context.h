@@ -34,21 +34,7 @@
 
 namespace mediapipe {
 
-// "Angry","Happy","Normal","Sad","Surprise"
-enum class EEmotionType
-{
-  kNone=-1,
-  kAngry=0,
-  kHappy,
-  kNormal,
-  kSad,
-  kSurprise
-};
 
-struct SGlobalData
-{
-  EEmotionType emotion_type;
-};
 
 // A CalculatorContext provides information about the graph it is running
 // inside of through a number of accessor functions: Inputs(), Outputs(),
@@ -60,7 +46,7 @@ struct SGlobalData
 // its own CalculatorContext object for exchanging data with the framework.
 class CalculatorContext {
  public:
-  CalculatorContext(CalculatorState* calculator_state,
+   CalculatorContext(CalculatorState* calculator_state,
                     std::shared_ptr<tool::TagMap> input_tag_map,
                     std::shared_ptr<tool::TagMap> output_tag_map)
       : calculator_state_(calculator_state),
@@ -77,7 +63,7 @@ class CalculatorContext {
   // CalculatorBase implementation may get its options by calling
   // GetExtension() on the result.
   const CalculatorOptions& Options() const;
-
+  
   // Returns the options given to this calculator.  Template argument T must
   // be the type of the protobuf extension message or the protobuf::Any
   // message containing the options.
@@ -121,7 +107,7 @@ class CalculatorContext {
   // Returns a const reference to the output stream collection.
   const OutputStreamShardSet& Outputs() const;
 
-  SGlobalData* CreateAndGetGlobaData();
+
   
 
   // Sets this packet timestamp offset for Packets going to all outputs.
@@ -193,9 +179,6 @@ class CalculatorContext {
 
   // The status of the graph run. Only used when Close() is called.
   absl::Status graph_status_;
-
-  //! only one global data
-  static std::unique_ptr<SGlobalData> global_data_;
 
   // Accesses CalculatorContext for setting input timestamp.
   friend class CalculatorContextManager;

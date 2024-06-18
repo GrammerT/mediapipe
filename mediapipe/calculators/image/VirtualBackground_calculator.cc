@@ -39,6 +39,16 @@ constexpr char kMaskCpuTag[] = "MASK";
 constexpr char kGpuBufferTag[] = "IMAGE_GPU";
 constexpr char kMaskGpuTag[] = "MASK_GPU";
 
+constexpr char kWindowName1[] = "Mask_full_1";
+constexpr char kWindowName2[] = "Mask_full_2";
+constexpr char kWindowName3[] = "Mask_full_3";
+constexpr char kWindowName4[] = "Mask_full_4";
+
+
+
+
+// #define SHOW_MASK
+
 inline cv::Vec3b Blend(const cv::Vec3b& color1, const cv::Vec3b& color2,
                        float weight, int invert_mask,
                        int adjust_with_luminance) {
@@ -202,9 +212,13 @@ absl::Status VirtualBackgroundCalculator::Open(CalculatorContext* cc) {
   }
 
   MP_RETURN_IF_ERROR(LoadOptions(cc));
+#ifdef SHOW_MASK
+  cv::namedWindow(kWindowName1, 1);
+  cv::namedWindow(kWindowName2, 1);
+  cv::namedWindow(kWindowName3, 1);
+  cv::namedWindow(kWindowName4, 1);
 
-  // cv::namedWindow("input_mat", cv::WINDOW_NORMAL);
-  // cv::namedWindow("mask_mat", cv::WINDOW_NORMAL);
+#endif
   return absl::OkStatus();
 }
 
@@ -238,6 +252,54 @@ absl::Status VirtualBackgroundCalculator::Close(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
+// 高斯模糊函数
+cv::Mat ApplyGaussianBlur(const cv::Mat& src, int kernel_size, double sigma) {
+      cv::Mat blurred;
+      cv::GaussianBlur(src, blurred, cv::Size(kernel_size, kernel_size), sigma);
+      return blurred;
+  }
+
+
+// 使用分离卷积的高斯模糊
+cv::Mat ApplySeparableGaussianBlur(const cv::Mat& src, int kernel_size, double sigma) {
+    cv::Mat dst, temp;
+    // 水平高斯模糊
+    cv::GaussianBlur(src, temp, cv::Size(kernel_size, 1), sigma);
+    // 垂直高斯模糊
+    cv::GaussianBlur(temp, dst, cv::Size(1, kernel_size), sigma);
+    return dst;
+}
+
+
+// 应用形态学操作
+cv::Mat ApplyMorphologicalOperations(const cv::Mat& src) {
+    cv::Mat eroded, dilated;
+
+    // 先进行腐蚀操作去除小斑点噪声
+    int erosion_size = 2; // 根据需要调整
+    cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+                                                cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
+                                                cv::Point(erosion_size, erosion_size));
+    cv::erode(src, eroded, element);
+
+    // 再进行膨胀操作恢复主体区域
+    int dilation_size = 2; // 根据需要调整
+    element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+                                        cv::Size(2 * dilation_size + 1, 2 * dilation_size + 1),
+                                        cv::Point(dilation_size, dilation_size));
+    cv::dilate(eroded, dilated, element);
+
+    return dilated;
+}
+
+// 应用双边滤波
+cv::Mat ApplyBilateralFilter(const cv::Mat& src) {
+    cv::Mat dst;
+    cv::bilateralFilter(src, dst, 9, 75, 75);
+    return dst;
+}
+
+
 absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kMaskCpuTag).IsEmpty()) {
     cc->Outputs()
@@ -251,11 +313,6 @@ absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
 
   cv::Mat input_mat = formats::MatView(&input_img);
   cv::Mat mask_mat = formats::MatView(&mask_img);
-
-#if 0
-  cv::imshow("input_mat", input_mat);
-  cv::imshow("mask_mat", mask_mat);
-#endif
 
   RET_CHECK(input_mat.channels() == 3);  // RGB only.
 
@@ -285,6 +342,30 @@ absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
   auto output_img = absl::make_unique<ImageFrame>(
       input_img.Format(), input_mat.cols, input_mat.rows);
   cv::Mat output_mat = mediapipe::formats::MatView(output_img.get());
+
+// #ifdef SHOW_MASK
+//   cv::imshow(kWindowName1, mask_full);
+// #endif
+
+  // mask_full = ApplyGaussianBlur(mask_full, 11.0, 5);
+  mask_full = ApplySeparableGaussianBlur(mask_full, 11, 5);
+
+// #ifdef SHOW_MASK
+//   cv::imshow(kWindowName2, mask_full2);
+//   auto mask_full3 = ApplySeparableGaussianBlur(mask_full2, 15, 5);
+//   cv::imshow(kWindowName3, mask_full3);
+// #endif
+
+// #ifdef SHOW_MASK
+//     // 应用形态学操作去除噪声
+//     auto mask_full4 = ApplyMorphologicalOperations(mask_full);
+//     // 应用双边滤波进一步平滑图像
+//     mask_full4 = ApplyBilateralFilter(mask_full4);
+//   cv::imshow(kWindowName4, mask_full4);
+//   cv::waitKey(190);
+// #endif
+
+
 #if 1
   const int invert_mask = invert_mask_ ? 1 : 0;
   const int adjust_with_luminance = adjust_with_luminance_ ? 1 : 0;

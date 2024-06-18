@@ -338,6 +338,10 @@ void VideoEffectImpl::startGraphThread()
     {
       auto frame = matToSVideoFrame(output_frame_mat, EVideoFormat::kYUV420P);
       frame->index=frame_index;
+      if(m_media_pipe_graph.CreateAndGetGlobaData())
+      {
+        frame->emotion_type = (EEmotionType)m_media_pipe_graph.CreateAndGetGlobaData()->emotion_type;
+      }
       m_receiver_callback(frame);
     }
 #ifdef SHOW_CV_WINDOW

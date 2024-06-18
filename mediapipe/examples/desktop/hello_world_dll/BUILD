@@ -32,6 +32,7 @@ cc_binary(
         ],
     deps = [
             "//mediapipe/graphs/face_mesh_self:desktop_live_calculators",
+            "//mediapipe/framework:calculator_context",
             "//mediapipe/framework:calculator_framework",
             "//mediapipe/framework/formats:image_frame",
             "//mediapipe/framework/formats:image_frame_opencv",

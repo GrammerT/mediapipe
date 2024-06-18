@@ -366,7 +366,7 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
   // Reset the renderer with the image_mat. No copy here.
   renderer_->AdoptImage(image_mat.get());
   // "Angry","Happy","Normal","Sad","Surprise"
-  std::string emotion_str = EmotionStr(cc->CreateAndGetGlobaData()->emotion_type);
+  std::string emotion_str = EmotionStr(CalculatorGraph::CreateAndGetGlobaData()->emotion_type);
   // printf("will render emotion : %s\n",emotion_str.c_str());
   renderEmotionStr(emotion_str);
   // Render streams onto render target.

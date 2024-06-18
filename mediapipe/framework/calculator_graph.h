@@ -65,6 +65,24 @@ struct GpuSharedData;
 
 typedef absl::StatusOr<OutputStreamPoller> StatusOrPoller;
 
+
+
+// "Angry","Happy","Normal","Sad","Surprise"
+enum class EEmotionType
+{
+  kNone=-1,
+  kAngry=0,
+  kHappy,
+  kNormal,
+  kSad,
+  kSurprise
+};
+
+struct SGlobalData
+{
+  EEmotionType emotion_type;
+};
+
 // The class representing a DAG of calculator nodes.
 //
 // CalculatorGraph is the primary API for the MediaPipe Framework.
@@ -124,6 +142,7 @@ class CalculatorGraph {
   explicit CalculatorGraph(CalculatorGraphConfig config);
   virtual ~CalculatorGraph();
 
+  static SGlobalData* CreateAndGetGlobaData();
   // Initializes the graph from a its proto description.
   // side_packets that are provided at this stage are common across all Run()
   // invocations and could be used to execute PacketGenerators immediately.
@@ -747,7 +766,8 @@ class CalculatorGraph {
   // such as GlContext.  It is declared here before the Scheduler so that it
   // remains available during the Scheduler destructor.
   std::shared_ptr<ProfilingContext> profiler_;
-
+//! only one global data
+  static std::unique_ptr<SGlobalData> global_data_;
   internal::Scheduler scheduler_;
 };
 

@@ -39,29 +39,46 @@ struct SVideoEffectParam
     std::string background_file_path ;
 };
 
-enum class EVideoFormat
+enum class EVideoFormat:int32_t
 {
     kYUV420P,
 };
 
-enum class EVideoFrameSize
+enum class EVideoFrameSize:int32_t
 {
     kSize_640_480
 };
+
+/**
+ * @brief 表情类型
+ *  Angry-Happy-Normal-Sad-Surprise
+ */
+
+enum class EEmotionType:int32_t
+{
+    kNone=-1,
+    kAngry=0,
+    kHappy,
+    kNormal,
+    kSad,
+    kSurprise
+};
+
 /**
  * @brief 推送给虚拟背景引擎的视频数据,建议rgba数据
  * 
  */
+
 struct SVideoFrame
 {
     EVideoFormat format;
+    EEmotionType emotion_type;
+    EVideoFrameSize size;
+    uint64_t index;//! 标记帧的索引,用于计算每一帧的处理耗时,可选,非必须
     uint8_t* data[MAX_DATA_NUM];
     int32_t linesize[MAX_DATA_NUM];
-    EVideoFrameSize size;
     void *extend_data;
-    uint64_t index;//! 标记帧的索引,用于计算每一帧的处理耗时,可选,非必须
 };
-
 
 class EFFECT_API_EXPORT IVideoEffect
 {
