@@ -34,6 +34,22 @@
 
 namespace mediapipe {
 
+// "Angry","Happy","Normal","Sad","Surprise"
+enum class EEmotionType
+{
+  kNone=-1,
+  kAngry=0,
+  kHappy,
+  kNormal,
+  kSad,
+  kSurprise
+};
+
+struct SGlobalData
+{
+  EEmotionType emotion_type;
+};
+
 // A CalculatorContext provides information about the graph it is running
 // inside of through a number of accessor functions: Inputs(), Outputs(),
 // InputSidePackets(), Options(), etc.
@@ -105,6 +121,9 @@ class CalculatorContext {
   // Returns a const reference to the output stream collection.
   const OutputStreamShardSet& Outputs() const;
 
+  SGlobalData* CreateAndGetGlobaData();
+  
+
   // Sets this packet timestamp offset for Packets going to all outputs.
   // If you only want to set the offset for a single output stream then
   // use OutputStream::SetOffset() directly.
@@ -174,6 +193,9 @@ class CalculatorContext {
 
   // The status of the graph run. Only used when Close() is called.
   absl::Status graph_status_;
+
+  //! only one global data
+  static std::unique_ptr<SGlobalData> global_data_;
 
   // Accesses CalculatorContext for setting input timestamp.
   friend class CalculatorContextManager;

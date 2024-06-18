@@ -18,6 +18,7 @@
 
 namespace mediapipe {
 
+std::unique_ptr<SGlobalData> CalculatorContext::global_data_=nullptr;
 const std::string& CalculatorContext::CalculatorType() const {
   ABSL_CHECK(calculator_state_);
   return calculator_state_->CalculatorType();
@@ -94,5 +95,15 @@ const OutputStreamSet& CalculatorContext::OutputStreams() const {
   }
   return *output_streams_;
 }
+
+SGlobalData* CalculatorContext::CreateAndGetGlobaData()
+{
+  if(global_data_==nullptr) 
+  {
+    global_data_= std::make_unique<SGlobalData>();
+  }
+  return global_data_.get();
+}
+
 
 }  // namespace mediapipe

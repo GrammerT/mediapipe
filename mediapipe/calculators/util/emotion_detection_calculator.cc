@@ -276,12 +276,16 @@ class EmotionDetectionCalculator : public CalculatorBase {
     cc->Outputs().Get(output_id).AddPacket(
         MakePacket<NormalizedLandmarkList>(std::move(output_landmarks))
             .At(timestamp));
-
+      // printf("will set output emotion tag.\n");
+      // cc->Outputs()
+      //     .Tag(kEmotionTag)
+      //     .AddPacket(MakePacket<std::string>(m_emotion_vec[m_last_id]).At(timestamp));
+          // .Add(new std::string(m_emotion_vec[m_last_id]),timestamp);
+      // printf("finished set output emotion tag.\n");
+      cc->CreateAndGetGlobaData()->emotion_type=(EEmotionType)m_last_id;
+      m_last_id = 2;
     }
-    cc->Outputs()
-        .Tag(kEmotionTag)
-        .Add(new std::string(m_emotion_vec[m_last_id]),timestamp);
-    m_last_id = 2;
+
     return absl::OkStatus();
   }
 
@@ -346,7 +350,6 @@ private:
           for (int i = 0; i < m_interpreter->outputs().size(); ++i) {
             output_indices_excluding_feedback_tensors.push_back(i);
           }
-
         }
       }
     }

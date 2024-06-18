@@ -160,6 +160,8 @@ class AnnotationOverlayCalculator : public CalculatorBase {
   template <typename Type, const char* Tag>
   absl::Status GlSetup(CalculatorContext* cc);
 
+  std::string EmotionStr(EEmotionType type);
+  void renderEmotionStr(std::string emotion);
   // Options for the calculator.
   AnnotationOverlayCalculatorOptions options_;
 
@@ -307,27 +309,23 @@ absl::Status AnnotationOverlayCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
+
   if (cc->Inputs().HasTag(kGpuBufferTag) &&
       cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
     return absl::OkStatus();
   }
+
   if (cc->Inputs().HasTag(kImageFrameTag) &&
       cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
     return absl::OkStatus();
   }
+
   if (cc->Inputs().HasTag(kImageTag) && cc->Inputs().Tag(kImageTag).IsEmpty()) {
     return absl::OkStatus();
   }
+
   if (HasImageTag(cc)) {
     use_gpu_ = cc->Inputs().Tag(kImageTag).Get<mediapipe::Image>().UsesGpu();
-  }
-  std::string emotion_str = "normal";
-  printf("will render emotion str \n");
-  if(cc->Inputs().HasTag(kEmotionTag))
-  {
-    emotion_str = cc->Inputs().Tag(kEmotionTag).Get<std::string>();
-    ABSL_LOG(INFO) << "render emotion str is :"<<emotion_str;
-    printf("render emotion str is :%s\n",emotion_str.c_str());
   }
   
   // Initialize render target, drawn with OpenCV.
@@ -367,7 +365,10 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
 
   // Reset the renderer with the image_mat. No copy here.
   renderer_->AdoptImage(image_mat.get());
-
+  // "Angry","Happy","Normal","Sad","Surprise"
+  std::string emotion_str = EmotionStr(cc->CreateAndGetGlobaData()->emotion_type);
+  // printf("will render emotion : %s\n",emotion_str.c_str());
+  renderEmotionStr(emotion_str);
   // Render streams onto render target.
   for (CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId();
        ++id) {
@@ -403,6 +404,7 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
       // Empty tag defaults to accepting a single object of RenderData type.
       const RenderData& render_data = cc->Inputs().Get(id).Get<RenderData>();
       renderer_->RenderDataOnImage(render_data);//! face mesh 中渲染 roi of face
+    
     } else {
       RET_CHECK_EQ(kVectorTag, tag);
       const std::vector<RenderData>& render_data_vec =
@@ -447,6 +449,67 @@ absl::Status AnnotationOverlayCalculator::Close(CalculatorContext* cc) {
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
   return absl::OkStatus();
+}
+
+
+void AnnotationOverlayCalculator::renderEmotionStr(std::string emotion)
+{
+  RenderData render_data;
+
+  auto* label_annotation = render_data.add_render_annotations();
+  label_annotation->set_thickness(2);
+  
+  label_annotation->mutable_color()->set_r(0);
+  label_annotation->mutable_color()->set_g(255);
+  label_annotation->mutable_color()->set_b(0);
+  
+
+  auto* text = label_annotation->mutable_text();
+  std::string display_text = emotion;
+
+  text->set_display_text(display_text);
+  text->set_font_height(30);
+  text->set_left(300);
+  text->set_baseline(25);
+  // text->set_font_face(options_.font_face());
+
+  // text->set_outline_thickness(10);
+
+  // text->mutable_outline_color()->set_r(0);
+  // text->mutable_outline_color()->set_g(0);
+  // text->mutable_outline_color()->set_b(255);
+ 
+ renderer_->RenderDataOnImage(render_data);
+  
+}
+
+  // kNone=-1,
+  // kAngry=0,
+  // kHappy,
+  // kNormal,
+  // kSad,
+  // kSurprise
+std::string AnnotationOverlayCalculator::EmotionStr(EEmotionType type)
+{
+  std::string emotion_str = "normal";
+  switch (type)
+  {
+  case EEmotionType::kAngry:
+    emotion_str = "angry";
+    break;
+  case EEmotionType::kHappy:
+    emotion_str = "happy";
+    break;
+  case EEmotionType::kSad:
+    emotion_str = "sad";
+    break;
+  case EEmotionType::kSurprise:
+    emotion_str = "surprise";
+    break;
+  default:
+    break;
+  }
+  return emotion_str;
 }
 
 absl::Status AnnotationOverlayCalculator::RenderToCpu(
