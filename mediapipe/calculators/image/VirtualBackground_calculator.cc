@@ -270,35 +270,47 @@ cv::Mat ApplySeparableGaussianBlur(const cv::Mat& src, int kernel_size, double s
     return dst;
 }
 
-
-// 应用形态学操作
-cv::Mat ApplyMorphologicalOperations(const cv::Mat& src) {
-    cv::Mat eroded, dilated;
-
-    // 先进行腐蚀操作去除小斑点噪声
-    int erosion_size = 2; // 根据需要调整
-    cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
-                                                cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
-                                                cv::Point(erosion_size, erosion_size));
-    cv::erode(src, eroded, element);
-
-    // 再进行膨胀操作恢复主体区域
-    int dilation_size = 2; // 根据需要调整
-    element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
-                                        cv::Size(2 * dilation_size + 1, 2 * dilation_size + 1),
-                                        cv::Point(dilation_size, dilation_size));
-    cv::dilate(eroded, dilated, element);
-
-    return dilated;
-}
-
-// 应用双边滤波
-cv::Mat ApplyBilateralFilter(const cv::Mat& src) {
+// 自动计算合适的阈值并二值化图像
+cv::Mat ApplyAutoThreshold(const cv::Mat& src) {
     cv::Mat dst;
-    cv::bilateralFilter(src, dst, 9, 75, 75);
+    // 使用Otsu方法自动计算合适的阈值
+    cv::threshold(src, dst, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
     return dst;
 }
 
+// 应用腐蚀操作
+cv::Mat ApplyErosion(const cv::Mat& src, int erosion_size = 1) {
+    cv::Mat dst;
+    // 创建一个 3x3 的卷积核
+    cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
+                                                cv::Size(2 * erosion_size + 1, 2 * erosion_size + 1),
+                                                cv::Point(erosion_size, erosion_size));
+    cv::erode(src, dst, element);
+    return dst;
+}
+
+// 应用膨胀操作
+cv::Mat ApplyDilation(const cv::Mat& src, int dilation_size = 1) {
+    cv::Mat dst;
+    // 创建一个 3x3 的卷积核
+    cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
+                                                cv::Size(2 * dilation_size + 1, 2 * dilation_size + 1),
+                                                cv::Point(dilation_size, dilation_size));
+    cv::dilate(src, dst, element);
+    return dst;
+}
+
+// 应用开运算
+cv::Mat ApplyOpening(const cv::Mat& src, int kernel_size = 3) {
+    cv::Mat dst;
+    // 创建一个 kernel_size x kernel_size 的卷积核
+    cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
+                                                cv::Size(kernel_size, kernel_size),
+                                                cv::Point(-1, -1));
+    // 进行开运算
+    cv::morphologyEx(src, dst, cv::MORPH_OPEN, element);
+    return dst;
+}
 
 absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
   if (cc->Inputs().Tag(kMaskCpuTag).IsEmpty()) {
@@ -343,13 +355,18 @@ absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
       input_img.Format(), input_mat.cols, input_mat.rows);
   cv::Mat output_mat = mediapipe::formats::MatView(output_img.get());
 
-// #ifdef SHOW_MASK
-//   cv::imshow(kWindowName1, mask_full);
-// #endif
+#ifdef SHOW_MASK
+  cv::imshow(kWindowName1, mask_full);
+  cv::waitKey(50);
+#endif
 
-  // mask_full = ApplyGaussianBlur(mask_full, 11.0, 5);
-  mask_full = ApplySeparableGaussianBlur(mask_full, 11, 5);
-
+    mask_full = ApplySeparableGaussianBlur(mask_full, 11, 5);
+#ifdef SHOW_MASK
+  cv::imshow(kWindowName3, mask_full);
+  cv::waitKey(50);
+  cv::imshow(kWindowName2, mask_full1);
+  cv::waitKey(50);
+#endif
 // #ifdef SHOW_MASK
 //   cv::imshow(kWindowName2, mask_full2);
 //   auto mask_full3 = ApplySeparableGaussianBlur(mask_full2, 15, 5);

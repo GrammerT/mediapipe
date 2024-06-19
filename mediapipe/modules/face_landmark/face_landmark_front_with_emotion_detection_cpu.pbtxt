@@ -54,13 +54,13 @@ output_stream: "EMOTION:emotion_type_str"
 
 # Extra outputs (for debugging, for instance).
 # Detected faces. (std::vector<Detection>)
-output_stream: "DETECTIONS:face_detections"
+#output_stream: "DETECTIONS:face_detections"
 # Regions of interest calculated based on landmarks.
 # (std::vector<NormalizedRect>)
 #output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
 # Regions of interest calculated based on face detections.
 # (std::vector<NormalizedRect>)
-output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
+#output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
 
 # When the optional input side packet "use_prev_landmarks" is either absent or
 # set to true, uses the landmarks on the previous image to help localize
@@ -217,12 +217,12 @@ node {
 # Collects a set of landmarks for each face into a vector. Upon receiving the
 # BATCH_END timestamp, outputs the vector of landmarks at the BATCH_END
 # timestamp.
-node {
-  calculator: "EndLoopNormalizedLandmarkListVectorCalculator"
-  input_stream: "ITEM:face_landmarks"
-  input_stream: "BATCH_END:landmarks_loop_end_timestamp"
-  output_stream: "ITERABLE:multi_face_landmarks"
-}
+#node {
+#  calculator: "EndLoopNormalizedLandmarkListVectorCalculator"
+#  input_stream: "ITEM:face_landmarks"
+#  input_stream: "BATCH_END:landmarks_loop_end_timestamp"
+#  output_stream: "ITERABLE:multi_face_landmarks"
+#}
 
 # Collects a NormalizedRect for each face into a vector. Upon receiving the
 # BATCH_END timestamp, outputs the vector of NormalizedRect at the BATCH_END

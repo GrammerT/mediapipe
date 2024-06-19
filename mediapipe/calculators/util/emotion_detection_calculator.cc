@@ -271,7 +271,7 @@ class EmotionDetectionCalculator : public CalculatorBase {
       if(landmarkVec.size()>0)
       {
         m_last_id = runTensor(landmarkVec);
-        // printf("emotion = %s \n" ,m_emotion_vec[id].c_str());
+        // printf("emotion = %s \n" ,m_emotion_vec[m_last_id].c_str());
       }
 #endif
     cc->Outputs().Get(output_id).AddPacket(
