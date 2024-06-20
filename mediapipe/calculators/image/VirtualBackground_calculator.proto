@@ -42,5 +42,5 @@ message VirtualBackgroundCalculatorOptions {
   optional bool adjust_with_luminance = 3 [default = true];
   //! 虚拟背景--图片地址
   optional string background_image_path = 4;
-
+  optional bool apply_background = 5 [default = true];
 }

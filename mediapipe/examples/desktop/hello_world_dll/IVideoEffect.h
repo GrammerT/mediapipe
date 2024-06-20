@@ -36,7 +36,8 @@ struct SVideoEffectParam
 {
     bool user_pure_color;
     EPureColor pure_color;
-    std::string background_file_path ;
+    std::string background_file_path;
+    bool apply_background;
 };
 
 enum class EVideoFormat:int32_t

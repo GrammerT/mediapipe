@@ -49,6 +49,7 @@ node{
       invert_mask: true
       adjust_with_luminance: false
       background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg"
+      apply_background: true
     }
   }
 }
@@ -176,7 +177,7 @@ int VideoEffectImpl::enableVideoEffect()
           {
             realOptions->set_background_image_path(m_param->background_file_path);    
           }
-
+          realOptions->set_apply_background(m_param->apply_background);
           //! MUST.
           realOptions->set_invert_mask(true);
           realOptions->set_adjust_with_luminance(false);

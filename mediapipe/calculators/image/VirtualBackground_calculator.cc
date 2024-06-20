@@ -140,6 +140,7 @@ class VirtualBackgroundCalculator : public CalculatorBase {
   bool adjust_with_luminance_ = false;
 
   std::string m_file_path = "";
+  bool m_bApply_background = true;
   cv::Mat m_background_image;
 #if !MEDIAPIPE_DISABLE_GPU
   mediapipe::GlCalculatorHelper gpu_helper_;
@@ -353,6 +354,15 @@ absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
   }
   auto output_img = absl::make_unique<ImageFrame>(
       input_img.Format(), input_mat.cols, input_mat.rows);
+      
+  if(!m_bApply_background)
+  {
+    cc->Outputs()
+    .Tag(kImageFrameTag)
+    .Add(output_img.release(), cc->InputTimestamp());
+    return absl::OkStatus();;
+  }
+
   cv::Mat output_mat = mediapipe::formats::MatView(output_img.get());
 
 #ifdef SHOW_MASK
@@ -540,6 +550,7 @@ absl::Status VirtualBackgroundCalculator::LoadOptions(CalculatorContext* cc) {
   invert_mask_ = options.invert_mask();
   adjust_with_luminance_ = options.adjust_with_luminance();
   m_file_path = options.background_image_path();
+  m_bApply_background = options.apply_background();
   printf("file path set path is : %s \n",m_file_path.c_str());
   if(!m_file_path.empty())
   {
