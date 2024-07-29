@@ -20,7 +20,10 @@ cmd
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/face_detection:face_detection_full_range_cpu
 
 @bazel-bin\mediapipe\examples\desktop\face_detection\face_detection_cpu.exe -calculator_graph_config_file=mediapipe\graphs\face_detection\face_detection_desktop_live.pbtxt -input_video_path=test_video\test_video.mkv 文件输入
-@bazel-bin\mediapipe\examples\desktop\face_detection\face_detection_cpu.exe -calculator_graph_config_file=mediapipe\graphs\face_detection\face_detection_desktop_live.pbtxt 实时
+@bazel-bin\mediapipe\examples\desktop\face_detection\face_detection_cpu.exe -calculator_graph_config_file=mediapipe\graphs\face_detection\face_detection_desktop_live_old.pbtxt 实时
+
+@自定义面部裁剪并完成表情识别
+@bazel-bin\mediapipe\examples\desktop\face_detection\face_detection_cpu.exe -calculator_graph_config_file=mediapipe\graphs\face_detection\face_detection_desktop_live_emotion_detection.pbtxt 实时
 
 @bazel-bin\mediapipe\examples\desktop\face_detection\face_detection_full_range_cpu.exe -calculator_graph_config_file=mediapipe\graphs\face_detection\face_detection_full_range_desktop_live.pbtxt 实时
 

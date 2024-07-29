@@ -39,6 +39,7 @@ cc_library(
         "//mediapipe/calculators/core:flow_limiter_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
+        "//mediapipe/calculators/util:emotion_detection_by_image_calculator",
         "//mediapipe/modules/face_detection:face_detection_short_range_cpu",
     ],
 )

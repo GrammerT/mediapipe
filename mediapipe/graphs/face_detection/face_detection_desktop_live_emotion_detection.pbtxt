@@ -53,9 +53,6 @@ node{
   }
 }
 
-
-
-
 # Subgraph that detects faces.
 node {
   calculator: "FaceDetectionShortRangeCpu"
@@ -70,10 +67,16 @@ node {
   output_stream: "RENDER_DATA:render_data"
   node_options: {
     [type.googleapis.com/mediapipe.DetectionsToRenderDataCalculatorOptions] {
-      thickness: 4.0
-      color { r: 255 g: 0 b: 0 }
+      thickness: 2.0
+      color { r: 255 g: 255 b: 0 }
     }
   }
+}
+
+# get roi from face detection,and run tensor.
+node {
+  calculator:"EmotionDetectionByImageCalculator"
+  #input_stream: "DETECTIONS:face_detections"
 }
 
 # Draws annotations and overlays them on top of the input images.

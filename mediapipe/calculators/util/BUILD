@@ -82,8 +82,6 @@ mediapipe_proto_library(
 )
 
 
-
-
 mediapipe_proto_library(
     name = "detection_label_id_to_text_calculator_proto",
     srcs = ["detection_label_id_to_text_calculator.proto"],
@@ -612,6 +610,35 @@ mediapipe_proto_library(
         "//mediapipe/util:render_data_proto",
     ],
 )
+
+mediapipe_proto_library(
+    name = "emotion_detection_by_image_calculator_proto",
+    srcs = ["emotion_detection_by_image_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto",
+    ],
+)
+
+cc_library(
+    name = "emotion_detection_by_image_calculator",
+    srcs = ["emotion_detection_by_image_calculator.cc"],
+    deps = [
+        ":emotion_detection_by_image_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_options_cc_proto",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location_data_cc_proto",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/util:color_cc_proto",
+        "//mediapipe/util:render_data_cc_proto",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/memory",
+        "@com_google_absl//absl/strings",
+    ],
+    alwayslink = 1,
+)
+
 
 mediapipe_proto_library(
     name = "landmarks_to_render_data_calculator_proto",

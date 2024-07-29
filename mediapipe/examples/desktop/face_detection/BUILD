@@ -27,10 +27,13 @@ cc_binary(
 
 cc_binary(
     name = "face_detection_cpu",
-    data = ["//mediapipe/modules/face_detection:face_detection_short_range.tflite"],
+    data = ["//mediapipe/modules/face_detection:face_detection_short_range.tflite",
+            "//mediapipe/modules/selfie_segmentation:selfie_segmentation.tflite",
+            "//mediapipe/modules/face_emotion_detect_self:keypoint_classifier.tflite"],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/face_detection:desktop_live_calculators",
+        "//mediapipe/graphs/selfie_segmentation_image:selfie_segmentation_cpu_deps",
     ],
 )
 
@@ -41,5 +44,6 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main_gpu",
         "//mediapipe/graphs/face_detection:desktop_live_gpu_calculators",
+        
     ],
 )
