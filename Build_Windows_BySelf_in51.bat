@@ -1,7 +1,7 @@
-set BAZEL_VS=C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional
-set BAZEL_VC=C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\VC
+set BAZEL_VS=C:\Program Files\Microsoft Visual Studio\2022\Professional
+set BAZEL_VC=C:\Program Files\Microsoft Visual Studio\2022\Professional\VC
 set BAZEL_VC_FULL_VERSION=14.29.30133
-set BAZEL_WINSDK_FULL_VERSION=10.0.19041.0
+set BAZEL_WINSDK_FULL_VERSION=10.0.26100.0
 
 cmd
 

@@ -343,7 +343,7 @@ void VideoEffectImpl::startGraphThread()
       if(m_media_pipe_graph.CreateAndGetGlobaData())
       {
         frame->emotion_type = (EEmotionType)m_media_pipe_graph.CreateAndGetGlobaData()->emotion_type;
-        m_media_pipe_graph.CreateAndGetGlobaData()->emotion_type=mediapipe::EEmotionType::kNormal;
+        m_media_pipe_graph.CreateAndGetGlobaData()->emotion_type=mediapipe::EEmotionType::kAbsent;
       }
       m_receiver_callback(frame);
     }

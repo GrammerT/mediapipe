@@ -57,7 +57,8 @@ enum class EVideoFrameSize:int32_t
 
 enum class EEmotionType:int32_t
 {
-    kNone=-1,
+    kNone=-2,
+    kAbsent=-1,
     kAngry=0,
     kHappy,
     kNormal,
