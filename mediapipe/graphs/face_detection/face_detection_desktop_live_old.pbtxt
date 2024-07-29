@@ -29,6 +29,10 @@ node {
   output_stream: "throttled_input_video"
 }
 
+
+
+
+
 # Subgraph that detects faces.
 node {
   calculator: "FaceDetectionShortRangeCpu"
