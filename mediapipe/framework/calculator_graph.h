@@ -67,14 +67,16 @@ typedef absl::StatusOr<OutputStreamPoller> StatusOrPoller;
 
 
 
-// "Angry","Happy","Normal","Sad","Surprise"
+// "Angry","Disgusted","Fearful","Happy","Normal","Sad","Surprise"
 enum class EEmotionType
 {
   kNone=-2,
   kAbsent=-1,
   kAngry=0,
+  kDisgusted,
+  kFearful,
   kHappy,
-  kNormal,
+  kNormal=4,
   kSad,
   kSurprise
 };

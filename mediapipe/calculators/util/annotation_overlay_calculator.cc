@@ -365,7 +365,7 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
 
   // Reset the renderer with the image_mat. No copy here.
   renderer_->AdoptImage(image_mat.get());
-  // "Angry","Happy","Normal","Sad","Surprise"
+  // "Angry","Disgusted","Fearful","Happy","Normal","Sad","Surprise"
    std::string emotion_str = EmotionStr(CalculatorGraph::CreateAndGetGlobaData()->emotion_type);
   // printf("will render emotion : %s\n",emotion_str.c_str());
    renderEmotionStr(emotion_str);
@@ -483,12 +483,7 @@ void AnnotationOverlayCalculator::renderEmotionStr(std::string emotion)
   
 }
 
-  // kNone=-1,
-  // kAngry=0,
-  // kHappy,
-  // kNormal,
-  // kSad,
-  // kSurprise
+// "Angry","Disgusted","Fearful","Happy","Normal","Sad","Surprise"
 std::string AnnotationOverlayCalculator::EmotionStr(EEmotionType type)
 {
   std::string emotion_str = "normal";
@@ -496,6 +491,12 @@ std::string AnnotationOverlayCalculator::EmotionStr(EEmotionType type)
   {
   case EEmotionType::kAngry:
     emotion_str = "angry";
+    break;
+  case EEmotionType::kDisgusted:
+    emotion_str = "disgusted";
+    break;
+  case EEmotionType::kFearful:
+    emotion_str = "fearful";
     break;
   case EEmotionType::kHappy:
     emotion_str = "happy";

@@ -53,12 +53,28 @@ node{
   }
 }
 
+
+# get roi from face detection,and run tensor.
+node {
+  calculator:"EmotionDetectionByImageCalculator"
+  input_stream: "IMAGE:virtual_bk_video_1"
+  input_stream: "DETECTIONS:face_detections"
+  options {
+    [mediapipe.EmotionDetectionByImageCalculatorOptions.ext] {
+        model_path:"mediapipe/modules/face_emotion_detect_self/keypoint_classifier.tflite"
+    }
+  }
+}
+
+
 # Subgraph that detects faces.
 node {
   calculator: "FaceDetectionShortRangeCpu"
   input_stream: "IMAGE:virtual_bk_video_1"
   output_stream: "DETECTIONS:face_detections"
 }
+
+
 
 # Converts the detections to drawing primitives for annotation overlay.
 node {
@@ -73,16 +89,7 @@ node {
   }
 }
 
-# get roi from face detection,and run tensor.
-node {
-  calculator:"EmotionDetectionByImageCalculator"
-  #input_stream: "DETECTIONS:face_detections"
-  options {
-    [mediapipe.EmotionDetectionByImageCalculatorOptions.ext] {
-        model_path:"mediapipe/modules/face_emotion_detect_self/keypoint_classifier.tflite"
-    }
-  }
-}
+
 
 # Draws annotations and overlays them on top of the input images.
 node {

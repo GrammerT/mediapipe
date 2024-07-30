@@ -284,7 +284,7 @@ class EmotionDetectionCalculator : public CalculatorBase {
           // .Add(new std::string(m_emotion_vec[m_last_id]),timestamp);
       // printf("finished set output emotion tag.\n");
       CalculatorGraph::CreateAndGetGlobaData()->emotion_type=(EEmotionType)m_last_id;
-      m_last_id = 2;
+      // m_last_id = 2;
     }
 
     return absl::OkStatus();
@@ -545,12 +545,8 @@ private:
 
   int32_t m_img_width=0;
   int32_t m_img_height=0;
-//   Angry
-// Happy
-// Neutral
-// Sad
-// Surprise
-  std::vector<std::string> m_emotion_vec={"Angry","Happy","Normal","Sad","Surprise"};
+// "Angry","Disgusted","Fearful","Happy","Normal","Sad","Surprise"
+  std::vector<std::string> m_emotion_vec={"Angry","Disgusted","Fearful","Happy","Normal","Sad","Surprise"};
   
   float m_emotion_threshold=0.85;
   int32_t m_last_id = 2;
