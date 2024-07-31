@@ -38,6 +38,29 @@ node{
 }
 
 
+node{
+  calculator: "SelfieSegmentationCpu"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "SEGMENTATION_MASK:segmentation_mask"
+}
+
+
+node{
+  calculator: "VirtualBackgroundCalculator"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "MASK:segmentation_mask"
+  output_stream: "IMAGE:virtual_video"
+  node_options: {
+    [type.googleapis.com/mediapipe.VirtualBackgroundCalculatorOptions] {
+      mask_channel: UNKNOWN
+      invert_mask: true
+      adjust_with_luminance: false
+      background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg"
+      apply_background: true
+    }
+  }
+}
+
 # Subgraph that detects faces.
 node {
   calculator: "FaceDetectionShortRangeCpu"
@@ -73,36 +96,12 @@ node {
 # Draws annotations and overlays them on top of the input images.
 node {
   calculator: "AnnotationOverlayCalculator"
-  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "IMAGE:virtual_video"
   input_stream: "render_data"
-  output_stream: "IMAGE:rendered_output_video"
+  output_stream: "IMAGE:output_video"
   options {
     [mediapipe.AnnotationOverlayCalculatorOptions.ext] {
       enable_painter_rect:false
-    }
-  }
-}
-
-
-node{
-  calculator: "SelfieSegmentationCpu"
-  input_stream: "IMAGE:rendered_output_video"
-  output_stream: "SEGMENTATION_MASK:segmentation_mask"
-}
-
-
-node{
-  calculator: "VirtualBackgroundCalculator"
-  input_stream: "IMAGE:rendered_output_video"
-  input_stream: "MASK:segmentation_mask"
-  output_stream: "IMAGE:output_video"
-  node_options: {
-    [type.googleapis.com/mediapipe.VirtualBackgroundCalculatorOptions] {
-      mask_channel: UNKNOWN
-      invert_mask: true
-      adjust_with_luminance: false
-      background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg"
-      apply_background: true
     }
   }
 }
