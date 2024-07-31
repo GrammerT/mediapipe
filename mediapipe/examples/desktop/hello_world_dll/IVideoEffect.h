@@ -52,7 +52,7 @@ enum class EVideoFrameSize:int32_t
 
 /**
  * @brief 表情类型
- *  Angry-Happy-Normal-Sad-Surprise
+ *   "Angry","Disgusted","Fearful","Happy","Normal","Sad","Surprise"
  */
 
 enum class EEmotionType:int32_t
@@ -60,6 +60,8 @@ enum class EEmotionType:int32_t
     kNone=-2,
     kAbsent=-1,
     kAngry=0,
+    kDisgusted,
+    kFearful,
     kHappy,
     kNormal,
     kSad,

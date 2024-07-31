@@ -53,35 +53,50 @@ node{
     }
   }
 }
+
+# Subgraph that detects faces.
 node {
-  calculator: "ConstantSidePacketCalculator"
-  output_side_packet: "PACKET:0:num_faces"
-  output_side_packet: "PACKET:1:with_attention"
-  node_options: {
-    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
-      packet { int_value: 1 }
-      packet { bool_value: true }
+  calculator: "FaceDetectionShortRangeCpu"
+  input_stream: "IMAGE:virtual_bk_video_1"
+  output_stream: "DETECTIONS:face_detections"
+}
+
+# get roi from face detection,and run tensor.
+node {
+  calculator:"EmotionDetectionByImageCalculator"
+  input_stream: "IMAGE:virtual_bk_video_1"
+  input_stream: "DETECTIONS:face_detections"
+  options {
+    [mediapipe.EmotionDetectionByImageCalculatorOptions.ext] {
+        model_path:"mediapipe/modules/face_emotion_detect_self/keypoint_classifier.tflite"
     }
   }
 }
-node {
-  calculator: "FaceLandmarkFrontWithEmotionDetectionCpu"
-  input_stream: "IMAGE:throttled_input_video"
-  input_side_packet: "NUM_FACES:num_faces"
-  input_side_packet: "WITH_ATTENTION:with_attention"
-  #output_stream: "LANDMARKS:multi_face_landmarks"
-  #output_stream: "ROIS_FROM_LANDMARKS:face_rects_from_landmarks"
-  #output_stream: "DETECTIONS:face_detections"
-  #output_stream: "ROIS_FROM_DETECTIONS:face_rects_from_detections"
-}
+
+# Converts the detections to drawing primitives for annotation overlay.
 #node {
-#  calculator: "FaceRendererCpu"
+#  calculator: "DetectionsToRenderDataCalculator"
+#  input_stream: "DETECTIONS:face_detections"
+#  output_stream: "RENDER_DATA:render_data"
+#  node_options: {
+#    [type.googleapis.com/mediapipe.DetectionsToRenderDataCalculatorOptions] {
+#      thickness: 2.0
+#      color { r: 255 g: 255 b: 0 }
+#    }
+#  }
+#}
+
+
+
+# Draws annotations and overlays them on top of the input images.
+#node {
+#  calculator: "AnnotationOverlayCalculator"
 #  input_stream: "IMAGE:virtual_bk_video_1"
-  #input_stream: "LANDMARKS:multi_face_landmarks"
-  #input_stream: "NORM_RECTS:face_rects_from_landmarks"
-  #input_stream: "DETECTIONS:face_detections"
+#  input_stream: "render_data"
 #  output_stream: "IMAGE:output_video"
 #}
+
+
 )pb";
 
 
@@ -343,7 +358,7 @@ void VideoEffectImpl::startGraphThread()
       if(m_media_pipe_graph.CreateAndGetGlobaData())
       {
         frame->emotion_type = (EEmotionType)m_media_pipe_graph.CreateAndGetGlobaData()->emotion_type;
-        m_media_pipe_graph.CreateAndGetGlobaData()->emotion_type=mediapipe::EEmotionType::kAbsent;
+        // m_media_pipe_graph.CreateAndGetGlobaData()->emotion_type=mediapipe::EEmotionType::kAbsent;
       }
       m_receiver_callback(frame);
     }
