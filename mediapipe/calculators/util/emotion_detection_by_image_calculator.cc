@@ -53,12 +53,6 @@ namespace {
 constexpr char kImageFrameTag[] = "IMAGE";
 constexpr char kDetectionsTag[] = "DETECTIONS";
 
-// The ratio of detection label font height to the height of detection bounding
-// box.
-constexpr double kLabelToBoundingBoxRatio = 0.1;
-// Perserve 2 decimal digits.
-constexpr float kNumScoreDecimalDigitsMultipler = 100;
-
 }  // namespace
 
 // cv::VideoWriter writer;
