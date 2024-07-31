@@ -227,8 +227,8 @@ absl::Status EmotionDetectionByImageCalculator::Process(CalculatorContext* cc)
           // 获取输入张量
       TfLiteTensor* input_tensor = m_interpreter->tensor(input_details_tensor_index);
       // float* input_tensor = m_interpreter->typed_tensor<float>(input_details_tensor_index);
-      // std::copy(input_data.begin(), input_data.end(), input_tensor);
-      // 将输入数据赋值给模型输入
+      // std::copy(input_data.begin(), input_data.end(), input_tensor); //! 一维数据
+      // 将输入数据赋值给模型输入//! 二维数据
       std::memcpy(input_tensor->data.f, fixed_size_face.data, fixed_size_face.total() * fixed_size_face.elemSize());
       // 运行推理
       TfLiteStatus status_code = kTfLiteOk;
