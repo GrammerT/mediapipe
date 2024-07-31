@@ -137,7 +137,7 @@ REGISTER_CALCULATOR(EmotionDetectionByImageCalculator);
     m_options = cc->Options<EmotionDetectionByImageCalculatorOptions>();
     ABSL_LOG(INFO) << "will load emotion model.";
     loadEmotionModel();
-  #ifdef RENDER_CROP_FACE
+#ifdef RENDER_CROP_FACE
     m_opencv_render_thread=std::thread([this](){
       cv::namedWindow("emotion detection", cv::WINDOW_AUTOSIZE);  
       cv::Mat frameBuff;
@@ -155,7 +155,7 @@ REGISTER_CALCULATOR(EmotionDetectionByImageCalculator);
         cv::waitKey(50);
       }
     });
-  #endif
+#endif
 
     return absl::OkStatus();
   }
