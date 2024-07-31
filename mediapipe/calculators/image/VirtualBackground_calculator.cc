@@ -314,7 +314,7 @@ cv::Mat ApplyOpening(const cv::Mat& src, int kernel_size = 3) {
 }
 
 absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
-  if (cc->Inputs().Tag(kMaskCpuTag).IsEmpty()) {
+  if (cc->Inputs().Tag(kMaskCpuTag).IsEmpty()||!m_bApply_background) {
     cc->Outputs()
         .Tag(kImageFrameTag)
         .AddPacket(cc->Inputs().Tag(kImageFrameTag).Value());
@@ -352,17 +352,10 @@ absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
     printf("will resize background image.\n");
 
   }
+
   auto output_img = absl::make_unique<ImageFrame>(
       input_img.Format(), input_mat.cols, input_mat.rows);
       
-  if(!m_bApply_background)
-  {
-    cc->Outputs()
-    .Tag(kImageFrameTag)
-    .Add(output_img.release(), cc->InputTimestamp());
-    return absl::OkStatus();;
-  }
-
   cv::Mat output_mat = mediapipe::formats::MatView(output_img.get());
 
 #ifdef SHOW_MASK

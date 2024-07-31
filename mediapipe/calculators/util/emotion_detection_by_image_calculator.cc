@@ -102,9 +102,10 @@ private:
   int32_t m_img_height=0;
   int32_t m_img_width=0;
 
-  float m_emotion_threshold=0.9;
+  float m_emotion_threshold=0.65;
   int32_t m_last_id = 4;
 
+  cv::Mat m_will_run_tensor_face_mat;
 #ifdef RENDER_CROP_FACE
   std::thread m_opencv_render_thread;
   std::mutex m_pMutex;
@@ -344,20 +345,19 @@ void EmotionDetectionByImageCalculator::dealWithDetection(const Detection& detec
     //! 截取面部区域
     cv::Mat faceMat = CVMat(matRect);
     // 将面部区域调整为固定大小
-    cv::Mat fixed_size_face;
-    resize(faceMat, fixed_size_face, cv::Size(64, 64));
+    resize(faceMat, m_will_run_tensor_face_mat, cv::Size(64, 64));
     // std::cout<<"mat channel 0: "<<faceMat.channels()<<std::endl;
-    cv::cvtColor(fixed_size_face, fixed_size_face, cv::COLOR_BGR2RGB);
+    cv::cvtColor(m_will_run_tensor_face_mat, m_will_run_tensor_face_mat, cv::COLOR_BGR2RGB);
     // std::cout<<"mat channel 1: "<<fixed_size_face.channels()<<std::endl;
     // 进行检测
-    fixed_size_face.convertTo(fixed_size_face, CV_32FC3, 1.0 / 255.0); // 归一化
+    m_will_run_tensor_face_mat.convertTo(m_will_run_tensor_face_mat, CV_32FC3, 1.0 / 255.0); // 归一化
 #ifdef RENDER_CROP_FACE
     if (m_pMutex.try_lock()) {
-      m_will_render_mat=fixed_size_face;
+      m_will_render_mat=m_will_run_tensor_face_mat;
       m_pMutex.unlock();
     }
 #endif
-    runTensorWithMat(fixed_size_face);
+    runTensorWithMat(m_will_run_tensor_face_mat);
 }
 
   cv::Rect EmotionDetectionByImageCalculator::calculateBBoxRect(const LocationData& location_data, 
@@ -418,7 +418,7 @@ void EmotionDetectionByImageCalculator::dealWithDetection(const Detection& detec
         last_index = result_index;
         m_last_id = result_index;
     } else {
-        m_last_id = result_index;
+        m_last_id = last_index;
     }
     CalculatorGraph::CreateAndGetGlobaData()->emotion_type=(EEmotionType)m_last_id;
 
