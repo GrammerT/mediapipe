@@ -347,7 +347,9 @@ void EmotionDetectionByImageCalculator::dealWithDetection(const Detection& detec
     // 将面部区域调整为固定大小
     resize(faceMat, m_will_run_tensor_face_mat, cv::Size(64, 64));
     // std::cout<<"mat channel 0: "<<faceMat.channels()<<std::endl;
-    cv::cvtColor(m_will_run_tensor_face_mat, m_will_run_tensor_face_mat, cv::COLOR_BGR2RGB);
+    cv::cvtColor(m_will_run_tensor_face_mat, m_will_run_tensor_face_mat, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(m_will_run_tensor_face_mat, m_will_run_tensor_face_mat, cv::COLOR_GRAY2RGB);
+    
     // std::cout<<"mat channel 1: "<<fixed_size_face.channels()<<std::endl;
     // 进行检测
     m_will_run_tensor_face_mat.convertTo(m_will_run_tensor_face_mat, CV_32FC3, 1.0 / 255.0); // 归一化

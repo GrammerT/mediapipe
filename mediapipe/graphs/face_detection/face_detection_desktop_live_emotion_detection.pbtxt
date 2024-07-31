@@ -30,8 +30,6 @@ node {
 }
 
 
-
-
 node{
   calculator: "SelfieSegmentationCpu"
   input_stream: "IMAGE:throttled_input_video"
@@ -49,10 +47,20 @@ node{
       invert_mask: true
       adjust_with_luminance: false
       background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg"
+      apply_background: false
     }
   }
 }
 
+
+
+
+# Subgraph that detects faces.
+node {
+  calculator: "FaceDetectionShortRangeCpu"
+  input_stream: "IMAGE:virtual_bk_video_1"
+  output_stream: "DETECTIONS:face_detections"
+}
 
 # get roi from face detection,and run tensor.
 node {
@@ -65,16 +73,6 @@ node {
     }
   }
 }
-
-
-# Subgraph that detects faces.
-node {
-  calculator: "FaceDetectionShortRangeCpu"
-  input_stream: "IMAGE:virtual_bk_video_1"
-  output_stream: "DETECTIONS:face_detections"
-}
-
-
 
 # Converts the detections to drawing primitives for annotation overlay.
 node {
@@ -97,4 +95,9 @@ node {
   input_stream: "IMAGE:virtual_bk_video_1"
   input_stream: "render_data"
   output_stream: "IMAGE:output_video"
+  options {
+     [mediapipe.AnnotationOverlayCalculatorOptions.ext] {
+      enable_painter_rect:true
+     }
+   }
 }

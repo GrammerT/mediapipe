@@ -17,12 +17,15 @@
 #include "MemoryPool.h"
 
 #include "mediapipe/calculators/image/VirtualBackground_calculator.pb.h"
+#include "mediapipe/calculators/util/annotation_overlay_calculator.pb.h"
 #include "mediapipe/framework/calculator_options.pb.h"
 
 
 std::string calculator_graph_config_contents = R"pb(
 input_stream: "input_video"
 output_stream: "output_video"
+output_stream: "face_detections"
+
 node{
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
@@ -33,14 +36,64 @@ node{
   }
   output_stream: "throttled_input_video"
 }
+
+
+# Subgraph that detects faces.
+node {
+  calculator: "FaceDetectionShortRangeCpu"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "DETECTIONS:face_detections"
+}
+
+# get roi from face detection,and run tensor.
+node {
+  calculator:"EmotionDetectionByImageCalculator"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "DETECTIONS:face_detections"
+  options {
+    [mediapipe.EmotionDetectionByImageCalculatorOptions.ext] {
+        model_path:"mediapipe/modules/face_emotion_detect_self/keypoint_classifier.tflite"
+    }
+  }
+}
+
+# Converts the detections to drawing primitives for annotation overlay.
+node {
+  calculator: "DetectionsToRenderDataCalculator"
+  input_stream: "DETECTIONS:face_detections"
+  output_stream: "RENDER_DATA:render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.DetectionsToRenderDataCalculatorOptions] {
+      thickness: 2.0
+      color { r: 255 g: 255 b: 0 }
+    }
+  }
+}
+
+# Draws annotations and overlays them on top of the input images.
+node {
+  calculator: "AnnotationOverlayCalculator"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "render_data"
+  output_stream: "IMAGE:rendered_output_video"
+  options {
+    [mediapipe.AnnotationOverlayCalculatorOptions.ext] {
+      enable_painter_rect:false
+    }
+  }
+}
+
+
 node{
   calculator: "SelfieSegmentationCpu"
-  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "IMAGE:rendered_output_video"
   output_stream: "SEGMENTATION_MASK:segmentation_mask"
 }
+
+
 node{
   calculator: "VirtualBackgroundCalculator"
-  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "IMAGE:rendered_output_video"
   input_stream: "MASK:segmentation_mask"
   output_stream: "IMAGE:output_video"
   node_options: {
@@ -53,49 +106,6 @@ node{
     }
   }
 }
-
-# Subgraph that detects faces.
-node {
-  calculator: "FaceDetectionShortRangeCpu"
-  input_stream: "IMAGE:virtual_bk_video_1"
-  output_stream: "DETECTIONS:face_detections"
-}
-
-# get roi from face detection,and run tensor.
-node {
-  calculator:"EmotionDetectionByImageCalculator"
-  input_stream: "IMAGE:virtual_bk_video_1"
-  input_stream: "DETECTIONS:face_detections"
-  options {
-    [mediapipe.EmotionDetectionByImageCalculatorOptions.ext] {
-        model_path:"mediapipe/modules/face_emotion_detect_self/keypoint_classifier.tflite"
-    }
-  }
-}
-
-# Converts the detections to drawing primitives for annotation overlay.
-#node {
-#  calculator: "DetectionsToRenderDataCalculator"
-#  input_stream: "DETECTIONS:face_detections"
-#  output_stream: "RENDER_DATA:render_data"
-#  node_options: {
-#    [type.googleapis.com/mediapipe.DetectionsToRenderDataCalculatorOptions] {
-#      thickness: 2.0
-#      color { r: 255 g: 255 b: 0 }
-#    }
-#  }
-#}
-
-
-
-# Draws annotations and overlays them on top of the input images.
-#node {
-#  calculator: "AnnotationOverlayCalculator"
-#  input_stream: "IMAGE:virtual_bk_video_1"
-#  input_stream: "render_data"
-#  output_stream: "IMAGE:output_video"
-#}
-
 
 )pb";
 
@@ -199,8 +209,15 @@ int VideoEffectImpl::enableVideoEffect()
           
           ABSL_LOG(INFO) <<"already set VirtualBackgroundCalculator\n";
         }
-
-    }
+        else if(node->calculator()=="AnnotationOverlayCalculator")
+        {
+          ABSL_LOG(INFO) <<"get AnnotationOverlayCalculator";
+          mediapipe::CalculatorOptions* node_options = node->mutable_options();
+          auto realOptions = node_options->MutableExtension(mediapipe::AnnotationOverlayCalculatorOptions::ext);
+          realOptions->set_enable_painter_rect(m_param->render_info);
+          ABSL_LOG(INFO) <<"already set AnnotationOverlayCalculator render info: "<<m_param->render_info;
+        }
+    } 
 #endif
     
     auto status = m_media_pipe_graph.Initialize(config);

@@ -380,8 +380,8 @@ void DetectionsToRenderDataCalculator::AddDetectionToRenderData(
                                        detection.label_id_size()) +
                               1 /* for feature_tag */));
   }
-  AddLabels(detection, options, text_line_height, render_data);
-  AddFeatureTag(detection, options, text_line_height, render_data);
+  // AddLabels(detection, options, text_line_height, render_data);
+  // AddFeatureTag(detection, options, text_line_height, render_data);
   AddLocationData(detection, options, render_data);
 }
 }  // namespace mediapipe

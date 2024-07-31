@@ -327,7 +327,7 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
   if (HasImageTag(cc)) {
     use_gpu_ = cc->Inputs().Tag(kImageTag).Get<mediapipe::Image>().UsesGpu();
   }
-  
+  // ABSL_LOG(INFO) <<"render info: "<<options_.enable_painter_rect();
   // Initialize render target, drawn with OpenCV.
   std::unique_ptr<cv::Mat> image_mat;
   ImageFormat::Format target_format;
@@ -366,9 +366,13 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
   // Reset the renderer with the image_mat. No copy here.
   renderer_->AdoptImage(image_mat.get());
   // "Angry","Disgusted","Fearful","Happy","Normal","Sad","Surprise"
-   std::string emotion_str = EmotionStr(CalculatorGraph::CreateAndGetGlobaData()->emotion_type);
-  // printf("will render emotion : %s\n",emotion_str.c_str());
-   renderEmotionStr(emotion_str);
+   // printf("will render emotion : %s\n",emotion_str.c_str());
+  if(options_.enable_painter_rect())
+  {
+    std::string emotion_str = EmotionStr(CalculatorGraph::CreateAndGetGlobaData()->emotion_type);
+    renderEmotionStr(emotion_str);
+  }
+   
   // Render streams onto render target.
   for (CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId();
        ++id) {
@@ -401,11 +405,20 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
       continue; 
     }
     if (tag.empty()) {
+      if(!options_.enable_painter_rect())
+      {
+        continue;
+      }
+      // ABSL_LOG(INFO) <<"render info 2";
       // Empty tag defaults to accepting a single object of RenderData type.
       const RenderData& render_data = cc->Inputs().Get(id).Get<RenderData>();
       renderer_->RenderDataOnImage(render_data);//! face mesh 中渲染 roi of face
-    
     } else {
+      if(!options_.enable_painter_rect())
+      {
+        continue;
+      }
+      // ABSL_LOG(INFO) <<"render info 3";
       RET_CHECK_EQ(kVectorTag, tag);
       const std::vector<RenderData>& render_data_vec =
           cc->Inputs().Get(id).Get<std::vector<RenderData>>();
