@@ -162,7 +162,8 @@ absl::Status EmotionDetectionByImageCalculator::Process(CalculatorContext* cc)
 {
   if (cc->Inputs().Tag(kDetectionsTag).IsEmpty())
   {
-    printf("no detections\n");
+    m_last_id = -1;//absent
+    CalculatorGraph::CreateAndGetGlobaData()->emotion_type=(EEmotionType)m_last_id;
     return absl::OkStatus();
   }
   const bool has_detection_from_vector =
@@ -187,9 +188,15 @@ absl::Status EmotionDetectionByImageCalculator::Process(CalculatorContext* cc)
       auto &bboxC = detection.location_data().relative_bounding_box();
 
       int32_t leftTopX = int(bboxC.xmin() * m_img_width);
+      if(leftTopX<0) leftTopX=0;
       int32_t leftTopY = int(bboxC.ymin() * m_img_height);
+      if(leftTopY<0) leftTopY=0;
       int32_t rightBottomX = int((bboxC.xmin() + bboxC.width()) * m_img_width);
+      if(rightBottomX>m_img_width) rightBottomX=m_img_width;
       int32_t rightBottomY = int((bboxC.ymin() + bboxC.height()) * m_img_height);
+      if (rightBottomY>m_img_height) rightBottomY=m_img_height;
+      
+      
       
       // printf("leftTopX:%d leftTopY:%d width:%d height:%d\n",
                 // leftTopX,leftTopY,rightBottomX-leftTopX,rightBottomY-leftTopY);
@@ -257,6 +264,7 @@ absl::Status EmotionDetectionByImageCalculator::Process(CalculatorContext* cc)
       }
       CalculatorGraph::CreateAndGetGlobaData()->emotion_type=(EEmotionType)m_last_id;
       // m_last_id = 4;
+      break;
     }
   }
 

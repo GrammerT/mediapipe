@@ -489,6 +489,9 @@ std::string AnnotationOverlayCalculator::EmotionStr(EEmotionType type)
   std::string emotion_str = "normal";
   switch (type)
   {
+  case EEmotionType::kAbsent:
+    emotion_str = "absent";
+    break;
   case EEmotionType::kAngry:
     emotion_str = "angry";
     break;
