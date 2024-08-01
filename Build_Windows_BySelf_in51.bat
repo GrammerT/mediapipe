@@ -89,7 +89,7 @@ cmd
 //! 虚拟背景优化研究方向
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/pose_tracking:pose_tracking_cpu
 @bazel-bin\mediapipe\examples\desktop\pose_tracking\pose_tracking_cpu.exe -calculator_graph_config_file=mediapipe\graphs\pose_tracking\pose_tracking_cpu.pbtxt 实时
-
+@bazel-bin\mediapipe\examples\desktop\pose_tracking\pose_tracking_cpu.exe -calculator_graph_config_file=mediapipe\graphs\pose_tracking\pose_tracking_cpu.pbtxt -input_video_path=D:/workspace/OpenSource/MediaPipe/test_video/header.mp4
 
 
 //! 尝试姿势识别gesture_recognizer  这个只是个lib

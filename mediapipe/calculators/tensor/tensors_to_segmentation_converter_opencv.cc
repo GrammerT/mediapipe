@@ -33,6 +33,11 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 
+#include "mediapipe/framework/port/opencv_highgui_inc.h"
+
+// #define RENDER_CROP_SEGMASK
+
+
 namespace mediapipe {
 namespace {
 
@@ -43,6 +48,29 @@ class TensorsToSegmentationOpenCvConverter
  public:
   absl::Status Init(const TensorsToSegmentationCalculatorOptions& options) {
     options_ = options;
+#ifdef RENDER_CROP_SEGMASK
+    m_opencv_render_thread=std::thread([this](){
+      cv::namedWindow("tensorImg", cv::WINDOW_AUTOSIZE);  
+      cv::Mat frameBuff;
+      while (true) {
+        if (m_will_render_mat.empty())
+        {
+          cv::waitKey(50);
+          continue;
+        }
+        std::shared_ptr<cv::Mat> cvMat = nullptr;
+        if (m_pMutex.try_lock()) {
+          // cvMat = m_will_render_mat;  
+          // frameBuff=cvMat.get()->clone();
+          frameBuff=m_will_render_mat;
+          
+          m_pMutex.unlock();
+        }
+        cv::imshow("tensorImg", m_will_render_mat);
+        cv::waitKey(50);
+      }
+    });
+#endif
     return absl::OkStatus();
   }
 
@@ -55,6 +83,14 @@ class TensorsToSegmentationOpenCvConverter
   absl::Status ApplyActivation(cv::Mat& tensor_mat, cv::Mat* small_mask_mat);
 
   TensorsToSegmentationCalculatorOptions options_;
+
+#ifdef RENDER_CROP_SEGMASK
+  std::thread m_opencv_render_thread;
+  std::mutex m_pMutex;
+  // std::shared_ptr<cv::Mat> m_will_render_mat;
+  cv::Mat m_will_render_mat;
+#endif
+
 };
 
 absl::StatusOr<std::unique_ptr<Image>>
@@ -76,7 +112,7 @@ TensorsToSegmentationOpenCvConverter::Convert(
   cv::Mat tensor_mat(cv::Size(tensor_width, tensor_height),
                      CV_MAKETYPE(CV_32F, tensor_channels),
                      const_cast<float*>(raw_input_data));
-
+  // ABSL_LOG(INFO) << "Start grabbing and processing frames "<<tensor_channels;
   // Process mask tensor and apply activation function.
   if (tensor_channels == 2) {
     MP_RETURN_IF_ERROR(ApplyActivation<cv::Vec2f>(tensor_mat, &small_mask_mat));
@@ -98,6 +134,7 @@ TensorsToSegmentationOpenCvConverter::Convert(
       ImageFormat::VEC32F1, output_width, output_height);
   auto output_mask = std::make_unique<Image>(mask_frame);
   auto output_mat = formats::MatView(output_mask.get());
+
   // Upsample small mask into output.
   cv::resize(small_mask_mat, *output_mat,
              cv::Size(output_width, output_height));
@@ -148,7 +185,12 @@ absl::Status TensorsToSegmentationOpenCvConverter::ApplyActivation(
       small_mask_mat->at<float>(i, j) = mask_value;
     }
   }
-
+#ifdef RENDER_CROP_SEGMASK
+    if (m_pMutex.try_lock()) {
+      m_will_render_mat=*small_mask_mat;
+      m_pMutex.unlock();
+    }
+#endif
   return absl::OkStatus();
 }
 

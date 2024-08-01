@@ -178,7 +178,7 @@ absl::Status TensorsToSegmentationCalculator::Process(CalculatorContext* cc) {
   if (kTensorsIn(cc).IsEmpty()) {
     return absl::OkStatus();
   }
-
+  // ABSL_LOG(INFO) << "TensorsToSegmentationCalculator process";
   const auto& input_tensors = kTensorsIn(cc).Get();
 
   bool use_gpu = false;
