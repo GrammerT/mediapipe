@@ -94,7 +94,7 @@ input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
 # timestamp there will not be an output packet in the LANDMARKS stream. However,
 # the MediaPipe framework will internally inform the downstream calculators of
 # the absence of this packet so that they don't wait for it unnecessarily.
-output_stream: "LANDMARKS:pose_landmarks"
+#output_stream: "LANDMARKS:pose_landmarks"
 
 # Pose world landmarks. (LandmarkList)
 # World landmarks are real-world 3D coordinates in meters with the origin at the
@@ -221,7 +221,7 @@ node {
   input_stream: "NORM_LANDMARKS:unfiltered_pose_landmarks"
   input_stream: "AUX_NORM_LANDMARKS:unfiltered_auxiliary_landmarks"
   input_stream: "WORLD_LANDMARKS:unfiltered_world_landmarks"
-  output_stream: "FILTERED_NORM_LANDMARKS:pose_landmarks"
+#  output_stream: "FILTERED_NORM_LANDMARKS:pose_landmarks"
   output_stream: "FILTERED_AUX_NORM_LANDMARKS:auxiliary_landmarks"
   output_stream: "FILTERED_WORLD_LANDMARKS:pose_world_landmarks"
 }

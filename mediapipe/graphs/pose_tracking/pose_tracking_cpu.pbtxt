@@ -6,7 +6,7 @@ input_stream: "input_video"
 # Output image with rendered results. (ImageFrame)
 output_stream: "output_video"
 # Pose landmarks. (NormalizedLandmarkList)
-output_stream: "pose_landmarks"
+#output_stream: "pose_landmarks"
 
 # Generates side packet to enable segmentation.
 node {
@@ -45,7 +45,7 @@ node {
   calculator: "PoseLandmarkCpu"
   input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
   input_stream: "IMAGE:throttled_input_video"
-  output_stream: "LANDMARKS:pose_landmarks"
+#  output_stream: "LANDMARKS:pose_landmarks"
   output_stream: "SEGMENTATION_MASK:segmentation_mask"
   output_stream: "DETECTION:pose_detection"
   output_stream: "ROI_FROM_LANDMARKS:roi_from_landmarks"
@@ -55,7 +55,7 @@ node {
 node {
   calculator: "PoseRendererCpu"
   input_stream: "IMAGE:throttled_input_video"
-  input_stream: "LANDMARKS:pose_landmarks"
+#  input_stream: "LANDMARKS:pose_landmarks"
   input_stream: "SEGMENTATION_MASK:segmentation_mask"
   input_stream: "DETECTION:pose_detection"
   input_stream: "ROI:roi_from_landmarks"

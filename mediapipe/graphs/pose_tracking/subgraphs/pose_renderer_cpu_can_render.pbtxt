@@ -5,7 +5,7 @@ type: "PoseRendererCpu"
 # CPU image. (ImageFrame)
 input_stream: "IMAGE:input_image"
 # Pose landmarks. (NormalizedLandmarkList)
-#input_stream: "LANDMARKS:pose_landmarks"
+input_stream: "LANDMARKS:pose_landmarks"
 # Segmentation mask. (ImageFrame in ImageFormat::VEC32F1)
 input_stream: "SEGMENTATION_MASK:segmentation_mask"
 # Region of interest calculated based on landmarks. (NormalizedRect)
@@ -36,13 +36,13 @@ node {
 }
 
 # Computes render data for landmarks.
-#node {
-#  calculator: "PoseLandmarksToRenderData"
-#  input_stream: "LANDMARKS:pose_landmarks"
-#  input_stream: "ROI:roi"
-#  input_stream: "IMAGE_SIZE:image_size"
-#  output_stream: "RENDER_DATA:landmarks_render_data"
-#}
+node {
+  calculator: "PoseLandmarksToRenderData"
+  input_stream: "LANDMARKS:pose_landmarks"
+  input_stream: "ROI:roi"
+  input_stream: "IMAGE_SIZE:image_size"
+  output_stream: "RENDER_DATA:landmarks_render_data"
+}
 
 # Converts normalized rects to drawing primitives for annotation overlay.
 node {
@@ -94,7 +94,7 @@ node {
   calculator: "AnnotationOverlayCalculator"
   input_stream: "IMAGE:segmented_image"
   input_stream: "detection_render_data"
-#  input_stream: "VECTOR:landmarks_render_data"
+  input_stream: "VECTOR:landmarks_render_data"
   input_stream: "roi_render_data"
   output_stream: "IMAGE:output_image"
 }
