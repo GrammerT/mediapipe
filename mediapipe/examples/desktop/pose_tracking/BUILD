@@ -21,10 +21,12 @@ cc_binary(
     data = [
         "//mediapipe/modules/pose_detection:pose_detection.tflite",
         "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+        "//mediapipe/modules/selfie_segmentation:selfie_segmentation.tflite",
     ],
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/pose_tracking:pose_tracking_cpu_deps",
+        "//mediapipe/graphs/selfie_segmentation_image:selfie_segmentation_cpu_deps",
     ],
 )
 

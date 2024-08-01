@@ -415,7 +415,7 @@ void EmotionDetectionByImageCalculator::dealWithDetection(const Detection& detec
     printf("result_index=%d value=%f \n",i,result[i]);
   }
 #endif
-    static int last_index=2;
+    static int last_index=4;
     if (max_value >= m_emotion_threshold) {
         last_index = result_index;
         m_last_id = result_index;

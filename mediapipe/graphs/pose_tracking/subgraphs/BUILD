@@ -58,5 +58,6 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/calculators/util:detections_to_render_data_calculator",
         "//mediapipe/calculators/util:rect_to_render_data_calculator",
+        "//mediapipe/graphs/selfie_segmentation_image:selfie_segmentation_cpu_deps",
     ],
 )

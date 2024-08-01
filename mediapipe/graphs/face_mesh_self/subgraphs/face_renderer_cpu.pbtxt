@@ -98,4 +98,9 @@ node {
   input_stream: "VECTOR:0:multi_face_landmarks_render_data"
   input_stream: "rects_render_data"
   output_stream: "IMAGE:output_image"
+  options {
+    [mediapipe.AnnotationOverlayCalculatorOptions.ext] {
+      enable_painter_rect:false
+    }
+  }
 }

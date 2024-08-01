@@ -47,7 +47,7 @@ node{
       invert_mask: true
       adjust_with_luminance: false
       background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg"
-      apply_background: false
+      apply_background: true
     }
   }
 }
