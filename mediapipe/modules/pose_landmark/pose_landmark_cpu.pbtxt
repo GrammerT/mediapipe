@@ -109,7 +109,7 @@ output_stream: "SEGMENTATION_MASK:segmentation_mask"
 
 # Extra outputs (for debugging, for instance).
 # Detected poses. (Detection)
-output_stream: "DETECTION:pose_detection"
+#output_stream: "DETECTION:pose_detection"
 # Regions of interest calculated based on landmarks. (NormalizedRect)
 output_stream: "ROI_FROM_LANDMARKS:pose_rect_from_landmarks"
 # Regions of interest calculated based on pose detections. (NormalizedRect)
