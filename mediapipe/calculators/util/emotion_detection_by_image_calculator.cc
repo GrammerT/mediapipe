@@ -408,9 +408,9 @@ void EmotionDetectionByImageCalculator::dealWithDetection(const Detection& detec
     auto max_it = std::max_element(result, result + num_output_elements);
     float max_value = *max_it;
     int result_index = std::distance(result, max_it);
-    // std::cout << "Predicted class: " << result_index << ", Probability: " << max_value << std::endl;
 #ifdef OUTPUT_RESULT_VALUE
-  for (size_t i = 0; i < num_output_elements; i++)
+  std::cout << "Predicted class: " << result_index << ", Probability: " << max_value << std::endl;
+  for(size_t i = 0; i < num_output_elements; i++)
   {
     printf("result_index=%d value=%f \n",i,result[i]);
   }
