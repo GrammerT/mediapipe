@@ -102,7 +102,7 @@ private:
   int32_t m_img_height=0;
   int32_t m_img_width=0;
 
-  float m_emotion_threshold=0.65;
+  float m_emotion_threshold=0.325;
   int32_t m_last_id = 4;
 
   cv::Mat m_will_run_tensor_face_mat;
@@ -345,7 +345,7 @@ void EmotionDetectionByImageCalculator::dealWithDetection(const Detection& detec
     //! 截取面部区域
     cv::Mat faceMat = CVMat(matRect);
     // 将面部区域调整为固定大小
-    resize(faceMat, m_will_run_tensor_face_mat, cv::Size(64, 64));
+    resize(faceMat, m_will_run_tensor_face_mat, cv::Size(32, 32));
     // std::cout<<"mat channel 0: "<<faceMat.channels()<<std::endl;
     cv::cvtColor(m_will_run_tensor_face_mat, m_will_run_tensor_face_mat, cv::COLOR_BGR2GRAY);
     cv::cvtColor(m_will_run_tensor_face_mat, m_will_run_tensor_face_mat, cv::COLOR_GRAY2RGB);

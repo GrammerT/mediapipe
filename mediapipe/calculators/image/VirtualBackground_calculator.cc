@@ -224,6 +224,7 @@ absl::Status VirtualBackgroundCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status VirtualBackgroundCalculator::Process(CalculatorContext* cc) {
+
   if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
     MP_RETURN_IF_ERROR(
@@ -262,14 +263,14 @@ cv::Mat ApplyGaussianBlur(const cv::Mat& src, int kernel_size, double sigma) {
 
 
 // 使用分离卷积的高斯模糊
-cv::Mat ApplySeparableGaussianBlur(const cv::Mat& src, int kernel_size, double sigma) {
-    cv::Mat dst, temp;
-    // 水平高斯模糊
-    cv::GaussianBlur(src, temp, cv::Size(kernel_size, 1), sigma);
-    // 垂直高斯模糊
-    cv::GaussianBlur(temp, dst, cv::Size(1, kernel_size), sigma);
-    return dst;
-}
+// cv::Mat ApplySeparableGaussianBlur(const cv::Mat& src, int kernel_size, double sigma) {
+//     cv::Mat dst, temp;
+//     // 水平高斯模糊
+//     cv::GaussianBlur(src, temp, cv::Size(kernel_size, 1), sigma);
+//     // 垂直高斯模糊
+//     cv::GaussianBlur(temp, dst, cv::Size(1, kernel_size), sigma);
+//     return dst;
+// }
 
 // 自动计算合适的阈值并二值化图像
 cv::Mat ApplyAutoThreshold(const cv::Mat& src) {
@@ -314,17 +315,35 @@ cv::Mat ApplyOpening(const cv::Mat& src, int kernel_size = 3) {
 }
 
 absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
-  if (cc->Inputs().Tag(kMaskCpuTag).IsEmpty()||!m_bApply_background) {
+  if(!m_bApply_background)
+  {
     cc->Outputs()
         .Tag(kImageFrameTag)
         .AddPacket(cc->Inputs().Tag(kImageFrameTag).Value());
     return absl::OkStatus();
   }
-  // Get inputs and setup output.
   const auto& input_img = cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
-  const auto& mask_img = cc->Inputs().Tag(kMaskCpuTag).Get<ImageFrame>();
-
   cv::Mat input_mat = formats::MatView(&input_img);
+  if (cc->Inputs().Tag(kMaskCpuTag).IsEmpty()) 
+  {
+    auto output_img = absl::make_unique<ImageFrame>(
+      input_img.Format(), input_mat.cols, input_mat.rows);
+    cv::Mat output_mat = mediapipe::formats::MatView(output_img.get());
+
+    for (int i = 0; i < output_mat.rows; ++i) {
+      for (int j = 0; j < output_mat.cols; ++j) {
+        output_mat.at<cv::Vec3b>(i, j) = m_background_image.at<cv::Vec3b>(i, j);
+      }
+    }
+
+    cc->Outputs()
+        .Tag(kImageFrameTag)
+        .Add(output_img.release(), cc->InputTimestamp());
+    return absl::OkStatus();
+  }
+  // Get inputs and setup output.
+  const auto& mask_img = cc->Inputs().Tag(kMaskCpuTag).Get<ImageFrame>();
+  
   cv::Mat mask_mat = formats::MatView(&mask_img);
 
   RET_CHECK(input_mat.channels() == 3);  // RGB only.
@@ -363,7 +382,7 @@ absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
   cv::waitKey(50);
 #endif
 
-    mask_full = ApplySeparableGaussianBlur(mask_full, 11, 5);
+    // mask_full = ApplySeparableGaussianBlur(mask_full, 9, 4);
 #ifdef SHOW_MASK
   cv::imshow(kWindowName3, mask_full);
   cv::waitKey(50);

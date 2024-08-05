@@ -15,98 +15,13 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"
 #include "MemoryPool.h"
-
+#include "InternalDefine.h"
 #include "mediapipe/calculators/image/VirtualBackground_calculator.pb.h"
 #include "mediapipe/calculators/util/annotation_overlay_calculator.pb.h"
 #include "mediapipe/framework/calculator_options.pb.h"
 
 
-std::string calculator_graph_config_contents = R"pb(
-input_stream: "input_video"
-output_stream: "output_video"
-output_stream: "face_detections"
-
-node{
-  calculator: "FlowLimiterCalculator"
-  input_stream: "input_video"
-  input_stream: "FINISHED:output_video"
-  input_stream_info: {
-    tag_index: "FINISHED"
-    back_edge: true
-  }
-  output_stream: "throttled_input_video"
-}
-
-
-node{
-  calculator: "SelfieSegmentationCpu"
-  input_stream: "IMAGE:throttled_input_video"
-  output_stream: "SEGMENTATION_MASK:segmentation_mask"
-}
-
-
-node{
-  calculator: "VirtualBackgroundCalculator"
-  input_stream: "IMAGE:throttled_input_video"
-  input_stream: "MASK:segmentation_mask"
-  output_stream: "IMAGE:virtual_video"
-  node_options: {
-    [type.googleapis.com/mediapipe.VirtualBackgroundCalculatorOptions] {
-      mask_channel: UNKNOWN
-      invert_mask: true
-      adjust_with_luminance: false
-      background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg"
-      apply_background: true
-    }
-  }
-}
-
-# Subgraph that detects faces.
-node {
-  calculator: "FaceDetectionShortRangeCpu"
-  input_stream: "IMAGE:throttled_input_video"
-  output_stream: "DETECTIONS:face_detections"
-}
-
-# get roi from face detection,and run tensor.
-node {
-  calculator:"EmotionDetectionByImageCalculator"
-  input_stream: "IMAGE:throttled_input_video"
-  input_stream: "DETECTIONS:face_detections"
-  options {
-    [mediapipe.EmotionDetectionByImageCalculatorOptions.ext] {
-        model_path:"mediapipe/modules/face_emotion_detect_self/keypoint_classifier.tflite"
-    }
-  }
-}
-
-# Converts the detections to drawing primitives for annotation overlay.
-node {
-  calculator: "DetectionsToRenderDataCalculator"
-  input_stream: "DETECTIONS:face_detections"
-  output_stream: "RENDER_DATA:render_data"
-  node_options: {
-    [type.googleapis.com/mediapipe.DetectionsToRenderDataCalculatorOptions] {
-      thickness: 2.0
-      color { r: 255 g: 255 b: 0 }
-    }
-  }
-}
-
-# Draws annotations and overlays them on top of the input images.
-node {
-  calculator: "AnnotationOverlayCalculator"
-  input_stream: "IMAGE:virtual_video"
-  input_stream: "render_data"
-  output_stream: "IMAGE:output_video"
-  options {
-    [mediapipe.AnnotationOverlayCalculatorOptions.ext] {
-      enable_painter_rect:false
-    }
-  }
-}
-
-)pb";
+std::string calculator_graph_config_contents = str_only_virtual_bk;
 
 
 
@@ -188,6 +103,7 @@ int VideoEffectImpl::enableVideoEffect()
       // 在 config 对象中找到需要修改的字段并进行修改
     for (int i = 0; i < config.node_size(); ++i) {
         mediapipe::CalculatorGraphConfig::Node* node = config.mutable_node(i);
+        ABSL_LOG(INFO) <<"calculator node is : "<<node->calculator();
         if(node->calculator()=="VirtualBackgroundCalculator")
         {
           ABSL_LOG(INFO) <<"get VirtualBackgroundCalculator";

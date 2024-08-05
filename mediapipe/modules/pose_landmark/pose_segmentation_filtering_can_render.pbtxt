@@ -1,3 +1,14 @@
+# MediaPipe graph to filter segmentation masks temporally (across packets with
+# incremental timestamps) to reduce jitter.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "PoseSegmentationFiltering"
+#     input_side_packet: "ENABLE:enable"
+#     input_stream: "SEGMENTATION_MASK:segmentation_mask"
+#     output_stream: "FILTERED_SEGMENTATION_MASK:filtered_segmentation_mask"
+#   }
+
 type: "PoseSegmentationFiltering"
 
 # Whether to enable filtering. If unspecified, functions as enabled. (bool)
@@ -32,11 +43,10 @@ node {
   output_stream: "MASK_SMOOTHED:filtered_segmentation_mask"
   options {
     [mediapipe.SegmentationSmoothingCalculatorOptions.ext] {
-      combine_with_previous_ratio: 0.93
+      combine_with_previous_ratio: 1.0
     }
   }
 }
-
 
 # Caches the filtered segmentation mask, similar to above for the pose rect.
 node {

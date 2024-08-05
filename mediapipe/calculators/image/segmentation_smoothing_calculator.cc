@@ -24,6 +24,9 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/vector.h"
+#include "mediapipe/framework/port/opencv_core_inc.h"
+#include "mediapipe/framework/port/opencv_imgproc_inc.h"
+#include "mediapipe/framework/port/opencv_highgui_inc.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
@@ -36,6 +39,9 @@
 #include "mediapipe/framework/formats/image_opencv.h"
 #include "mediapipe/framework/port/opencv_core_inc.h"
 #endif  // !MEDIAPIPE_DISABLE_OPENCV
+
+// #define RENDER_CROP_SEG
+#define kWindowName "segment smooth"
 
 namespace mediapipe {
 
@@ -105,6 +111,15 @@ class SegmentationSmoothingCalculator : public CalculatorBase {
   mediapipe::GlCalculatorHelper gpu_helper_;
   GLuint program_ = 0;
 #endif  // !MEDIAPIPE_DISABLE_GPU
+
+private:
+#ifdef RENDER_CROP_SEG
+  std::thread m_opencv_render_thread;
+  std::mutex m_pMutex;
+  cv::Mat m_will_render_mat;
+#endif
+
+
 };
 REGISTER_CALCULATOR(SegmentationSmoothingCalculator);
 
@@ -130,7 +145,25 @@ absl::Status SegmentationSmoothingCalculator::Open(CalculatorContext* cc) {
   auto options =
       cc->Options<mediapipe::SegmentationSmoothingCalculatorOptions>();
   combine_with_previous_ratio_ = options.combine_with_previous_ratio();
-
+#ifdef RENDER_CROP_SEG
+    m_opencv_render_thread=std::thread([this](){
+      cv::namedWindow(kWindowName, cv::WINDOW_AUTOSIZE);  
+      cv::Mat frameBuff;
+      while (true) {
+        if (m_will_render_mat.empty())
+        {
+          cv::waitKey(50);
+          continue;
+        }
+        if (m_pMutex.try_lock()) {
+          frameBuff=m_will_render_mat;
+          m_pMutex.unlock();
+        }
+        cv::imshow(kWindowName, m_will_render_mat);
+        cv::waitKey(50);
+      }
+    });
+#endif
   return absl::OkStatus();
 }
 
@@ -148,7 +181,6 @@ absl::Status SegmentationSmoothingCalculator::Process(CalculatorContext* cc) {
 
   // Run on GPU if incoming data is on GPU.
   const bool use_gpu = cc->Inputs().Tag(kCurrentMaskTag).Get<Image>().UsesGpu();
-
   if (use_gpu) {
 #if !MEDIAPIPE_DISABLE_GPU
     if (!gpu_initialized_) {
@@ -176,6 +208,15 @@ absl::Status SegmentationSmoothingCalculator::Process(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
+cv::Mat ApplySeparableGaussianBlur(const cv::Mat& src, int kernel_size, double sigma) {
+    cv::Mat dst, temp;
+    // 水平高斯模糊
+    cv::GaussianBlur(src, temp, cv::Size(kernel_size, 1), sigma);
+    // 垂直高斯模糊
+    cv::GaussianBlur(temp, dst, cv::Size(1, kernel_size), sigma);
+    return dst;
+}
+
 absl::Status SegmentationSmoothingCalculator::Close(CalculatorContext* cc) {
 #if !MEDIAPIPE_DISABLE_GPU
   if (gpu_initialized_) {
@@ -188,6 +229,14 @@ absl::Status SegmentationSmoothingCalculator::Close(CalculatorContext* cc) {
 
   return absl::OkStatus();
 }
+
+// Calculate uncertainty using Beta distribution
+float beta_uncertainty(float p, float alpha, float beta) {
+    float B = tgamma(alpha) * tgamma(beta) / tgamma(alpha + beta);  // Beta function
+    float beta_pdf = pow(p, alpha - 1) * pow(1 - p, beta - 1) / B;
+    return beta_pdf;
+}
+
 
 absl::Status SegmentationSmoothingCalculator::RenderCpu(CalculatorContext* cc) {
 #if !MEDIAPIPE_DISABLE_OPENCV
@@ -211,7 +260,14 @@ absl::Status SegmentationSmoothingCalculator::RenderCpu(CalculatorContext* cc) {
       current_frame.image_format(), current_mat->cols, current_mat->rows);
   cv::Mat output_mat = mediapipe::formats::MatView(output_frame.get());
   output_mat.setTo(cv::Scalar(0));
-
+  // output_mat = ApplySeparableGaussianBlur(output_mat, 9, 4);
+#ifdef RENDER_CROP_SEG
+    if (m_pMutex.try_lock()) {
+      m_will_render_mat=output_mat;
+      m_pMutex.unlock();
+    }
+#endif
+  // output_mat = ApplySeparableGaussianBlur(output_mat, 9, 4);
   // Blending function.
   const auto blending_fn = [&](const float prev_mask_value,
                                const float new_mask_value) {
@@ -238,6 +294,22 @@ absl::Status SegmentationSmoothingCalculator::RenderCpu(CalculatorContext* cc) {
 
     return new_mask_value + (prev_mask_value - new_mask_value) *
                                 (uncertainty * combine_with_previous_ratio_);
+  };
+
+
+  const auto blending_fn_2 = [&](const float prev_mask_value,
+                               const float new_mask_value) {
+    float alpha = 16.0;  // Shape parameter α
+    float beta = 16.0;   // Shape parameter β
+    float p = new_mask_value;
+    
+    // Calculate uncertainty using Beta distribution
+    float uncertainty = beta_uncertainty(p, alpha, beta);
+
+    // Clamp uncertainty between 0 and 1
+    uncertainty = std::clamp(uncertainty, 0.0f, 1.0f);
+
+    return new_mask_value + (prev_mask_value - new_mask_value) * (uncertainty * combine_with_previous_ratio_);
   };
 
   // Write directly to the first channel of output.

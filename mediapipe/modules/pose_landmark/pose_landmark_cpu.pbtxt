@@ -1,32 +1,3 @@
-# MediaPipe graph to detect/predict pose landmarks. (CPU input, and inference is
-# executed on CPU.) This graph tries to skip pose detection as much as possible
-# by using previously detected/predicted landmarks for new images.
-#
-# It is required that "pose_detection.tflite" is available at
-# "mediapipe/modules/pose_detection/pose_detection.tflite"
-# path during execution.
-#
-# It is required that "pose_landmark_lite.tflite" or
-# "pose_landmark_full.tflite" or "pose_landmark_heavy.tflite" is available at
-# "mediapipe/modules/pose_landmark/pose_landmark_lite.tflite" or
-# "mediapipe/modules/pose_landmark/pose_landmark_full.tflite" or
-# "mediapipe/modules/pose_landmark/pose_landmark_heavy.tflite"
-# path respectively during execution, depending on the specification in the
-# MODEL_COMPLEXITY input side packet.
-#
-# EXAMPLE:
-#   node {
-#     calculator: "PoseLandmarkCpu"
-#     input_side_packet: "MODEL_COMPLEXITY:model_complexity"
-#     input_side_packet: "SMOOTH_LANDMARKS:smooth_landmarks"
-#     input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
-#     input_side_packet: "SMOOTH_SEGMENTATION:smooth_segmentation"
-#     input_side_packet: "USE_PREV_LANDMARKS:use_prev_landmarks"
-#     input_stream: "IMAGE:image"
-#     output_stream: "LANDMARKS:pose_landmarks"
-#     output_stream: "SEGMENTATION_MASK:segmentation_mask"
-#   }
-
 type: "PoseLandmarkCpu"
 
 # CPU image. (ImageFrame)
@@ -258,6 +229,7 @@ node {
   input_stream: "SEGMENTATION_MASK:unfiltered_segmentation_mask"
   output_stream: "FILTERED_SEGMENTATION_MASK:filtered_segmentation_mask"
 }
+
 
 # Converts the incoming segmentation mask represented as an Image into the
 # corresponding ImageFrame type.
