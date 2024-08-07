@@ -24,6 +24,7 @@
 #include "mediapipe/framework/formats/landmark.pb.h"
 #include "mediapipe/framework/formats/rect.pb.h"
 #include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/framework/formats/detection.pb.h"
 #include "mediapipe/framework/packet.h"
 #include <tensorflow/lite/interpreter.h>
 #include "tensorflow/lite/model.h"
@@ -42,6 +43,8 @@ namespace {
 constexpr char kImageFrameTag[] = "IMAGE";
 constexpr char kLandmarksTag[] = "NORM_LANDMARKS";
 constexpr char kRectTag[] = "NORM_RECT";
+constexpr char kDetectionsTag[] = "DETECTIONS";
+
 constexpr char kProjectionMatrix[] = "PROJECTION_MATRIX";
 constexpr char kEmotionTag[] = "EMOTION";
 
@@ -142,6 +145,12 @@ class EmotionDetectionCalculator : public CalculatorBase {
       printf("will set emotion str.\n");
       cc->Outputs().Tag(kEmotionTag).Set<std::string>();
     }
+    if (cc->Inputs().HasTag(kDetectionsTag)) 
+    {
+      cc->Inputs().Tag(kDetectionsTag).Set<std::vector<Detection>>();
+      printf("will process detections 1\n");
+    }
+
     return absl::OkStatus();
   }
 
@@ -186,6 +195,12 @@ class EmotionDetectionCalculator : public CalculatorBase {
   absl::Status Process(CalculatorContext* cc) override {
     std::function<void(const NormalizedLandmark&, NormalizedLandmark*)>
         project_fn;
+    if (cc->Inputs().Tag(kDetectionsTag).IsEmpty())
+    {
+      m_last_id = -1;//absent
+      CalculatorGraph::CreateAndGetGlobaData()->emotion_type=(EEmotionType)m_last_id;
+      return absl::OkStatus();
+    }
     if (cc->Inputs().HasTag(kRectTag)) {
       if (cc->Inputs().Tag(kRectTag).IsEmpty()) {
         return absl::OkStatus();
@@ -271,18 +286,13 @@ class EmotionDetectionCalculator : public CalculatorBase {
       if(landmarkVec.size()>0)
       {
         m_last_id = runTensor(landmarkVec);
-        // printf("emotion = %s \n" ,m_emotion_vec[m_last_id].c_str());
+  
       }
 #endif
     cc->Outputs().Get(output_id).AddPacket(
         MakePacket<NormalizedLandmarkList>(std::move(output_landmarks))
             .At(timestamp));
-      // printf("will set output emotion tag.\n");
-      // cc->Outputs()
-      //     .Tag(kEmotionTag)
-      //     .AddPacket(MakePacket<std::string>(m_emotion_vec[m_last_id]).At(timestamp));
-          // .Add(new std::string(m_emotion_vec[m_last_id]),timestamp);
-      // printf("finished set output emotion tag.\n");
+
       CalculatorGraph::CreateAndGetGlobaData()->emotion_type=(EEmotionType)m_last_id;
       // m_last_id = 2;
     }
@@ -498,7 +508,7 @@ struct Landmark {
     auto max_it = std::max_element(result, result + num_output_elements);
     float max_value = *max_it;
     int result_index = std::distance(result, max_it);
-    static int last_index=2;
+    static int last_index=3;
 #if 0
     for (size_t i = 0; i < num_output_elements; i++)
     {
@@ -545,11 +555,9 @@ private:
 
   int32_t m_img_width=0;
   int32_t m_img_height=0;
-// "Angry","Disgusted","Fearful","Happy","Normal","Sad","Surprise"
-  std::vector<std::string> m_emotion_vec={"Angry","Disgusted","Fearful","Happy","Normal","Sad","Surprise"};
-  
-  float m_emotion_threshold=0.85;
-  int32_t m_last_id = 2;
+
+  float m_emotion_threshold=0.6;
+  int32_t m_last_id = 3;
 };
 REGISTER_CALCULATOR(EmotionDetectionCalculator);
 

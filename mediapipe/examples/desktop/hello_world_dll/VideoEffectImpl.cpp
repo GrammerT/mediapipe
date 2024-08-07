@@ -21,7 +21,7 @@
 #include "mediapipe/framework/calculator_options.pb.h"
 
 
-std::string calculator_graph_config_contents = str_only_virtual_bk;
+std::string calculator_graph_config_contents = str_virtual_bk_with_emotion_detect_bylandmark;
 
 
 
@@ -290,7 +290,6 @@ void VideoEffectImpl::startGraphThread()
       if(m_media_pipe_graph.CreateAndGetGlobaData())
       {
         frame->emotion_type = (EEmotionType)m_media_pipe_graph.CreateAndGetGlobaData()->emotion_type;
-        // m_media_pipe_graph.CreateAndGetGlobaData()->emotion_type=mediapipe::EEmotionType::kAbsent;
       }
       m_receiver_callback(frame);
     }

@@ -511,9 +511,6 @@ std::string AnnotationOverlayCalculator::EmotionStr(EEmotionType type)
   case EEmotionType::kDisgusted:
     emotion_str = "disgusted";
     break;
-  case EEmotionType::kFearful:
-    emotion_str = "fearful";
-    break;
   case EEmotionType::kHappy:
     emotion_str = "happy";
     break;

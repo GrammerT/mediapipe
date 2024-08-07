@@ -60,9 +60,8 @@ enum class EEmotionType:int32_t
 {
     kNone=-2,
     kAbsent=-1,
-    kAngry=0,
-    kDisgusted,
-    kFearful,
+    kDisgusted=0,
+    kAngry=1,
     kHappy,
     kNormal,
     kSad,

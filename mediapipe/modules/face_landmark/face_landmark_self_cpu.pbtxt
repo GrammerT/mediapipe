@@ -185,9 +185,17 @@ node {
 #  output_stream: "NORM_LANDMARKS:face_landmarks"
 #}
 
+# Subgraph that detects faces.
+node {
+  calculator: "FaceDetectionShortRangeCpu"
+  input_stream: "IMAGE:image"
+  output_stream: "DETECTIONS:face_detections"
+}
+
 node {
   calculator: "EmotionDetectionCalculator"
   input_stream: "IMAGE:image" 
+  input_stream: "DETECTIONS:face_detections"
   input_stream: "NORM_LANDMARKS:landmarks"
   input_stream: "NORM_RECT:roi"
   output_stream: "EMOTION:emotion_type_str"
