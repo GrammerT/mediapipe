@@ -30,6 +30,7 @@ cc_binary(
             "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
         ],
     deps = [
+            "//mediapipe/graphs/face_mesh_self:desktop_live_calculators",
             "//mediapipe/graphs/face_detection:desktop_live_calculators",
             "//mediapipe/framework:calculator_context",
             "//mediapipe/framework:calculator_framework",
@@ -44,9 +45,10 @@ cc_binary(
             "@com_google_absl//absl/flags:flag",
             "@com_google_absl//absl/flags:parse",
             "@com_google_absl//absl/log:absl_log",
+
             "//mediapipe/graphs/pose_tracking:pose_tracking_cpu_deps",
             "//mediapipe/graphs/selfie_segmentation_image:selfie_segmentation_cpu_deps",
-
+            "//mediapipe/modules/face_landmark:face_landmark_front_with_emotion_detection_cpu",
         ],
     linkshared=True,
 )
