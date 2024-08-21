@@ -52,15 +52,15 @@ inline cv::Vec3b Blend(const cv::Vec3b& color1, const cv::Vec3b& color2,
                        int adjust_with_luminance,bool &backGround) {
   weight = (1 - invert_mask) * weight + invert_mask * (1.0f - weight);
 #if 1
-  if(weight>0.25)
+  if(weight>0.5)
   {
     backGround=true;
-    // return color2;
+    return color2;
   }
   else
   {
     backGround=false;
-    // return color1;
+    return color1;
   }
 #endif
   float luminance =
@@ -471,6 +471,9 @@ absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
 #endif
 
     // mask_full = ApplySeparableGaussianBlur(mask_full, 9, 4);
+    cv::Mat floatMask;
+    mask_full.convertTo(floatMask, CV_32FC1); // 单通道浮点类型
+    cv::bilateralFilter(floatMask, mask_full, 9, 75, 75);
 #ifdef SHOW_MASK
   cv::imshow(kWindowName3, mask_full);
   cv::waitKey(50);
@@ -493,7 +496,7 @@ absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
                 weight, invert_mask, adjust_with_luminance,background);
         if(!background)
         {
-          output_mat_person.at<cv::Vec3b>(i, j) = output_mat.at<cv::Vec3b>(i, j);
+          // output_mat_person.at<cv::Vec3b>(i, j) = output_mat.at<cv::Vec3b>(i, j);
         }
         background=false;
       }

@@ -60,8 +60,19 @@ node {
   output_stream: "SEGMENTATION_MASK:segmentation_mask_image_frame"
 }
 
+
+# Smoothes segmentation to reduce jitter.
+node {
+  calculator: "PoseSegmentationFiltering"
+  input_side_packet: "ENABLE:smooth_segmentation"
+  input_stream: "SEGMENTATION_MASK:segmentation_mask_image_frame"
+  output_stream: "FILTERED_SEGMENTATION_MASK:filtered_segmentation_mask"
+}
+
+
+
 node {
   calculator: "ToImageCalculator"
-  input_stream: "IMAGE_CPU:segmentation_mask_image_frame"
+  input_stream: "IMAGE_CPU:filtered_segmentation_mask"
   output_stream: "IMAGE:segmentation_mask"
 }

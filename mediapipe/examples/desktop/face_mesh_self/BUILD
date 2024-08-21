@@ -49,6 +49,7 @@ cc_binary(
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/log:absl_log",
         "//mediapipe/graphs/selfie_segmentation_image:selfie_segmentation_cpu_deps",
+        "//mediapipe/graphs/pose_tracking:pose_tracking_cpu_deps",
     ],
 )
 

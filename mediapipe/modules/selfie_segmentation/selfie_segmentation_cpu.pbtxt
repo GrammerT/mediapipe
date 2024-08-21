@@ -124,6 +124,8 @@ node {
   }
 }
 
+
+
 # Converts the incoming Image into the corresponding ImageFrame type.
 node: {
   calculator: "FromImageCalculator"
