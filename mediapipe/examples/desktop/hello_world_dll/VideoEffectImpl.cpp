@@ -21,7 +21,7 @@
 #include "mediapipe/framework/calculator_options.pb.h"
 
 
-std::string calculator_graph_config_contents = str_virtual_bk_with_emotion_detect_bylandmark;
+std::string calculator_graph_config_contents = str_virtual_bk_byTensor_with_emotion_detect_bylandmark;
 
 
 

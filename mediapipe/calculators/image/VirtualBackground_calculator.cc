@@ -44,31 +44,30 @@ constexpr char kWindowName2[] = "Mask_full_2";
 constexpr char kWindowName3[] = "Mask_full_3";
 constexpr char kWindowName4[] = "Mask_full_4";
 
-
-
-
+// #define RENDER_CROP_FACE
 // #define SHOW_MASK
 
 inline cv::Vec3b Blend(const cv::Vec3b& color1, const cv::Vec3b& color2,
                        float weight, int invert_mask,
-                       int adjust_with_luminance) {
+                       int adjust_with_luminance,bool &backGround) {
   weight = (1 - invert_mask) * weight + invert_mask * (1.0f - weight);
-
+#if 1
+  if(weight>0.25)
+  {
+    backGround=true;
+    // return color2;
+  }
+  else
+  {
+    backGround=false;
+    // return color1;
+  }
+#endif
   float luminance =
       (1 - adjust_with_luminance) * 1.0f +
       adjust_with_luminance * (color1[0] * 0.299 + color1[1] * 0.587 + color1[2] * 0.114) / 255;
 
   float mix_value = weight * luminance;
-  #if 0
-  if(weight>0)
-  {
-    return color2;
-  }
-  else
-  {
-    return color1;
-  }
-  #endif
   return color1 * (1.0 - mix_value) + color2 * mix_value;
 }
 
@@ -130,6 +129,7 @@ class VirtualBackgroundCalculator : public CalculatorBase {
   absl::Status RenderGpu(CalculatorContext* cc);
   absl::Status RenderCpu(CalculatorContext* cc);
   void GlRender();
+  void dealBackgroundMat(cv::Mat &background, cv::Mat &mask);
 
   bool initialized_ = false;
   std::vector<uint8_t> color_;
@@ -146,6 +146,20 @@ class VirtualBackgroundCalculator : public CalculatorBase {
   mediapipe::GlCalculatorHelper gpu_helper_;
   GLuint program_ = 0;
 #endif  // !MEDIAPIPE_DISABLE_GPU
+
+#ifdef RENDER_CROP_FACE
+  std::thread m_opencv_render_thread;
+  std::mutex m_pMutex;
+  cv::Mat m_will_render_mat;
+  cv::Mat m_will_render_mat2;
+  cv::Mat m_will_render_mat3;
+  cv::Mat m_will_render_mat4;
+  cv::Mat m_will_render_mat5;
+  cv::Mat m_will_render_mat6;
+  
+#endif
+
+
 };
 REGISTER_CALCULATOR(VirtualBackgroundCalculator);
 
@@ -213,33 +227,60 @@ absl::Status VirtualBackgroundCalculator::Open(CalculatorContext* cc) {
   }
 
   MP_RETURN_IF_ERROR(LoadOptions(cc));
-#ifdef SHOW_MASK
-  cv::namedWindow(kWindowName1, 1);
-  cv::namedWindow(kWindowName2, 1);
-  cv::namedWindow(kWindowName3, 1);
-  cv::namedWindow(kWindowName4, 1);
 
+#ifdef RENDER_CROP_FACE
+    m_opencv_render_thread=std::thread([this](){
+      cv::namedWindow("mask1", cv::WINDOW_AUTOSIZE);  
+      cv::namedWindow("dealGuesmask2", cv::WINDOW_AUTOSIZE);  
+      cv::namedWindow("dealthresMask3", cv::WINDOW_AUTOSIZE);  
+      cv::namedWindow("outputMat", cv::WINDOW_AUTOSIZE);  
+      cv::namedWindow("result", cv::WINDOW_AUTOSIZE);
+      cv::namedWindow("result_2", cv::WINDOW_AUTOSIZE);
+
+      cv::Mat frameBuff;
+      cv::Mat frameBuff2;
+      cv::Mat frameBuff3;
+      cv::Mat frameBuff4;
+      cv::Mat frameBuff5;
+      cv::Mat frameBuff6;
+      
+      while (true) {
+        if (m_will_render_mat.empty()||
+        m_will_render_mat2.empty()||
+        m_will_render_mat3.empty()||
+        m_will_render_mat4.empty()||
+        m_will_render_mat5.empty()||
+        m_will_render_mat6.empty())
+        {
+          cv::waitKey(50);
+          continue;
+        }
+        if (m_pMutex.try_lock()) {
+          frameBuff=m_will_render_mat;
+          frameBuff2=m_will_render_mat2;
+          frameBuff3=m_will_render_mat3;
+          frameBuff4=m_will_render_mat4;
+          frameBuff5=m_will_render_mat5;
+          frameBuff6=m_will_render_mat6;
+          m_pMutex.unlock();
+        }
+        cv::imshow("mask1", frameBuff);
+        cv::imshow("dealGuesmask2", frameBuff2);
+        cv::imshow("dealthresMask3", frameBuff3);
+        cv::imshow("outputMat", frameBuff4);
+        cv::imshow("result", frameBuff5);
+        cv::imshow("result_2", frameBuff6);
+        
+        cv::waitKey(50);
+      }
+    });
 #endif
+
   return absl::OkStatus();
 }
 
 absl::Status VirtualBackgroundCalculator::Process(CalculatorContext* cc) {
-
-  if (use_gpu_) {
-#if !MEDIAPIPE_DISABLE_GPU
-    MP_RETURN_IF_ERROR(
-        gpu_helper_.RunInGlContext([this, &cc]() -> absl::Status {
-          if (!initialized_) {
-            MP_RETURN_IF_ERROR(InitGpu(cc));
-            initialized_ = true;
-          }
-          MP_RETURN_IF_ERROR(RenderGpu(cc));
-          return absl::OkStatus();
-        }));
-#endif  // !MEDIAPIPE_DISABLE_GPU
-  } else {
-    MP_RETURN_IF_ERROR(RenderCpu(cc));
-  }
+  MP_RETURN_IF_ERROR(RenderCpu(cc));
   return absl::OkStatus();
 }
 
@@ -263,14 +304,14 @@ cv::Mat ApplyGaussianBlur(const cv::Mat& src, int kernel_size, double sigma) {
 
 
 // 使用分离卷积的高斯模糊
-// cv::Mat ApplySeparableGaussianBlur(const cv::Mat& src, int kernel_size, double sigma) {
-//     cv::Mat dst, temp;
-//     // 水平高斯模糊
-//     cv::GaussianBlur(src, temp, cv::Size(kernel_size, 1), sigma);
-//     // 垂直高斯模糊
-//     cv::GaussianBlur(temp, dst, cv::Size(1, kernel_size), sigma);
-//     return dst;
-// }
+cv::Mat ApplySeparableGaussianBlur(const cv::Mat& src, int kernel_size, double sigma) {
+    cv::Mat dst, temp;
+    // 水平高斯模糊
+    cv::GaussianBlur(src, temp, cv::Size(kernel_size, 1), sigma);
+    // 垂直高斯模糊
+    cv::GaussianBlur(temp, dst, cv::Size(1, kernel_size), sigma);
+    return dst;
+}
 
 // 自动计算合适的阈值并二值化图像
 cv::Mat ApplyAutoThreshold(const cv::Mat& src) {
@@ -301,6 +342,53 @@ cv::Mat ApplyDilation(const cv::Mat& src, int dilation_size = 1) {
     cv::dilate(src, dst, element);
     return dst;
 }
+
+
+void VirtualBackgroundCalculator::dealBackgroundMat(cv::Mat &background, cv::Mat &mask)
+{
+      // cv::Mat img=cv::imread("output_mat_person.jpg");
+      // cv::Mat whole_image=background;//cv::imread("output_mat_person.jpg");
+      background.convertTo(background,CV_32FC3,1.0/255.0);
+      cv::resize(background,background,mask.size());
+      mask.convertTo(mask,CV_32FC3,1.0/255.0);
+      
+      cv::Mat bg=cv::Mat(mask.size(),CV_32FC3);
+      bg=cv::Scalar(1.0,1.0,1.0);
+
+      // Prepare mask
+      cv::Mat mask_1;
+      cv::Mat img_gray;
+      cv::cvtColor(mask,img_gray,cv::COLOR_BGR2GRAY);
+      img_gray.convertTo(mask_1,CV_32FC1);
+      cv::threshold(1.0-mask_1,mask_1,0.9,1.0,cv::THRESH_BINARY_INV);
+
+      cv::GaussianBlur(mask_1,mask_1,cv::Size(15,15),9.0);
+#ifdef RENDER_CROP_FACE
+      if (m_pMutex.try_lock()) {
+        m_will_render_mat5=mask_1;
+        m_pMutex.unlock();
+      }
+#endif
+      // Reget the image fragment with smoothed mask
+      // cv::Mat res;
+      std::vector<cv::Mat> ch_img(3);
+      std::vector<cv::Mat> ch_bg(3);
+      cv::split(background,ch_img);
+      cv::split(bg,ch_bg);
+      ch_img[0]=ch_img[0].mul(mask_1)+ch_bg[0].mul(1.0-mask_1);
+      ch_img[1]=ch_img[1].mul(mask_1)+ch_bg[1].mul(1.0-mask_1);
+      ch_img[2]=ch_img[2].mul(mask_1)+ch_bg[2].mul(1.0-mask_1);
+      cv::merge(ch_img,background);
+      cv::merge(ch_bg,bg);
+#ifdef RENDER_CROP_FACE
+      if (m_pMutex.try_lock()) {
+        m_will_render_mat6=background;
+        m_pMutex.unlock();
+      }
+#endif
+}
+
+
 
 // 应用开运算
 cv::Mat ApplyOpening(const cv::Mat& src, int kernel_size = 3) {
@@ -389,36 +477,29 @@ absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
   cv::imshow(kWindowName2, mask_full1);
   cv::waitKey(50);
 #endif
-// #ifdef SHOW_MASK
-//   cv::imshow(kWindowName2, mask_full2);
-//   auto mask_full3 = ApplySeparableGaussianBlur(mask_full2, 15, 5);
-//   cv::imshow(kWindowName3, mask_full3);
-// #endif
-
-// #ifdef SHOW_MASK
-//     // 应用形态学操作去除噪声
-//     auto mask_full4 = ApplyMorphologicalOperations(mask_full);
-//     // 应用双边滤波进一步平滑图像
-//     mask_full4 = ApplyBilateralFilter(mask_full4);
-//   cv::imshow(kWindowName4, mask_full4);
-//   cv::waitKey(190);
-// #endif
-
 
 #if 1
   const int invert_mask = invert_mask_ ? 1 : 0;
   const int adjust_with_luminance = adjust_with_luminance_ ? 1 : 0;
-
+  bool background=false;
   if (mask_img.Format() == ImageFormat::VEC32F1) {
     // printf("mask_img format 1\n");
     for (int i = 0; i < output_mat.rows; ++i) {
       for (int j = 0; j < output_mat.cols; ++j) {
         const float weight = mask_full.at<float>(i, j);
+        // printf("mask_img format 1 %.2f \n",weight); //this code will run.
         output_mat.at<cv::Vec3b>(i, j) =
             Blend(input_mat.at<cv::Vec3b>(i, j), m_background_image.at<cv::Vec3b>(i, j), 
-                weight, invert_mask, adjust_with_luminance);
+                weight, invert_mask, adjust_with_luminance,background);
+        if(!background)
+        {
+          output_mat_person.at<cv::Vec3b>(i, j) = output_mat.at<cv::Vec3b>(i, j);
+        }
+        background=false;
       }
     }
+    // dealBackgroundMat(output_mat,output_mat_person);
+
   } else {
     // printf("mask_img format 2\n");
     for (int i = 0; i < output_mat.rows; ++i) {
@@ -426,12 +507,66 @@ absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
         const float weight = mask_full.at<uchar>(i, j) * (1.0 / 255.0);
         output_mat.at<cv::Vec3b>(i, j) =
             Blend(input_mat.at<cv::Vec3b>(i, j),m_background_image.at<cv::Vec3b>(i, j), weight, invert_mask,
-                  adjust_with_luminance);
+                  adjust_with_luminance,background);
       }
     }
   }
   #endif
 #if 1
+
+#ifdef RENDER_CROP_FACE
+    if (m_pMutex.try_lock()) {
+      output_mat_person.copyTo(m_will_render_mat4);
+      m_pMutex.unlock();
+    }
+    // static bool savefile = false;
+    // if(savefile)
+    // {
+      // cv::imwrite("output_mat_person.jpg",output_mat_person);
+      // cv::namedWindow("result");
+      // cv::namedWindow("result_2");
+      
+    //   cv::Mat img=cv::imread("output_mat_person.jpg");
+    //   cv::Mat whole_image=cv::imread("output_mat_person.jpg");
+    //   whole_image.convertTo(whole_image,CV_32FC3,1.0/255.0);
+    //   cv::resize(whole_image,whole_image,img.size());
+    //   img.convertTo(img,CV_32FC3,1.0/255.0);
+      
+    //   cv::Mat bg=cv::Mat(img.size(),CV_32FC3);
+    //   bg=cv::Scalar(1.0,1.0,1.0);
+
+    //   // Prepare mask
+    //   cv::Mat mask;
+    //   cv::Mat img_gray;
+    //   cv::cvtColor(img,img_gray,cv::COLOR_BGR2GRAY);
+    //   img_gray.convertTo(mask,CV_32FC1);
+    //   cv::threshold(1.0-mask,mask,0.9,1.0,cv::THRESH_BINARY_INV);
+
+    //   cv::GaussianBlur(mask,mask,cv::Size(15,15),9.0);
+
+    // if (m_pMutex.try_lock()) {
+    //   m_will_render_mat5=mask;
+    //   m_pMutex.unlock();
+    // }
+    //   // Reget the image fragment with smoothed mask
+    //   cv::Mat res;
+    //   std::vector<cv::Mat> ch_img(3);
+    //   std::vector<cv::Mat> ch_bg(3);
+    //   cv::split(whole_image,ch_img);
+    //   cv::split(bg,ch_bg);
+    //   ch_img[0]=ch_img[0].mul(mask)+ch_bg[0].mul(1.0-mask);
+    //   ch_img[1]=ch_img[1].mul(mask)+ch_bg[1].mul(1.0-mask);
+    //   ch_img[2]=ch_img[2].mul(mask)+ch_bg[2].mul(1.0-mask);
+    //   cv::merge(ch_img,res);
+    //   cv::merge(ch_bg,bg);
+    //   if (m_pMutex.try_lock()) {
+    //     m_will_render_mat6=res;
+    //   m_pMutex.unlock();
+    // }
+    //   savefile=false;
+    // }
+#endif
+
   cc->Outputs()
       .Tag(kImageFrameTag)
       .Add(output_img.release(), cc->InputTimestamp());

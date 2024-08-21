@@ -41,7 +41,7 @@
 #endif  // !MEDIAPIPE_DISABLE_OPENCV
 
 // #define RENDER_CROP_SEG
-#define kWindowName "segment smooth"
+// #define kWindowName "segment smooth"
 
 namespace mediapipe {
 
@@ -117,6 +117,8 @@ private:
   std::thread m_opencv_render_thread;
   std::mutex m_pMutex;
   cv::Mat m_will_render_mat;
+  cv::Mat m_will_render_prev_mat;
+  cv::Mat m_will_render_current_mat;
 #endif
 
 
@@ -148,19 +150,31 @@ absl::Status SegmentationSmoothingCalculator::Open(CalculatorContext* cc) {
 #ifdef RENDER_CROP_SEG
     m_opencv_render_thread=std::thread([this](){
       cv::namedWindow(kWindowName, cv::WINDOW_AUTOSIZE);  
+      cv::namedWindow("prev", cv::WINDOW_AUTOSIZE);  
+      cv::namedWindow("curr", cv::WINDOW_AUTOSIZE);  
+      
       cv::Mat frameBuff;
+      cv::Mat frameBuff2;
+      cv::Mat frameBuff3;
+
       while (true) {
-        if (m_will_render_mat.empty())
+        if (m_will_render_mat.empty()||
+        m_will_render_prev_mat.empty()||
+        m_will_render_current_mat.empty())
         {
           cv::waitKey(50);
           continue;
         }
         if (m_pMutex.try_lock()) {
           frameBuff=m_will_render_mat;
+          frameBuff2=m_will_render_prev_mat;
+          frameBuff3=m_will_render_current_mat;
           m_pMutex.unlock();
         }
-        cv::imshow(kWindowName, m_will_render_mat);
-        cv::waitKey(50);
+        cv::imshow(kWindowName, frameBuff);
+        cv::imshow("prev", frameBuff2);
+        cv::imshow("curr", frameBuff3);
+        cv::waitKey(10);
       }
     });
 #endif
@@ -208,7 +222,7 @@ absl::Status SegmentationSmoothingCalculator::Process(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
-cv::Mat ApplySeparableGaussianBlur(const cv::Mat& src, int kernel_size, double sigma) {
+cv::Mat ApplySeparableGaussianBlur1(const cv::Mat& src, int kernel_size, double sigma) {
     cv::Mat dst, temp;
     // 水平高斯模糊
     cv::GaussianBlur(src, temp, cv::Size(kernel_size, 1), sigma);
@@ -254,7 +268,14 @@ absl::Status SegmentationSmoothingCalculator::RenderCpu(CalculatorContext* cc) {
 
   RET_CHECK_EQ(current_mat->rows, previous_mat->rows);
   RET_CHECK_EQ(current_mat->cols, previous_mat->cols);
-
+#ifdef RENDER_CROP_SEG
+    if (m_pMutex.try_lock()) 
+    {
+      previous_mat->copyTo(m_will_render_prev_mat);
+      current_mat->copyTo(m_will_render_current_mat);
+      m_pMutex.unlock();
+    }
+#endif
   // Setup destination image.
   auto output_frame = std::make_shared<ImageFrame>(
       current_frame.image_format(), current_mat->cols, current_mat->rows);
@@ -294,22 +315,6 @@ absl::Status SegmentationSmoothingCalculator::RenderCpu(CalculatorContext* cc) {
 
     return new_mask_value + (prev_mask_value - new_mask_value) *
                                 (uncertainty * combine_with_previous_ratio_);
-  };
-
-
-  const auto blending_fn_2 = [&](const float prev_mask_value,
-                               const float new_mask_value) {
-    float alpha = 16.0;  // Shape parameter α
-    float beta = 16.0;   // Shape parameter β
-    float p = new_mask_value;
-    
-    // Calculate uncertainty using Beta distribution
-    float uncertainty = beta_uncertainty(p, alpha, beta);
-
-    // Clamp uncertainty between 0 and 1
-    uncertainty = std::clamp(uncertainty, 0.0f, 1.0f);
-
-    return new_mask_value + (prev_mask_value - new_mask_value) * (uncertainty * combine_with_previous_ratio_);
   };
 
   // Write directly to the first channel of output.

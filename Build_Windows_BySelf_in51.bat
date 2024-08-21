@@ -94,3 +94,7 @@ cmd
 
 //! 尝试姿势识别gesture_recognizer  这个只是个lib
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/tasks/cc/vision/gesture_recognizer:gesture_recognizer
+
+
+@bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="D://workspace//OpenSource//MediaPipe//DependTools//Python3//python.exe" mediapipe/examples/desktop/autoflip:run_autoflip
+@bazel-bin\mediapipe\examples\desktop\autoflip\run_autoflip.exe -calculator_graph_config_file=mediapipe\examples\desktop\autoflip\autoflip_graph.pbtxt

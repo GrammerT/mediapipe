@@ -22,6 +22,7 @@ cc_binary(
     deps = [
         "//mediapipe/examples/desktop:demo_run_graph_main",
         "//mediapipe/graphs/selfie_segmentation_image:selfie_segmentation_cpu_deps",
+        "//mediapipe/graphs/pose_tracking:pose_tracking_cpu_deps",
     ],
 )
 

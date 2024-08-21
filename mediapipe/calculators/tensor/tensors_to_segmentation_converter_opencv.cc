@@ -35,7 +35,7 @@
 
 #include "mediapipe/framework/port/opencv_highgui_inc.h"
 
-// #define RENDER_CROP_SEGMASK
+#define RENDER_CROP_SEGMASK
 
 
 namespace mediapipe {
@@ -60,13 +60,10 @@ class TensorsToSegmentationOpenCvConverter
         }
         std::shared_ptr<cv::Mat> cvMat = nullptr;
         if (m_pMutex.try_lock()) {
-          // cvMat = m_will_render_mat;  
-          // frameBuff=cvMat.get()->clone();
           frameBuff=m_will_render_mat;
-          
           m_pMutex.unlock();
         }
-        cv::imshow("tensorImg", m_will_render_mat);
+        cv::imshow("tensorImg", frameBuff);
         cv::waitKey(50);
       }
     });
@@ -187,7 +184,7 @@ absl::Status TensorsToSegmentationOpenCvConverter::ApplyActivation(
   }
 #ifdef RENDER_CROP_SEGMASK
     if (m_pMutex.try_lock()) {
-      m_will_render_mat=*small_mask_mat;
+      small_mask_mat->copyTo(m_will_render_mat);
       m_pMutex.unlock();
     }
 #endif
