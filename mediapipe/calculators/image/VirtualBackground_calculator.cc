@@ -470,10 +470,10 @@ absl::Status VirtualBackgroundCalculator::RenderCpu(CalculatorContext* cc) {
   cv::waitKey(50);
 #endif
 
-    // mask_full = ApplySeparableGaussianBlur(mask_full, 9, 4);
-    cv::Mat floatMask;
-    mask_full.convertTo(floatMask, CV_32FC1); // 单通道浮点类型
-    cv::bilateralFilter(floatMask, mask_full, 9, 75, 75);
+    mask_full = ApplySeparableGaussianBlur(mask_full, 9, 4);
+    // cv::Mat floatMask;
+    // mask_full.convertTo(floatMask, CV_32FC1); // 单通道浮点类型
+    // cv::bilateralFilter(floatMask, mask_full, 5, 75, 75);
 #ifdef SHOW_MASK
   cv::imshow(kWindowName3, mask_full);
   cv::waitKey(50);
