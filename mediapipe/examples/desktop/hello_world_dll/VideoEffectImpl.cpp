@@ -15,13 +15,14 @@
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"
 #include "MemoryPool.h"
-#include "InternalDefine.h"
 #include "mediapipe/calculators/image/VirtualBackground_calculator.pb.h"
 #include "mediapipe/calculators/util/annotation_overlay_calculator.pb.h"
 #include "mediapipe/framework/calculator_options.pb.h"
+#include "InternalDefine.h"
 
 
-std::string calculator_graph_config_contents = str_virtual_bk_byTensor_with_emotion_detect_bylandmark;
+
+std::string calculator_graph_config_contents = str_virtual_bk_with_emotion_detect_bylandmark;
 
 
 

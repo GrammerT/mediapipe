@@ -308,11 +308,38 @@ node{
   }
   output_stream: "throttled_input_video"
 }
+
 node{
   calculator: "SelfieSegmentationCpu"
   input_stream: "IMAGE:throttled_input_video"
-  output_stream: "SEGMENTATION_MASK:segmentation_mask"
+  output_stream: "SEGMENTATION_MASK:segmentation_mask_first"
 }
+
+
+node {
+  calculator: "ToImageCalculator"
+  input_stream: "IMAGE_CPU:segmentation_mask_first"
+  output_stream: "IMAGE:segmentation_mask_to_jitter"
+}
+
+# Smoothes segmentation to reduce jitter.
+node {
+  calculator: "PoseSegmentationFiltering"
+  input_side_packet: "ENABLE:smooth_segmentation"
+  input_stream: "SEGMENTATION_MASK:segmentation_mask_to_jitter"
+  output_stream: "FILTERED_SEGMENTATION_MASK:filtered_segmentation_mask"
+}
+
+
+# Converts the incoming segmentation mask represented as an Image into the
+# corresponding ImageFrame type.
+node: {
+  calculator: "FromImageCalculator"
+  input_stream: "IMAGE:filtered_segmentation_mask"
+  output_stream: "IMAGE_CPU:segmentation_mask"
+}
+
+
 node{
   calculator: "VirtualBackgroundCalculator"
   input_stream: "IMAGE:throttled_input_video"

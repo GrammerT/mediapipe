@@ -35,7 +35,7 @@
 
 #include "mediapipe/framework/port/opencv_highgui_inc.h"
 
-#define RENDER_CROP_SEGMASK
+// #define RENDER_CROP_SEGMASK
 
 
 namespace mediapipe {

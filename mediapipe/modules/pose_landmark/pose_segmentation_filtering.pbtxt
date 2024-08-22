@@ -32,7 +32,7 @@ node {
   output_stream: "MASK_SMOOTHED:filtered_segmentation_mask"
   options {
     [mediapipe.SegmentationSmoothingCalculatorOptions.ext] {
-      combine_with_previous_ratio: 0.93
+      combine_with_previous_ratio: 0.9399
     }
   }
 }
