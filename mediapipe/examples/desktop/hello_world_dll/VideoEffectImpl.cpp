@@ -22,8 +22,7 @@
 
 
 
-std::string calculator_graph_config_contents = str_virtual_bk_with_emotion_detect_bylandmark;
-
+std::string calculator_graph_config_contents = str_only_virtual_bk;
 
 
 constexpr char kInputStream[] = "input_video";

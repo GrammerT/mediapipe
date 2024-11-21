@@ -141,11 +141,15 @@ absl::Status TensorsToLandmarksCalculator::Process(CalculatorContext* cc) {
   const auto& input_tensors = *kInTensors(cc);
   RET_CHECK(input_tensors[0].element_type() == Tensor::ElementType::kFloat32);
   int num_values = input_tensors[0].shape().num_elements();
+  
   const int num_dimensions = num_values / num_landmarks_;
   ABSL_CHECK_GT(num_dimensions, 0);
 
   auto view = input_tensors[0].GetCpuReadView();
   auto raw_landmarks = view.buffer<float>();
+  // 此处输出63,代表21个点,每个点有3个值
+  // LOG(INFO) << "num_values: " << num_values;
+  // LOG(INFO) << "raw_landmarks size: " << input_tensors[0].shape().num_elements();
 
   LandmarkList output_landmarks;
 
@@ -197,6 +201,13 @@ absl::Status TensorsToLandmarksCalculator::Process(CalculatorContext* cc) {
         norm_landmark->set_presence(landmark.presence());
       }
     }
+    // for (int i = 0; i < output_norm_landmarks.landmark_size(); ++i) {
+    //   const auto& norm_landmark = output_norm_landmarks.landmark(i);
+    //   LOG(INFO) << "Landmark " << i << ": ("
+    //       << norm_landmark.x() << ", "
+    //       << norm_landmark.y() << ", "
+    //       << norm_landmark.z() << ")";
+    // }
     kOutNormalizedLandmarkList(cc).Send(std::move(output_norm_landmarks));
   }
 

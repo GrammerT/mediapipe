@@ -142,6 +142,7 @@ absl::Status RunMPPGraph() {
   if (load_video) {
     capture.open(absl::GetFlag(FLAGS_input_video_path));
   } else {
+    // capture.open("obs-virtual-cam");
     capture.open(0);
   }
   RET_CHECK(capture.isOpened());
@@ -204,7 +205,7 @@ absl::Status RunMPPGraph() {
     // Convert back to opencv for display or saving.
     cv::Mat output_frame_mat = mediapipe::formats::MatView(&output_frame);
     cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
-    if (save_video) {
+    if (0) {
       if (!writer.isOpened()) {
         ABSL_LOG(INFO) << "Prepare video writer.";
         writer.open(absl::GetFlag(FLAGS_output_video_path),
@@ -216,7 +217,7 @@ absl::Status RunMPPGraph() {
     } else {
       cv::imshow(kWindowName, output_frame_mat);
       // Press any key to exit.
-      const int pressed_key = cv::waitKey(10);
+      const int pressed_key = cv::waitKey(100);
       if (pressed_key >= 0 && pressed_key != 255) grab_frames = false;
     }
   }

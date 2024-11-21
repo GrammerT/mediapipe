@@ -25,24 +25,49 @@ node {
   output_stream: "throttled_input_video"
 }
 
-node {
-  calculator: "PoseLandmarkCpu"
-  input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
+node{
+  calculator: "SelfieSegmentationCpu"
   input_stream: "IMAGE:throttled_input_video"
-  output_stream: "SEGMENTATION_MASK:segmentation_mask"
+  output_stream: "SEGMENTATION_MASK:segmentation_mask_first"
 }
 
+
 node {
+  calculator: "ToImageCalculator"
+  input_stream: "IMAGE_CPU:segmentation_mask_first"
+  output_stream: "IMAGE:segmentation_mask_to_jitter"
+}
+
+# Smoothes segmentation to reduce jitter.
+node {
+  calculator: "PoseSegmentationFiltering"
+  input_side_packet: "ENABLE:smooth_segmentation"
+  input_stream: "SEGMENTATION_MASK:segmentation_mask_to_jitter"
+  output_stream: "FILTERED_SEGMENTATION_MASK:filtered_segmentation_mask"
+}
+
+
+# Converts the incoming segmentation mask represented as an Image into the
+# corresponding ImageFrame type.
+node: {
+  calculator: "FromImageCalculator"
+  input_stream: "IMAGE:filtered_segmentation_mask"
+  output_stream: "IMAGE_CPU:segmentation_mask"
+}
+
+
+node{
   calculator: "VirtualBackgroundCalculator"
   input_stream: "IMAGE:throttled_input_video"
   input_stream: "MASK:segmentation_mask"
   output_stream: "IMAGE:output_video"
   node_options: {
     [type.googleapis.com/mediapipe.VirtualBackgroundCalculatorOptions] {
-      mask_channel: RED
+      mask_channel: UNKNOWN
       invert_mask: true
       adjust_with_luminance: false
-      background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (3).jpg"
+      background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg"
+      apply_background: true
     }
   }
 }
