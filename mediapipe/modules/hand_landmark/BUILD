@@ -59,9 +59,15 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tensor:tensors_to_landmarks_calculator",
         "//mediapipe/calculators/util:landmark_letterbox_removal_calculator",
         "//mediapipe/calculators/util:landmark_projection_calculator",
+        "//mediapipe/calculators/util:landmarks_to_detection_calculator",
         "//mediapipe/calculators/util:thresholding_calculator",
         "//mediapipe/calculators/util:world_landmark_projection_calculator",
-    ],
+        "//mediapipe/calculators/util:detections_to_rects_calculator",
+        "//mediapipe/calculators/util:rect_transformation_calculator",
+        "//hand-gesture-recognition:hand-gesture-recognition-calculator",
+        "//hand-mouvement-recognition:hand-mouvement-recognition-calculator",
+
+        ],
 )
 
 mediapipe_simple_subgraph(

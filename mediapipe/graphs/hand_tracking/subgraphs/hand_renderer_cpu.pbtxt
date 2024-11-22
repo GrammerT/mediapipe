@@ -16,6 +16,12 @@ input_stream: "NORM_RECTS:0:multi_palm_rects"
 # Regions of interest calculated based on landmarks.
 # (std::vector<NormalizedRect>)
 input_stream: "NORM_RECTS:1:multi_hand_rects"
+
+input_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
+input_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
+input_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
+input_stream: "RECOGNIZED_HAND_MOUVEMENT_SLIDING:recognized_hand_mouvement_sliding"
+
 # Detected palms. (std::vector<Detection>)
 input_stream: "DETECTIONS:palm_detections"
 
@@ -188,7 +194,6 @@ node {
       font_height_px: 50
       horizontal_offset_px: 30
       vertical_offset_px: 50
-
       max_num_labels: 1
       location: TOP_LEFT
     }
@@ -200,6 +205,12 @@ node {
 node {
   calculator: "AnnotationOverlayCalculator"
   input_stream: "IMAGE:input_image"
+  
+  input_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
+  input_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
+  input_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
+  input_stream: "RECOGNIZED_HAND_MOUVEMENT_SLIDING:recognized_hand_mouvement_sliding"
+
   input_stream: "detection_render_data"
   input_stream: "multi_hand_rects_render_data"
   input_stream: "multi_palm_rects_render_data"

@@ -30,6 +30,11 @@ node {
   output_stream: "PALM_DETECTIONS:multi_palm_detections"
   output_stream: "HAND_ROIS_FROM_LANDMARKS:multi_hand_rects"
   output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:multi_palm_rects"
+  output_stream: "RECOGNIZED_HAND_GESTURE:recognized_hand_gesture"
+  output_stream: "RECOGNIZED_HAND_MOUVEMENT_SCROLLING:recognized_hand_mouvement_scrolling"
+  output_stream: "RECOGNIZED_HAND_MOUVEMENT_ZOOMING:recognized_hand_mouvement_zooming"
+  output_stream: "RECOGNIZED_HAND_MOUVEMENT_SLIDING:recognized_hand_mouvement_sliding"
+
 }
 
 # Subgraph that renders annotations and overlays them on top of the input

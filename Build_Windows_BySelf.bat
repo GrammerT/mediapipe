@@ -39,7 +39,24 @@ cmd
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="C://Python310//python.exe" mediapipe/examples/desktop/selfie_segmentation_self:selfie_segmentation_cpu_image
 @bazel-bin\mediapipe\examples\desktop\selfie_segmentation_self\selfie_segmentation_cpu_image.exe -calculator_graph_config_file=mediapipe\graphs\selfie_segmentation\selfie_segmentation_cpu.pbtxt 实时
 
+
 //! 虚拟背景优化研究方向
 @bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="C://Python310//python.exe" mediapipe/examples/desktop/pose_tracking:pose_tracking_cpu
 @bazel-bin\mediapipe\examples\desktop\pose_tracking\pose_tracking_cpu.exe -calculator_graph_config_file=mediapipe\graphs\pose_tracking\pose_tracking_cpu.pbtxt 实时
 @bazel-bin\mediapipe\examples\desktop\pose_tracking\pose_tracking_cpu.exe -calculator_graph_config_file=mediapipe\graphs\pose_tracking\pose_tracking_cpu.pbtxt -input_video_path=D:/workspace/OpenSource/MediaPipe/test_video/header.mp4
+
+//自定义
+@bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="C://Python310//python.exe" mediapipe/examples/desktop/hello_world_dll
+
+
+
+
+//! gesture recognizer demo 尝试
+@bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="C://Python310//python.exe" mediapipe/model_maker/python/vision/gesture_recognizer:gesture_recognizer_demo
+@bazel-bin\mediapipe\model_maker\python\vision\gesture_recognizer\gesture_recognizer_demo.exe
+
+@python bazel-bin\mediapipe\model_maker\python\vision\gesture_recognizer\gesture_recognizer_demo\runfiles\mediapipe\mediapipe\model_maker\python\vision\gesture_recognizer\gesture_recognizer_demo.py
+
+
+
+

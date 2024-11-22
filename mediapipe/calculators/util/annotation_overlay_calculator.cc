@@ -41,6 +41,8 @@
 #include "mediapipe/gpu/shader_util.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
+#define GESTURE_OPEN
+
 namespace mediapipe {
 
 namespace {
@@ -49,7 +51,16 @@ constexpr char kVectorTag[] = "VECTOR";
 constexpr char kGpuBufferTag[] = "IMAGE_GPU";
 constexpr char kImageFrameTag[] = "IMAGE";
 constexpr char kImageTag[] = "UIMAGE";  // Universal Image
+
 constexpr char kEmotionTag[] = "EMOTION";
+
+#ifdef GESTURE_OPEN
+constexpr char recognizedHandGestureTag[] = "RECOGNIZED_HAND_GESTURE";
+constexpr char recognizedHandMouvementScrollingTag[] = "RECOGNIZED_HAND_MOUVEMENT_SCROLLING";
+constexpr char recognizedHandMouvementZoomingTag[] = "RECOGNIZED_HAND_MOUVEMENT_ZOOMING";
+constexpr char recognizedHandMouvementSlidingTag[] = "RECOGNIZED_HAND_MOUVEMENT_SLIDING";
+#endif
+
 
 enum { ATTRIB_VERTEX, ATTRIB_TEXTURE_POSITION, NUM_ATTRIBUTES };
 
@@ -186,7 +197,31 @@ class AnnotationOverlayCalculator : public CalculatorBase {
 REGISTER_CALCULATOR(AnnotationOverlayCalculator);
 
 absl::Status AnnotationOverlayCalculator::GetContract(CalculatorContract* cc) {
+
+#ifdef GESTURE_OPEN
+  if(cc->Inputs().HasTag(recognizedHandGestureTag))
+  {
+    ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->GetContract(CalculatorContract) -- 5.1";
+    cc->Inputs().Tag(recognizedHandGestureTag).Set<std::string>();
+  }
+  if(cc->Inputs().HasTag(recognizedHandMouvementScrollingTag))
+  {
+    ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->GetContract(CalculatorContract) -- 5.2";
+    cc->Inputs().Tag(recognizedHandMouvementScrollingTag).Set<std::string>();
+  }
+  if(cc->Inputs().HasTag(recognizedHandMouvementZoomingTag))
+  {
+    ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->GetContract(CalculatorContract) -- 5.3";
+    cc->Inputs().Tag(recognizedHandMouvementZoomingTag).Set<std::string>();
+  }
+  if(cc->Inputs().HasTag(recognizedHandMouvementSlidingTag))
+  {
+    ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->GetContract(CalculatorContract) -- 5.4";
+    cc->Inputs().Tag(recognizedHandMouvementSlidingTag).Set<std::string>();
+  }
   RET_CHECK_GE(cc->Inputs().NumEntries(), 1);
+#endif
+
 
   bool use_gpu = false;
 
@@ -428,7 +463,20 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
       }
     }
   }
-
+#ifdef GESTURE_OPEN
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 12" ;
+  const auto &recognizedHandGesture = cc->Inputs().Tag(recognizedHandGestureTag).Get<std::string>();
+  renderer_->DrawText(recognizedHandGesture, 50, 50);
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 13" ;
+  const auto &recognizedHandMouvementScrolling = cc->Inputs().Tag(recognizedHandMouvementScrollingTag).Get<std::string>();
+  renderer_->DrawText(recognizedHandMouvementScrolling, 120, 50);
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 14" ;
+  const auto &recognizedHandMouvementZooming = cc->Inputs().Tag(recognizedHandMouvementZoomingTag).Get<std::string>();
+  renderer_->DrawText(recognizedHandMouvementZooming, 190, 50);
+  ABSL_LOG(INFO)<< "AnnotationOverlayCalculator->Process(CalculatorContext) -- 15" ;
+  const auto &recognizedHandMouvementSliding = cc->Inputs().Tag(recognizedHandMouvementSlidingTag).Get<std::string>();
+  renderer_->DrawText(recognizedHandMouvementSliding, 260, 50);
+#endif
   if (use_gpu_) {
 #if !MEDIAPIPE_DISABLE_GPU
     // Overlay rendered image in OpenGL, onto a copy of input.
