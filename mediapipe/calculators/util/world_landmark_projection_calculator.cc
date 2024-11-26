@@ -109,6 +109,17 @@ class WorldLandmarkProjectionCalculator : public CalculatorBase {
       }
     }
 
+  // Print out_landmarks for debugging.
+  // for (int i = 0; i < out_landmarks->landmark_size(); ++i) 
+  // {
+  //   const auto& out_landmark = out_landmarks->landmark(4);
+  //   LOG(INFO) << "Landmark " << 4 << ": ("
+  //       << out_landmark.x() << ", "
+  //       << out_landmark.y() << ", "
+  //       << out_landmark.z() << ")";
+  // }
+
+
     cc->Outputs()
         .Tag(kLandmarksTag)
         .Add(out_landmarks.release(), cc->InputTimestamp());
