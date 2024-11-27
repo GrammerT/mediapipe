@@ -36,6 +36,24 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "hand_gesture_recognition",
+    srcs = ["hand_gesture_recognition.cc"],
+
+    deps = [
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_graph",
+        "//mediapipe/framework/formats:detection_cc_proto",
+        "//mediapipe/framework/formats:location",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework/port:point",
+        "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
+    ],
+    alwayslink = 1,
+)
+
+
 mediapipe_proto_library(
     name = "align_hand_to_pose_in_world_calculator_proto",
     srcs = ["align_hand_to_pose_in_world_calculator.proto"],
