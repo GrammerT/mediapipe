@@ -83,6 +83,7 @@ enum class  EEmotionType
 struct SGlobalData
 {
   EEmotionType emotion_type;
+  bool thumb_up;
 };
 
 // The class representing a DAG of calculator nodes.

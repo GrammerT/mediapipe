@@ -77,6 +77,7 @@ struct SVideoFrame
 {
     EVideoFormat format;
     EEmotionType emotion_type;
+    bool thumb_up;
     EVideoFrameSize size;
     uint64_t index;//! 标记帧的索引,用于计算每一帧的处理耗时,可选,非必须
     uint8_t* data[MAX_DATA_NUM];

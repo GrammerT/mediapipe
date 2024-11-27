@@ -249,8 +249,28 @@ absl::Status TensorsToLandmarksCalculator::Process(CalculatorContext* cc) {
       }
 
       int result = GestureRecognition(singleHandGestureInfo);
-      printf("Gesture Recognition result = %d\n", result);
-      // hand_gesture_recognition_result[m] = result;
+
+      static int gesture_count = 0;
+      static auto last_time = std::chrono::steady_clock::now();
+      if (result != -1) {
+        gesture_count++;
+        
+      }
+      auto current_time = std::chrono::steady_clock::now();
+      std::chrono::duration<double> elapsed_seconds = current_time - last_time;
+      if (elapsed_seconds.count() >= 1.0) {
+        if (gesture_count >= 6) {
+          printf("gesture_count0 = %d\n", gesture_count);
+          printf("Gesture Recognition result = %s\n", "ThumbUp");
+          CalculatorGraph::CreateAndGetGlobaData()->thumb_up = true;
+        } else {
+          printf("gesture_count1 = %d\n", gesture_count);
+          printf("Gesture Recognition result = %s\n", "NoGesture");
+          CalculatorGraph::CreateAndGetGlobaData()->thumb_up = false;
+        }
+        gesture_count = 0;
+        last_time = current_time;
+      }
     }
     kOutNormalizedLandmarkList(cc).Send(std::move(output_norm_landmarks));
   }
@@ -341,23 +361,23 @@ int TensorsToLandmarksCalculator::GestureRecognition(const std::vector<PoseInfo>
 
 	int result = -1;
 	if ((thumb_angle > thumb_angle_threshold) && (index_angle > angle_threshold) && (middle_angle > angle_threshold) && (ring_angle > angle_threshold) && (pink_angle > angle_threshold))
-		result = Gesture::Fist;
+		result = -1;//Gesture::Fist;
 	else if ((thumb_angle > 5) && (index_angle < angle_threshold) && (middle_angle > angle_threshold) && (ring_angle > angle_threshold) && (pink_angle > angle_threshold))
-		result = Gesture::One;
+		result = -1;//Gesture::One;
 	else if ((thumb_angle > thumb_angle_threshold) && (index_angle < angle_threshold) && (middle_angle < angle_threshold) && (ring_angle > angle_threshold) && (pink_angle > angle_threshold))
-		result = Gesture::Two;
+		result = -1;//Gesture::Two;
 	else if ((thumb_angle > thumb_angle_threshold) && (index_angle < angle_threshold) && (middle_angle < angle_threshold) && (ring_angle < angle_threshold) && (pink_angle > angle_threshold))
-		result = Gesture::Three;
+		result = -1;//Gesture::Three;
 	else if ((thumb_angle > thumb_angle_threshold) && (index_angle < angle_threshold) && (middle_angle < angle_threshold) && (ring_angle < angle_threshold) && (pink_angle < angle_threshold))
-		result = Gesture::Four;
+		result = -1;//Gesture::Four;
 	else if ((thumb_angle < thumb_angle_threshold) && (index_angle < angle_threshold) && (middle_angle < angle_threshold) && (ring_angle < angle_threshold) && (pink_angle < angle_threshold))
-		result = Gesture::Five;
+		result = -1;//Gesture::Five;
 	else if ((thumb_angle < thumb_angle_threshold) && (index_angle > angle_threshold) && (middle_angle > angle_threshold) && (ring_angle > angle_threshold) && (pink_angle < angle_threshold))
-		result = Gesture::Six;
+		result = -1;//Gesture::Six;
 	else if ((thumb_angle < thumb_angle_threshold) && (index_angle > angle_threshold) && (middle_angle > angle_threshold) && (ring_angle > angle_threshold) && (pink_angle > angle_threshold))
 		result = Gesture::ThumbUp;
 	else if ((thumb_angle > 5) && (index_angle > angle_threshold) && (middle_angle < angle_threshold) && (ring_angle < angle_threshold) && (pink_angle < angle_threshold))
-		result = Gesture::Ok;
+		result = -1;//Gesture::Ok;
 	else
 		result = -1;
 	return result;

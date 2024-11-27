@@ -290,6 +290,7 @@ void VideoEffectImpl::startGraphThread()
       if(m_media_pipe_graph.CreateAndGetGlobaData())
       {
         frame->emotion_type = (EEmotionType)m_media_pipe_graph.CreateAndGetGlobaData()->emotion_type;
+        frame->thumb_up = m_media_pipe_graph.CreateAndGetGlobaData()->thumb_up;
       }
       m_receiver_callback(frame);
     }
