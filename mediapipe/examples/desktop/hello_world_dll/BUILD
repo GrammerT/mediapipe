@@ -22,7 +22,10 @@ cc_binary(
     copts = ["-DEFFECT_LIBRARY"],
     srcs = ["IVideoEffect.h",
             "VideoEffectImpl.h","VideoEffectImpl.cpp",
-            "MemoryPool.h","MemoryPool.cpp"
+            "MemoryPool.h","MemoryPool.cpp",
+            "hand_tracking_data.h",
+            "hand_gesture_recognition.h","hand_gesture_recognition.cpp",
+            "GestureRecognitionGraph.h","GestureRecognitionGraph.cpp"
             ],
     data = [
             "//mediapipe/modules/selfie_segmentation:selfie_segmentation.tflite",

@@ -14,6 +14,7 @@
 //  #define SHOW_CV_WINDOW
 
 class MemoryPool;
+class GestureRecognitionGraph;
 
 class VideoEffectImpl:  public IVideoEffect
 {
@@ -31,7 +32,6 @@ public:
 private:
     void startGraphThread();
     void stopGraphThread();
-
     cv::Mat PopVideoFrameQueueToCVMat(uint64_t &index);
     std::shared_ptr<SVideoFrame> matToSVideoFrame(const cv::Mat& inputMat, EVideoFormat format);
 private:
@@ -40,7 +40,7 @@ private:
     std::function<void(std::shared_ptr<SVideoFrame>)> m_receiver_callback=nullptr;
     mediapipe::CalculatorGraph m_media_pipe_graph;
     absl::StatusOr<mediapipe::OutputStreamPoller> m_stream_poller;
-
+    // std::unique_ptr<mediapipe::OutputStreamPoller> m_pPoller_landmarks;
 
     std::atomic_bool m_is_graph_running=false;
     std::thread m_graph_thread;
@@ -53,6 +53,8 @@ private:
     std::shared_ptr<SVideoFrame> m_yuv_2_rgb_tmpframe=nullptr; //! 临时做缓存用,不考虑此变量格式
     
     std::shared_ptr<SVideoFrame> m_mat_to_tmpframe=nullptr; //! 临时做缓存用,不考虑此变量格式
+
+    std::unique_ptr<GestureRecognitionGraph> m_gesture_graph=nullptr;
 
 #ifdef SHOW_CV_WINDOW
     cv::VideoCapture m_capture;

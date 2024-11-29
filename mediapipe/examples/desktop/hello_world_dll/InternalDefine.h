@@ -399,3 +399,109 @@ node {
 }
 
 )pb";
+
+static const char* const str_gesture_recognition = R"pb(
+  input_stream: "input_video"
+  output_stream: "landmarks"
+  node {
+    calculator: "ConstantSidePacketCalculator"
+    output_side_packet: "PACKET:num_hands"
+    node_options: {
+      [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+        packet { int_value: 2 }
+      }
+    }
+  }
+
+  # Detects/tracks hand landmarks.
+  node {
+    calculator: "HandLandmarkTrackingCpu"
+    input_stream: "IMAGE:input_video"
+    input_side_packet: "NUM_HANDS:num_hands"
+    output_stream: "LANDMARKS:landmarks"
+    output_stream: "HANDEDNESS:handedness"
+    output_stream: "PALM_DETECTIONS:multi_palm_detections"
+    output_stream: "HAND_ROIS_FROM_LANDMARKS:multi_hand_rects"
+    output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:multi_palm_rects"
+  }
+)pb";
+
+static const char* const str_virtual_bk_with_gesture_recognition = R"pb(
+input_stream: "input_video"
+output_stream: "output_video"
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:0:enable_segmentation"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { bool_value: true }
+    }
+  }
+}
+
+node {
+  calculator: "FlowLimiterCalculator"
+  input_stream: "input_video"
+  input_stream: "FINISHED:output_video"
+  input_stream_info: {
+    tag_index: "FINISHED"
+    back_edge: true
+  }
+  output_stream: "throttled_input_video"
+}
+
+node{
+  calculator: "SelfieSegmentationCpu"
+  input_stream: "IMAGE:throttled_input_video"
+  output_stream: "SEGMENTATION_MASK:segmentation_mask_first"
+}
+
+
+node {
+  calculator: "ToImageCalculator"
+  input_stream: "IMAGE_CPU:segmentation_mask_first"
+  output_stream: "IMAGE:segmentation_mask_to_jitter"
+}
+
+# Smoothes segmentation to reduce jitter.
+node {
+  calculator: "PoseSegmentationFiltering"
+  input_side_packet: "ENABLE:smooth_segmentation"
+  input_stream: "SEGMENTATION_MASK:segmentation_mask_to_jitter"
+  output_stream: "FILTERED_SEGMENTATION_MASK:filtered_segmentation_mask"
+}
+
+
+# Converts the incoming segmentation mask represented as an Image into the
+# corresponding ImageFrame type.
+node: {
+  calculator: "FromImageCalculator"
+  input_stream: "IMAGE:filtered_segmentation_mask"
+  output_stream: "IMAGE_CPU:segmentation_mask"
+}
+
+node{
+  calculator: "VirtualBackgroundCalculator"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "MASK:segmentation_mask"
+  output_stream: "IMAGE:output_video"
+  node_options: {
+    [type.googleapis.com/mediapipe.VirtualBackgroundCalculatorOptions] {
+      mask_channel: UNKNOWN
+      invert_mask: true
+      adjust_with_luminance: false
+      background_image_path:"D:\\workspace\\OpenSource\\MediaPipe\\test_file\\virtual_background\\1 (1).jpg"
+      apply_background: true
+    }
+  }
+}
+
+node {
+  calculator: "HandLandmarkTrackingCpu"
+  input_stream: "IMAGE:input_video"
+  input_side_packet: "NUM_HANDS:num_hands"
+  output_stream: "LANDMARKS:landmarks"
+  output_stream: "HANDEDNESS:handedness"
+}
+
+)pb";

@@ -1,20 +1,20 @@
-#include "hand_gesture_recognition.h"
+﻿#include "hand_gesture_recognition.h"
 #include <cmath>
 #include <iostream>
 
-GoogleMediapipeHandTrackingDetect::HandGestureRecognition::HandGestureRecognition()
+HandGestureRecognition::HandGestureRecognition()
 {
 
 }
 
 
-GoogleMediapipeHandTrackingDetect::HandGestureRecognition::~HandGestureRecognition()
+HandGestureRecognition::~HandGestureRecognition()
 {
 
 }
 
 
-int GoogleMediapipeHandTrackingDetect::HandGestureRecognition::GestureRecognition(const std::vector<PoseInfo>& single_hand_joint_vector)
+int HandGestureRecognition::GestureRecognition(const std::vector<PoseInfo>& single_hand_joint_vector)
 {
 	if (single_hand_joint_vector.size() != 21)
 		return -1;
@@ -113,7 +113,7 @@ int GoogleMediapipeHandTrackingDetect::HandGestureRecognition::GestureRecognitio
 	return result;
 }
 
-float GoogleMediapipeHandTrackingDetect::HandGestureRecognition::Vector2DAngle(const Vector2D& vec1, const Vector2D& vec2)
+float HandGestureRecognition::Vector2DAngle(const Vector2D& vec1, const Vector2D& vec2)
 {
 	double PI = 3.141592653;
 	float t = (vec1.x * vec2.x + vec1.y * vec2.y) / (sqrt(pow(vec1.x, 2) + pow(vec1.y, 2)) * sqrt(pow(vec2.x, 2) + pow(vec2.y, 2)));

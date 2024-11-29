@@ -42,14 +42,6 @@ int GoogleMediapipeHandTrackingDetect::HandUpHandDownDetect::DetectHandUpOrHandD
 	{
 		return HandUp_HandDown::HandUp;
 	}
-	//if (fabs(origin_image_height - wrist_y) > (origin_image_height / 3))
-	//{
-	//	return HandUp_HandDown::HandUp;
-	//}
-	//else
-	//{
-	//	return HandUp_HandDown::HandDown;
-	//}
 
 	return result;
 

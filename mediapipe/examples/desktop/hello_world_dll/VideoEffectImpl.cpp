@@ -18,11 +18,12 @@
 #include "mediapipe/calculators/image/VirtualBackground_calculator.pb.h"
 #include "mediapipe/calculators/util/annotation_overlay_calculator.pb.h"
 #include "mediapipe/framework/calculator_options.pb.h"
+#include "mediapipe/framework/formats/landmark.pb.h"
 #include "InternalDefine.h"
+#include "hand_gesture_recognition.h"
+#include "GestureRecognitionGraph.h"
 
-
-
-std::string calculator_graph_config_contents = str_only_virtual_bk;
+std::string calculator_graph_config_contents =  str_only_virtual_bk;
 
 
 constexpr char kInputStream[] = "input_video";
@@ -54,6 +55,7 @@ VideoEffectImpl::VideoEffectImpl()
 
 VideoEffectImpl::~VideoEffectImpl()
 {
+  m_gesture_graph.reset();
   stopGraphThread();
   m_yuv_2_rgb_tmpframe.reset();
   m_memory_pool.reset();
@@ -76,6 +78,9 @@ bool VideoEffectImpl::initVideoEffect(std::shared_ptr<SVideoEffectParam> param)
       ABSL_LOG(INFO)<<"init param : user_pure_color:"<<m_param->user_pure_color<<"  pure_color_value:"<<(int)m_param->pure_color;
     }
 
+    m_gesture_graph = std::make_unique<GestureRecognitionGraph>();
+    m_gesture_graph->Initialize();
+    m_gesture_graph->Run();
     return true;
 }
 
@@ -151,6 +156,12 @@ int VideoEffectImpl::enableVideoEffect()
         return -3;
     }
 
+    // 	// 添加landmarks输出流
+    // mediapipe::StatusOrPoller sop_landmark = m_media_pipe_graph.AddOutputStreamPoller("landmarks");
+    // assert(sop_landmark.ok());
+    // m_pPoller_landmarks = std::make_unique<mediapipe::OutputStreamPoller>(std::move(sop_landmark.value()));
+
+
     startGraphThread();
     return 0;
 }
@@ -191,125 +202,100 @@ void VideoEffectImpl::setVideoFrameReceiverCallback(std::function<void(std::shar
 
 void VideoEffectImpl::startGraphThread()
 {
-#ifdef OUT_CV_MAT
-  writer.open("test_cv_mat.mp4",cv::VideoWriter::fourcc('H', '2', '6', '4'),20, cv::Size(640, 480));
-#endif
+
   stopGraphThread();
   m_is_graph_running = true;
-#ifndef SHOW_CV_WINDOW
+
   m_graph_thread = std::thread([this](){
-  ABSL_LOG(INFO) << "Starting thread: " << m_graph_thread.get_id();
-#endif
-  auto status = m_media_pipe_graph.StartRun({});
-  if(!status.ok())
-  {
-    ABSL_LOG(INFO) << "Starting graph false: " << m_graph_thread.get_id();
-    return ;
-  }
-  ABSL_LOG(INFO) << "Starting graph success: " << m_graph_thread.get_id();
-#ifdef SHOW_CV_WINDOW
-  ABSL_LOG(INFO) << "capture will opene."; 
-  m_capture.open(0);
-  ABSL_LOG(INFO) << "capture opened : "<< m_capture.isOpened();
-  cv::namedWindow(kWindowName, /*flags=WINDOW_AUTOSIZE*/ 1);
-#if (CV_MAJOR_VERSION >= 3) && (CV_MINOR_VERSION >= 2)
-    m_capture.set(cv::CAP_PROP_FRAME_WIDTH, 640);
-    m_capture.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
-    m_capture.set(cv::CAP_PROP_FPS, 10);
-#endif 
-#endif
-  ABSL_LOG(INFO) << "frame queue size:" << m_frame_queue.size();
-  ABSL_LOG(WARNING) << "m_frame_queue will be clean.";
-  std::queue<std::shared_ptr<SVideoFrame>> t;
-  std::unique_lock<std::mutex> locker(m_frame_queue_mutex);
-  m_frame_queue.swap(t);
-  locker.unlock();  
-  ABSL_LOG(INFO) << "while m_is_graph_running will running.";
-  while (m_is_graph_running) {
-    // Capture opencv camera or video frame.
-#ifdef  SHOW_CV_WINDOW
-    cv::Mat camera_frame_raw;
-    m_capture >> camera_frame_raw;
-    if (camera_frame_raw.empty()) {
+    ABSL_LOG(INFO) << "Starting thread: " << m_graph_thread.get_id();
+
+    auto status = m_media_pipe_graph.StartRun({});
+    if(!status.ok())
+    {
+      ABSL_LOG(INFO) << "Starting graph false: " << m_graph_thread.get_id();
+      return ;
+    }
+    ABSL_LOG(INFO) << "Starting graph success: " << m_graph_thread.get_id();
+
+    ABSL_LOG(INFO) << "frame queue size:" << m_frame_queue.size();
+    ABSL_LOG(WARNING) << "m_frame_queue will be clean.";
+    std::queue<std::shared_ptr<SVideoFrame>> t;
+    std::unique_lock<std::mutex> locker(m_frame_queue_mutex);
+    m_frame_queue.swap(t);
+    locker.unlock();  
+    ABSL_LOG(INFO) << "while m_is_graph_running will running.";
+    while (m_is_graph_running) {
+      // Capture opencv camera or video frame.
+
+      uint64_t frame_index=0;
+      cv::Mat camera_frame = PopVideoFrameQueueToCVMat(frame_index);
+
+      if (camera_frame.empty()) {
         ABSL_LOG(WARNING) << "Ignore empty frames from Queue.";
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        continue;
+      }
+
+      // Wrap Mat into an ImageFrame.
+      auto input_frame = absl::make_unique<mediapipe::ImageFrame>(
+          mediapipe::ImageFormat::SRGB, camera_frame.cols, camera_frame.rows,
+          mediapipe::ImageFrame::kDefaultAlignmentBoundary);
+      cv::Mat input_frame_mat = mediapipe::formats::MatView(input_frame.get());
+      camera_frame.copyTo(input_frame_mat);
+      if(m_gesture_graph)
+      {
+        m_gesture_graph->pushVideoFrame(camera_frame);
+      }
+      // Send image packet into the graph.
+      size_t frame_timestamp_us =
+          (double)cv::getTickCount() / (double)cv::getTickFrequency() * 1e6;
+      auto addRetStatus = m_media_pipe_graph.AddPacketToInputStream(
+          kInputStream, mediapipe::Adopt(input_frame.release())
+                            .At(mediapipe::Timestamp(frame_timestamp_us)));
+      if (!addRetStatus.ok())
+      {
+        ABSL_LOG(WARNING) <<"addRetStatus return false."<<addRetStatus.ToString();
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         continue;
-    }
-    cv::Mat camera_frame;
-    cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
-    cv::flip(camera_frame, camera_frame, /*flipcode=HORIZONTAL*/ 1);
-    uint64_t frame_index=0;
-#else
-    uint64_t frame_index=0;
-    cv::Mat camera_frame = PopVideoFrameQueueToCVMat(frame_index);
-    if (camera_frame.empty()) {
-      ABSL_LOG(WARNING) << "Ignore empty frames from Queue.";
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
-      continue;
-    }
-    // ABSL_LOG(INFO) << "frame from Queue will callback.";
-
-#endif
-    // Wrap Mat into an ImageFrame.
-    auto input_frame = absl::make_unique<mediapipe::ImageFrame>(
-        mediapipe::ImageFormat::SRGB, camera_frame.cols, camera_frame.rows,
-        mediapipe::ImageFrame::kDefaultAlignmentBoundary);
-    cv::Mat input_frame_mat = mediapipe::formats::MatView(input_frame.get());
-    camera_frame.copyTo(input_frame_mat);
-
-    // Send image packet into the graph.
-    size_t frame_timestamp_us =
-        (double)cv::getTickCount() / (double)cv::getTickFrequency() * 1e6;
-    auto addRetStatus = m_media_pipe_graph.AddPacketToInputStream(
-        kInputStream, mediapipe::Adopt(input_frame.release())
-                          .At(mediapipe::Timestamp(frame_timestamp_us)));
-    if (!addRetStatus.ok())
-    {
-      ABSL_LOG(WARNING) << "addRetStatus return false."<<addRetStatus.ToString();
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      continue;
-    }
-    // Get the graph result packet, or stop if that fails.
-    mediapipe::Packet packet;
-    if (!m_stream_poller->Next(&packet)) 
-    {
-      ABSL_LOG(WARNING) << "m_stream_poller->Next return false.";
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      continue;
-    }
-    auto& output_frame = packet.Get<mediapipe::ImageFrame>();
-    // Convert back to opencv for display or saving
-    cv::Mat output_frame_mat = mediapipe::formats::MatView(&output_frame);
-#ifdef SHOW_CV_WINDOW
-    cv::cvtColor(output_frame_mat, output_frame_mat, cv::COLOR_RGB2BGR);
-#endif
-    if(m_receiver_callback)
-    {
-      auto frame = matToSVideoFrame(output_frame_mat, EVideoFormat::kYUV420P);
-      frame->index=frame_index;
-      if(m_media_pipe_graph.CreateAndGetGlobaData())
-      {
-        frame->emotion_type = (EEmotionType)m_media_pipe_graph.CreateAndGetGlobaData()->emotion_type;
-        frame->thumb_up = m_media_pipe_graph.CreateAndGetGlobaData()->thumb_up;
       }
-      m_receiver_callback(frame);
+      // Get the graph result packet, or stop if that fails.
+      mediapipe::Packet packet;
+      if (!m_stream_poller->Next(&packet)) 
+      {
+        ABSL_LOG(WARNING) << "m_stream_poller->Next return false.";
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        continue;
+      }
+
+      auto& output_frame = packet.Get<mediapipe::ImageFrame>();
+      // Convert back to opencv for display or saving
+      cv::Mat output_frame_mat = mediapipe::formats::MatView(&output_frame);
+
+      if(m_receiver_callback)
+      {
+        auto frame = matToSVideoFrame(output_frame_mat, EVideoFormat::kYUV420P);
+        frame->index=frame_index;
+        if(m_media_pipe_graph.CreateAndGetGlobaData())
+        {
+          frame->emotion_type = (EEmotionType)m_media_pipe_graph.CreateAndGetGlobaData()->emotion_type;
+          if(m_gesture_graph)
+          {
+            auto thumbup = m_gesture_graph->getThumbUp();
+            frame->thumb_up = thumbup;
+          }
+        }
+        m_receiver_callback(frame);
+      }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-#ifdef SHOW_CV_WINDOW
-  ABSL_LOG(INFO) << "opencv imshow image.";
-  cv::imshow(kWindowName, output_frame_mat);
-  cv::waitKey(30);
-#else
-   std::this_thread::sleep_for(std::chrono::milliseconds(1));
-#endif
-  }
-#ifndef SHOW_CV_WINDOW
+
   });
-#endif
+
 }
+
 
 void VideoEffectImpl::stopGraphThread()
 {
-
   ABSL_LOG(INFO) << "graph thread will stop.";
   m_is_graph_running = false;
   if(m_graph_thread.joinable())
