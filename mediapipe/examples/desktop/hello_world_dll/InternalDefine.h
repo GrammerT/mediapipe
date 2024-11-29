@@ -402,7 +402,7 @@ node {
 
 static const char* const str_gesture_recognition = R"pb(
   input_stream: "input_video"
-  output_stream: "landmarks"
+  output_stream: "output_video"
   node {
     calculator: "ConstantSidePacketCalculator"
     output_side_packet: "PACKET:num_hands"
@@ -424,6 +424,18 @@ static const char* const str_gesture_recognition = R"pb(
     output_stream: "HAND_ROIS_FROM_LANDMARKS:multi_hand_rects"
     output_stream: "HAND_ROIS_FROM_PALM_DETECTIONS:multi_palm_rects"
   }
+
+  node {
+    calculator: "HandRendererSubgraph"
+    input_stream: "IMAGE:input_video"
+    input_stream: "DETECTIONS:multi_palm_detections"
+    input_stream: "LANDMARKS:landmarks"
+    input_stream: "HANDEDNESS:handedness"
+    input_stream: "NORM_RECTS:0:multi_palm_rects"
+    input_stream: "NORM_RECTS:1:multi_hand_rects"
+    output_stream: "IMAGE:output_video"
+  }
+
 )pb";
 
 static const char* const str_virtual_bk_with_gesture_recognition = R"pb(
@@ -496,12 +508,5 @@ node{
   }
 }
 
-node {
-  calculator: "HandLandmarkTrackingCpu"
-  input_stream: "IMAGE:input_video"
-  input_side_packet: "NUM_HANDS:num_hands"
-  output_stream: "LANDMARKS:landmarks"
-  output_stream: "HANDEDNESS:handedness"
-}
 
 )pb";

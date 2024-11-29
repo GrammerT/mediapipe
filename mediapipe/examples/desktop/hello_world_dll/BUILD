@@ -49,6 +49,7 @@ cc_binary(
             "@com_google_absl//absl/flags:parse",
             "@com_google_absl//absl/log:absl_log",
             "//mediapipe/modules/hand_landmark:hand_landmark_tracking_cpu",
+            "//mediapipe/graphs/hand_tracking/subgraphs:hand_renderer_cpu",
             "//mediapipe/graphs/pose_tracking:pose_tracking_cpu_deps",
             "//mediapipe/graphs/selfie_segmentation_image:selfie_segmentation_cpu_deps",
             "//mediapipe/modules/face_landmark:face_landmark_front_with_emotion_detection_cpu",
