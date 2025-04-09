@@ -142,10 +142,12 @@ OutputStreamHandler::GetMonitoringInfo() {
     if (!stream) {
       continue;
     }
-    monitoring_info_vector.emplace_back(OutputStreamMonitoringInfo(
-        {.stream_name = DebugStreamName(id),
-         .num_packets_added = stream->NumPacketsAdded(),
-         .next_timestamp_bound = stream->NextTimestampBound()}));
+	OutputStreamMonitoringInfo info;
+	info.stream_name = DebugStreamName(id);
+	info.num_packets_added = stream->NumPacketsAdded();
+	info.next_timestamp_bound = stream->NextTimestampBound();
+	
+    monitoring_info_vector.emplace_back(info);
   }
   return monitoring_info_vector;
 }
