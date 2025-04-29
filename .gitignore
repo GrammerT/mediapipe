@@ -5,3 +5,6 @@ mediapipe/provisioning_profile.mobileprovision
 node_modules/
 .configure.bazelrc
 .user.bazelrc
+mediapipe/examples/desktop/face_camera_detection/TestDir/build/*
+mediapipe/examples/desktop/face_camera_detection/.vscode/*
+mediapipe/examples/android/solutions/*
