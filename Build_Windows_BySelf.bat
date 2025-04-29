@@ -39,6 +39,12 @@ cmd
 @bazel-bin\mediapipe\examples\desktop\face_camera_detection\face_camera_detection_cpu.exe -calculator_graph_config_file=mediapipe\graphs\face_camera_detection\camera_detection_desktop_tflite_graph.pbtxt -input_video_path="C:\Users\qq675\Videos\WIN_20250421_17_51_40_Pro.mp4"
 
 
+@bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="C://Python310//python.exe" mediapipe/examples/desktop/face_camera_detection:person_camera_detection_module
+
+@bazel-6.3.1 build -c opt --define MEDIAPIPE_DISABLE_GPU=1 --action_env PYTHON_BIN_PATH="C://Python310//python.exe" mediapipe/examples/desktop/face_camera_detection:face_camera_detection_cpu_test
+
+
+
 
 
 
