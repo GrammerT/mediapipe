@@ -59,6 +59,7 @@ private:
     bool IsCameraPossiblyBlocked(cv::Mat image) const ;
 
 private:
+    bool m_already_initialized = false;
     bool m_detection_running = false;
     GeneralConfig m_general_config;
     CrowdDetectionConfig m_crowd_config;

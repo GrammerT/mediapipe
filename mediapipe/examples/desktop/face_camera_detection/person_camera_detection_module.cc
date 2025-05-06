@@ -32,6 +32,11 @@ PersonCameraDetectionModule::PersonCameraDetectionModule() {
 
 PersonCameraDetectionModule::~PersonCameraDetectionModule() {
     // Destructor implementation
+    if (m_camera) {
+        m_camera->release();
+        m_camera.reset();
+    }
+    StopDetection();
     std::cout << "PersonCameraDetectionModule destroyed." << std::endl;
 }
 
@@ -68,6 +73,7 @@ DetectionError PersonCameraDetectionModule::Initialize(const GeneralConfig& gene
         std::cerr << "Failed to initialize object detection graph." << std::endl;
         return error;
     }
+    m_already_initialized = true;
     std::cout << "Module initialized with camera timeout: " << generalConfig.camera.timeout
                 << " and resolution:" << generalConfig.camera.width<<"x"<< 
                 generalConfig.camera.height << std::endl;
@@ -77,8 +83,14 @@ DetectionError PersonCameraDetectionModule::Initialize(const GeneralConfig& gene
 DetectionError PersonCameraDetectionModule::StartDetection(const std::function<void(const DetectionResult&)>& callback) {
     if (m_detection_running) {
         std::cerr << "Detection is already running." << std::endl;
-        return DetectionError::DetectionStartFailed;
+        return DetectionError::None;
     }
+    if(!m_already_initialized)
+    {
+        std::cerr << "Module not initialized. Please initialize first." << std::endl;
+        return DetectionError::Uninitialized;
+    }
+
     m_detection_running = true;
  
     std::cout << "ResumeCameraCapture will started ." << std::endl;
@@ -146,6 +158,20 @@ DetectionError PersonCameraDetectionModule::StopDetection() {
     }
     m_detection_running = false;
     stopInterfaceDetectionThread();
+    if (m_camera) {
+        m_camera->release(); // 释放摄像头资源
+        m_camera.reset();
+    }
+    if (m_face_detection_graph) {
+        m_face_detection_graph->CloseInputStream(kInputStream);
+        m_face_detection_graph->WaitUntilDone();
+        m_face_detection_graph.reset();
+    }
+    if (m_object_detection_graph) {
+        m_object_detection_graph->CloseInputStream(kInputStream);
+        m_object_detection_graph->WaitUntilDone();
+        m_object_detection_graph.reset();
+    }
     std::cout << "Detection stopped." << std::endl;
     return DetectionError::None;
 }
@@ -166,7 +192,7 @@ DetectionError PersonCameraDetectionModule::DetectFromImage(const uint8_t* image
     return DetectionError::None;
     }
 
-    DetectionError PersonCameraDetectionModule::GetDetectionResult(DetectionResult& result) const {
+DetectionError PersonCameraDetectionModule::GetDetectionResult(DetectionResult& result) const {
     if (!m_detection_running) {
         std::cerr << "Detection is not running." << std::endl;
         return DetectionError::Uninitialized;
@@ -460,11 +486,7 @@ void PersonCameraDetectionModule::processFaceDetectionResult(DetectionResult &re
 
 void PersonCameraDetectionModule::processObjectDetectionResult(DetectionResult &result)
 {
-    // Poll object detection results
-    // bool m_camera_detected = false;  // 是否检测到相机
-    // std::chrono::steady_clock::time_point m_detection_start_time;  // 检测开始时间
-    // std::chrono::steady_clock::time_point m_last_detection_time;  // 上次检测时间
-    // int m_frame_counter = 0;  // 帧计数器
+
     if (m_object_direction_poller->QueueSize() > 0) {
         // std::cout << "m_object_direction_poller->QueueSize() > 0" << std::endl;
         mediapipe::Packet obj_packet;
