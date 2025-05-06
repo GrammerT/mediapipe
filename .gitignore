@@ -8,3 +8,7 @@ node_modules/
 mediapipe/examples/desktop/face_camera_detection/TestDir/build/*
 mediapipe/examples/desktop/face_camera_detection/.vscode/*
 mediapipe/examples/android/solutions/*
+DependTools
+test_file
+MediaPipe-pbtxt_files
+test_video
