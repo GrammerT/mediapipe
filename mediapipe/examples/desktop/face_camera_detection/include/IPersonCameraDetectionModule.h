@@ -17,14 +17,14 @@
 struct GeneralConfig {
     // 摄像头配置
     struct {
-        int timeout = 5000;       // 摄像头启动超时（毫秒）
         int width = 640;         // 摄像头宽度
         int height = 480;        // 摄像头高度
-        int frame_rate = 5; 
+        int frame_rate = 5;      // 摄像头帧率
+        int timeout = 3000;      // 摄像头启动超时（毫秒）
     } camera;
 
-    std::string log_path; // 日志路径
-    bool debug_mode = false; // 是否开启调试模式-可以展示摄像头画面
+    bool debug_mode = false;     // 是否开启调试模式-可以展示摄像头画面
+    std::string log_path;        // 日志路径
 };
 
 struct DetectionConfig {
@@ -40,7 +40,7 @@ struct CrowdDetectionConfig:DetectionConfig {
 
 //! 拍照泄密
 struct PhotoLeakDetectionConfig:DetectionConfig  {
-    float pose_threshold = 0.8f;   // 拍照动作置信度阈值
+    float pose_threshold = 0.2f;   // 拍照动作置信度阈值
 };
 
 //! 人员离席
@@ -64,12 +64,11 @@ enum class DetectionError {
 };
 
 struct DetectionResult {
-    int person_count = 0;          // 检测到的人数
+    int  person_count = 0;          // 检测到的人数
     bool is_absent = false;        // 是否离席
-    int absence_timeout = 0;     // 离席超时时间（秒）
+    int  absence_timeout = 0;     // 离席超时时间（秒）
     bool is_photo_leak_possible = false; // 是否可能在拍照
 };
-
 
 
 class PERSON_CAMERA_DETECTION_MODULE_API IPersonCameraDetectionModule {

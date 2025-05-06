@@ -54,6 +54,10 @@ constexpr int kNumCoordsPerBox = 4;
 
 constexpr char kTensorsTag[] = "TENSORS";
 constexpr char kTensorsGpuTag[] = "TENSORS_GPU";
+
+
+#define CELL_PHONE_ID 77
+
 }  // namespace
 
 namespace mediapipe {
@@ -655,6 +659,11 @@ absl::Status TfLiteTensorsToDetectionsCalculator::ConvertToDetections(
         detection_scores[i] < options_.min_score_thresh()) {
       continue;
     }
+    if(detection_classes[i] != CELL_PHONE_ID) 
+    {
+      continue;
+    }
+
     const int box_offset = i * num_coords_;
     Detection detection = ConvertToDetection(
         detection_boxes[box_offset + 0], detection_boxes[box_offset + 1],

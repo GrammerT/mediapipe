@@ -55,6 +55,7 @@ std::string generateObjectionDetectionGraph(float threshold=0.4,
     return R"pb(
 input_stream: "input_video"
 output_stream: "output_video"
+output_stream: "output_detections"
 
 node {
   calculator: "FlowLimiterCalculator"
@@ -156,7 +157,7 @@ node {
       y_scale: 10.0
       h_scale: 5.0
       w_scale: 5.0
-      min_score_thresh: 0.6
+      min_score_thresh: )pb" + std::to_string(threshold) + R"pb(
     }
   }
 }
@@ -168,7 +169,7 @@ node {
   output_stream: "filtered_detections"
   node_options: {
     [type.googleapis.com/mediapipe.NonMaxSuppressionCalculatorOptions] {
-      min_suppression_threshold: )pb" + std::to_string(threshold) + R"pb(
+      min_suppression_threshold: 0.4
       max_num_detections: )pb" + std::to_string(max_num_detections) + R"pb(
       overlap_type: INTERSECTION_OVER_UNION
       return_empty_detections: true
@@ -181,7 +182,7 @@ node {
 node {
   calculator: "DetectionLabelIdToTextCalculator"
   input_stream: "filtered_detections"
-  output_stream: "output_detections"
+  output_stream: "DETECTIONS:output_detections"
   node_options: {
     [type.googleapis.com/mediapipe.DetectionLabelIdToTextCalculatorOptions] {
       label_map_path: "mediapipe/models/ssdlite_object_detection_labelmap.txt"

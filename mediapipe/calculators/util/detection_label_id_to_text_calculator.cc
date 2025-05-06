@@ -57,6 +57,9 @@ namespace mediapipe {
 //     }
 //   }
 // }
+
+constexpr char kDetectionsTag[] = "DETECTIONS";
+
 class DetectionLabelIdToTextCalculator : public CalculatorBase {
  public:
   static absl::Status GetContract(CalculatorContract* cc);
@@ -77,8 +80,15 @@ REGISTER_CALCULATOR(DetectionLabelIdToTextCalculator);
 absl::Status DetectionLabelIdToTextCalculator::GetContract(
     CalculatorContract* cc) {
   cc->Inputs().Index(0).Set<std::vector<Detection>>();
-  cc->Outputs().Index(0).Set<std::vector<Detection>>();
-
+  
+  if (cc->Outputs().HasTag(kDetectionsTag)) {
+    cc->Outputs().Tag(kDetectionsTag).Set<std::vector<Detection>>();
+  }
+  else
+  {
+    cc->Outputs().Index(0).Set<std::vector<Detection>>();
+  }
+  
   return absl::OkStatus();
 }
 
@@ -108,6 +118,7 @@ absl::Status DetectionLabelIdToTextCalculator::Open(CalculatorContext* cc) {
       LabelMapItem item;
       item.set_name(options.label(i));
       local_label_map_[i] = std::move(item);
+      LOG(INFO) << "Added label: " << item.name() << " at index: " << i;
     }
   }
   keep_label_id_ = options.keep_label_id();
@@ -118,6 +129,7 @@ absl::Status DetectionLabelIdToTextCalculator::Process(CalculatorContext* cc) {
   std::vector<Detection> output_detections;
   for (const auto& input_detection :
        cc->Inputs().Index(0).Get<std::vector<Detection>>()) {
+
     output_detections.push_back(input_detection);
     Detection& output_detection = output_detections.back();
     bool has_text_label = false;
@@ -136,9 +148,20 @@ absl::Status DetectionLabelIdToTextCalculator::Process(CalculatorContext* cc) {
       output_detection.clear_label_id();
     }
   }
-  cc->Outputs().Index(0).AddPacket(
+
+
+  if (cc->Outputs().HasTag(kDetectionsTag)) {
+    cc->Outputs().Tag(kDetectionsTag).AddPacket(
       MakePacket<std::vector<Detection>>(output_detections)
           .At(cc->InputTimestamp()));
+  }
+  else
+  {
+    cc->Outputs().Index(0).AddPacket(
+      MakePacket<std::vector<Detection>>(output_detections)
+          .At(cc->InputTimestamp()));
+  }
+
   return absl::OkStatus();
 }
 
