@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
 
     PhotoLeakDetectionConfig photoLeakConfig;
     photoLeakConfig.isOpen = true;
-    photoLeakConfig.pose_threshold = 0.85f;
+    photoLeakConfig.pose_threshold = 0.35f;
 
     AbsenceDetectionConfig absenceConfig;
     absenceConfig.isOpen = true;

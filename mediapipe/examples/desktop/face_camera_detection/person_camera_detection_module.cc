@@ -7,9 +7,6 @@
 #include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/formats/image_frame_opencv.h"
 #include "mediapipe/framework/port/file_helpers.h"
-#include "mediapipe/framework/port/opencv_highgui_inc.h"
-#include "mediapipe/framework/port/opencv_imgproc_inc.h"
-#include "mediapipe/framework/port/opencv_video_inc.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/util/resource_util.h"
@@ -373,6 +370,7 @@ void PersonCameraDetectionModule::startInterfaceDetectionThread(const std::funct
 
             DetectionResult result;
 
+            result.is_camera_blocked = IsCameraPossiblyBlocked(camera_frame);
             processFaceDetectionResult(result);
             processObjectDetectionResult(result);
 
@@ -383,6 +381,7 @@ void PersonCameraDetectionModule::startInterfaceDetectionThread(const std::funct
                       << ", Is Absent: " << result.is_absent 
                       << ", Absence Timeout: " << result.absence_timeout 
                       << ", Is Photo Leak Possible: " << result.is_photo_leak_possible 
+                      << ", Is Camera Blocked: " << result.is_camera_blocked
                       << std::endl;
 
             // Invoke the callback with the detection result
@@ -440,8 +439,17 @@ void PersonCameraDetectionModule::processFaceDetectionResult(DetectionResult &re
             result.is_absent = false;  // Example: set to false for now
             dealAbsentDetection(result);
         }
+        if(m_face_img_poller->QueueSize() > 0) {
+            if (m_face_img_poller->Next(&face_packet)) {
+                auto& output_frame = face_packet.Get<mediapipe::ImageFrame>();
+            }
+        }
     } else {
         if(m_face_img_poller->QueueSize() > 0) {
+            if (m_face_img_poller->Next(&face_packet)) {
+                auto& output_frame = face_packet.Get<mediapipe::ImageFrame>();
+            }
+            
             result.person_count = 0;
             result.is_absent = true;
             dealAbsentDetection(result);
@@ -486,6 +494,11 @@ void PersonCameraDetectionModule::processObjectDetectionResult(DetectionResult &
                 }
             }
         }
+        
+        mediapipe::Packet object_packet;
+        if (m_object_poller->Next(&object_packet)) {
+           auto& output_frame = object_packet.Get<mediapipe::ImageFrame>();
+        }
     }
     else
     {
@@ -497,10 +510,33 @@ void PersonCameraDetectionModule::processObjectDetectionResult(DetectionResult &
         // Poll object detection results
         mediapipe::Packet object_packet;
         if (m_object_poller->Next(&object_packet)) {
-
+           auto& output_frame = object_packet.Get<mediapipe::ImageFrame>();
         }
     } 
 }
+
+
+bool PersonCameraDetectionModule::IsCameraPossiblyBlocked(cv::Mat image) const
+{
+    if (image.empty()) {
+        std::cerr << "Input image is empty." << std::endl;
+        return false;
+    }
+
+    cv::Mat gray_image;
+    cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
+
+    cv::Scalar mean, stddev;
+    cv::meanStdDev(gray_image, mean, stddev);
+
+    double variance = stddev[0] * stddev[0];
+    if (variance < 200) {
+        return true; // Camera is possibly blocked
+    } else {
+        return false; // Camera is not blocked
+    }
+}
+
 
 
 

@@ -2,6 +2,9 @@
 
 #include "mediapipe/framework/calculator_framework.h"
 #include "include/IPersonCameraDetectionModule.h"
+#include "mediapipe/framework/port/opencv_highgui_inc.h"
+#include "mediapipe/framework/port/opencv_imgproc_inc.h"
+#include "mediapipe/framework/port/opencv_video_inc.h"
 #include <memory>
 #include <thread>
 #include <chrono>
@@ -52,6 +55,8 @@ private:
 
     void processFaceDetectionResult(DetectionResult &result);
     void processObjectDetectionResult(DetectionResult &result);
+
+    bool IsCameraPossiblyBlocked(cv::Mat image) const ;
 
 private:
     bool m_detection_running = false;

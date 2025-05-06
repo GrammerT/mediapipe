@@ -64,10 +64,12 @@ enum class DetectionError {
 };
 
 struct DetectionResult {
-    int  person_count = 0;          // 检测到的人数
+    bool is_photo_leak_possible = false; // 是否可能在拍照
+    bool is_camera_blocked = false;   // 摄像头是否可能被遮挡
     bool is_absent = false;        // 是否离席
     int  absence_timeout = 0;     // 离席超时时间（秒）
-    bool is_photo_leak_possible = false; // 是否可能在拍照
+    int  person_count = 0;          // 检测到的人数
+    
 };
 
 
