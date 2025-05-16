@@ -14,6 +14,7 @@
 #endif
 
 
+
 struct GeneralConfig {
     // 摄像头配置
     struct {
@@ -24,8 +25,8 @@ struct GeneralConfig {
     } camera;
 
     bool debug_mode = false;     // 是否开启调试模式-可以展示摄像头画面
-    std::string log_path;        // 日志路径
-};
+    // const char* log_path;        // 日志路径
+}; 
 
 struct DetectionConfig {
     bool isOpen;               // 是否开启此检测
@@ -72,6 +73,8 @@ struct DetectionResult {
     
 };
 
+typedef void(*DetectionResultCallback)(const DetectionResult* result, void* user_data);
+
 
 class PERSON_CAMERA_DETECTION_MODULE_API IPersonCameraDetectionModule {
 public:
@@ -83,8 +86,13 @@ public:
                             const AbsenceDetectionConfig& absenceConfig) = 0;
 
     
-    virtual DetectionError StartDetection(const std::function<void(const DetectionResult&)>& callback) = 0;
-    
+    virtual DetectionError UpdateGeneralConfig(const GeneralConfig& generalConfig) = 0;
+    virtual DetectionError UpdateCrowdDetectionConfig(const CrowdDetectionConfig& crowdConfig) = 0;
+    virtual DetectionError UpdatePhotoLeakDetectionConfig(const PhotoLeakDetectionConfig& photoLeakConfig) = 0;
+    virtual DetectionError UpdateAbsenceDetectionConfig(const AbsenceDetectionConfig& absenceConfig) = 0;
+
+
+    virtual DetectionError StartDetection(DetectionResultCallback callback, void* user_data) = 0;
     virtual DetectionError StopDetection() = 0;
     virtual bool IsDetectionRunning() const = 0;
     /**
@@ -98,7 +106,7 @@ public:
      * @return DetectionError Returns an error code indicating the result of the detection.
      */
     virtual DetectionError DetectFromImage(const uint8_t* image_data, int width, int height, 
-                                           const std::function<void(const DetectionResult&)>& callback) = 0;
+                                           DetectionResultCallback callback, void* user_data) = 0;
 
     /**
      * @brief Retrieve the latest detection result.

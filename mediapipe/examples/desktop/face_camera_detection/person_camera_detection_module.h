@@ -27,13 +27,18 @@ public:
             const PhotoLeakDetectionConfig& photoLeakConfig, 
             const AbsenceDetectionConfig& absenceConfig);
 
+    DetectionError UpdateGeneralConfig(const GeneralConfig& generalConfig) override;
+    DetectionError UpdateCrowdDetectionConfig(const CrowdDetectionConfig& crowdConfig) override;
+    DetectionError UpdatePhotoLeakDetectionConfig(const PhotoLeakDetectionConfig& photoLeakConfig) override;
+    DetectionError UpdateAbsenceDetectionConfig(const AbsenceDetectionConfig& absenceConfig) override;
 
-    DetectionError StartDetection(const std::function<void(const DetectionResult&)>& callback);
+
+    DetectionError StartDetection(DetectionResultCallback callback, void* user_data);
 
     DetectionError StopDetection();
 
     DetectionError DetectFromImage(const uint8_t* image_data, int width, int height, 
-                        const std::function<void(const DetectionResult&)>& callback) ;
+                        DetectionResultCallback callback, void* user_data) ;
 
     DetectionError GetDetectionResult(DetectionResult& result) const;
 
@@ -49,7 +54,7 @@ private:
     DetectionError InitializeObjectDetectionGraph(const PhotoLeakDetectionConfig& photoLeakConfig);
     DetectionError InitializeCamera(const GeneralConfig& generalConfig);
 
-    void startInterfaceDetectionThread(const std::function<void(const DetectionResult&)>& callback);
+    void startInterfaceDetectionThread(DetectionResultCallback callback, void* user_data);
     void stopInterfaceDetectionThread();
     void dealAbsentDetection(DetectionResult& result);
 

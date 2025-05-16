@@ -49,7 +49,14 @@ DetectionError PersonCameraDetectionModule::Initialize(const GeneralConfig& gene
     std::cout << "Camera Resolution: " << generalConfig.camera.width << "x" << generalConfig.camera.height << std::endl;
     std::cout << "Camera Frame Rate: " << generalConfig.camera.frame_rate << std::endl;
     std::cout << "Debug Mode: " << (generalConfig.debug_mode ? "Enabled" : "Disabled") << std::endl;
+    // Deep copy for char* members in GeneralConfig
+    // If GeneralConfig contains char* fields, copy their contents instead of pointers
+    // Example assumes a field: char* name;
+    // Adjust according to your actual struct definition
+
+    // Copy other primitive fields
     m_general_config = generalConfig;
+
     m_crowd_config = crowdConfig;
     m_photo_leak_config = photoLeakConfig;
     m_absence_config = absenceConfig;
@@ -80,7 +87,40 @@ DetectionError PersonCameraDetectionModule::Initialize(const GeneralConfig& gene
     return DetectionError::None;
 }
 
-DetectionError PersonCameraDetectionModule::StartDetection(const std::function<void(const DetectionResult&)>& callback) {
+DetectionError PersonCameraDetectionModule::UpdateGeneralConfig(const GeneralConfig& generalConfig) {
+    if (memcmp(&m_general_config, &generalConfig, sizeof(GeneralConfig)) != 0) {
+        m_general_config = generalConfig;
+        std::cout << "GeneralConfig updated." << std::endl;
+    }
+    return DetectionError::None;
+}
+
+DetectionError PersonCameraDetectionModule::UpdateCrowdDetectionConfig(const CrowdDetectionConfig& crowdConfig) {
+    if (memcmp(&m_crowd_config, &crowdConfig, sizeof(CrowdDetectionConfig)) != 0) {
+        m_crowd_config = crowdConfig;
+        std::cout << "CrowdDetectionConfig updated." << std::endl;
+    }
+    return DetectionError::None;
+}
+
+DetectionError PersonCameraDetectionModule::UpdatePhotoLeakDetectionConfig(const PhotoLeakDetectionConfig& photoLeakConfig) {
+    if (memcmp(&m_photo_leak_config, &photoLeakConfig, sizeof(PhotoLeakDetectionConfig)) != 0) {
+        m_photo_leak_config = photoLeakConfig;
+        std::cout << "PhotoLeakDetectionConfig updated." << std::endl;
+    }
+    return DetectionError::None;
+}
+
+DetectionError PersonCameraDetectionModule::UpdateAbsenceDetectionConfig(const AbsenceDetectionConfig& absenceConfig) {
+    if (memcmp(&m_absence_config, &absenceConfig, sizeof(AbsenceDetectionConfig)) != 0) {
+        m_absence_config = absenceConfig;
+        std::cout << "AbsenceDetectionConfig updated." << std::endl;
+    }
+    return DetectionError::None;
+}
+
+
+DetectionError PersonCameraDetectionModule::StartDetection(DetectionResultCallback callback, void* user_data) {
     if (m_detection_running) {
         std::cerr << "Detection is already running." << std::endl;
         return DetectionError::None;
@@ -146,7 +186,7 @@ DetectionError PersonCameraDetectionModule::StartDetection(const std::function<v
         return DetectionError::MMPStartFailed;
     }
     // Start the detection thread
-    startInterfaceDetectionThread(callback);
+    startInterfaceDetectionThread(callback, user_data);
     std::cout << "Detection thread started successfully." << std::endl;
     return DetectionError::None;
 }
@@ -177,7 +217,7 @@ DetectionError PersonCameraDetectionModule::StopDetection() {
 }
 
 DetectionError PersonCameraDetectionModule::DetectFromImage(const uint8_t* image_data, int width, int height, 
-         const std::function<void(const DetectionResult&)>& callback) {
+                                                        DetectionResultCallback callback, void* user_data) {
     if (!image_data || width <= 0 || height <= 0) {
         std::cerr << "Invalid image data." << std::endl;
         return DetectionError::ProcessingError;
@@ -186,7 +226,7 @@ DetectionError PersonCameraDetectionModule::DetectFromImage(const uint8_t* image
     // Simulate image detection
     DetectionResult result;
     result.person_count = 1;  // Example: detected one person
-    callback(result);
+    callback(&result,user_data);
 
     std::cout << "Image detection completed for resolution: " << width << "x" << height << std::endl;
     return DetectionError::None;
@@ -325,7 +365,7 @@ DetectionError PersonCameraDetectionModule::ResumeCameraCapture() {
     return DetectionError::None;
 }
 
-void PersonCameraDetectionModule::startInterfaceDetectionThread(const std::function<void(const DetectionResult&)>& callback) {
+void PersonCameraDetectionModule::startInterfaceDetectionThread(DetectionResultCallback callback, void* user_data) {
     if (m_inference_thread.joinable()) {
         std::cerr << "Detection thread is already running." << std::endl;
         return;
@@ -339,7 +379,7 @@ void PersonCameraDetectionModule::startInterfaceDetectionThread(const std::funct
         cv::namedWindow(kObjectDetection, /*flags=WINDOW_AUTOSIZE*/ 1);
     }
     
-    m_inference_thread = std::thread([this, callback]() {
+    m_inference_thread = std::thread([this, callback,user_data]() {
         while (m_detection_running) {
             if (!m_camera || !m_camera->isOpened()) {
                 std::cerr << "Camera is not initialized or closed." << std::endl;
@@ -411,7 +451,10 @@ void PersonCameraDetectionModule::startInterfaceDetectionThread(const std::funct
                       << std::endl;
 
             // Invoke the callback with the detection result
-            // callback(result);
+            if(callback)
+            {
+                callback(&result,user_data);
+            }
             // Log detection results for debugging
             std::cout << "Processed frame at timestamp: " << frame_timestamp_us << " us" << std::endl;            
             std::this_thread::sleep_for(std::chrono::milliseconds(1000/m_general_config.camera.frame_rate));
