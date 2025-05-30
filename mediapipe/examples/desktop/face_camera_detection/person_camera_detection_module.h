@@ -8,6 +8,8 @@
 #include <memory>
 #include <thread>
 #include <chrono>
+#include <mutex>
+#include <vector>
 
 namespace mediapipe{
     class CalculatorGraph;
@@ -19,7 +21,7 @@ namespace cv{
 
 class PersonCameraDetectionModule : public IPersonCameraDetectionModule {
 public:
-    PersonCameraDetectionModule() ;
+    PersonCameraDetectionModule(bool create_log = false);
     ~PersonCameraDetectionModule() ;
 
     DetectionError Initialize(const GeneralConfig& generalConfig, 
@@ -46,8 +48,7 @@ public:
 
     DetectionError PauseCameraCapture() override;
     DetectionError ResumeCameraCapture() override;
-
-
+    DetectionError SaveImage(const char* file_path,bool face_detect);
 
 private:
     DetectionError InitializeFaceDetectionGraph();
@@ -62,6 +63,7 @@ private:
     void processObjectDetectionResult(DetectionResult &result);
 
     bool IsCameraPossiblyBlocked(cv::Mat image) const ;
+    bool HasCameraDevice() const;
 
 private:
     bool m_already_initialized = false;
@@ -81,12 +83,23 @@ private:
     absl::StatusOr<mediapipe::OutputStreamPoller> m_object_direction_poller;
 
     std::unique_ptr<cv::VideoCapture> m_camera;
+    std::atomic_bool m_camera_opened = false;  // 是否成功打开摄像头
+
     std::thread m_inference_thread;
 
     bool m_already_recode_time = false;
     std::chrono::time_point<std::chrono::steady_clock> m_absence_start_time;
 
+    DetectionResult m_callback_result;  // 用于存储回调结果
+
+
     //! 记录检测到相机相关的逻辑
     bool m_camera_detected = false;  // 是否检测到相机
     std::chrono::steady_clock::time_point m_detection_start_time;  // 检测开始时间
+
+    std::mutex m_img_mutex;
+    cv::Mat m_last_mat_face_detect;
+    cv::Mat m_last_mat_object_detect;
+
+    std::vector<float> m_photo_leak_confidences;  // 用于存储拍照动作置信度
 };

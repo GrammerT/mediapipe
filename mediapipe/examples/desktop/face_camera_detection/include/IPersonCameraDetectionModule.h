@@ -61,16 +61,18 @@ enum class DetectionError {
     DetectionStartFailed,   // 启动检测失败
     ProcessingError,        // 图像处理错误
     InvalidOperation,      // 无效操作
+    InvalidArgument,        // 无效参数
     UnknownError            // 未知错误
 };
 
 struct DetectionResult {
+    bool camera_exist = true; // 摄像头是否不存在
     bool is_photo_leak_possible = false; // 是否可能在拍照
     bool is_camera_blocked = false;   // 摄像头是否可能被遮挡
     bool is_absent = false;        // 是否离席
-    int  absence_timeout = 0;     // 离席超时时间（秒）
+    int  absence_timeout = 0;     // 离席超时时间(秒)
     int  person_count = 0;          // 检测到的人数
-    
+    float photo_leak_confidence= 0.0f; // 拍照动作置信度
 };
 
 typedef void(*DetectionResultCallback)(const DetectionResult* result, void* user_data);
@@ -133,6 +135,8 @@ public:
      * @return DetectionError Returns an error code indicating the result of the operation.
      */
     virtual DetectionError PauseCameraCapture() = 0;
+
+    virtual DetectionError SaveImage(const char* file_path,bool face_detect) = 0;
 
 };
 
