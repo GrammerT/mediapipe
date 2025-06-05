@@ -12,8 +12,10 @@
 #include "mediapipe/util/resource_util.h"
 #include "mediapipe/framework/formats/detection.pb.h"
 #include "internal_def.h"
+#ifdef WIN32
+    #include "windows.h"
+#endif
 
-#include "windows.h"
 #include <fstream>
 
 constexpr char kInputStream[] = "input_video";
