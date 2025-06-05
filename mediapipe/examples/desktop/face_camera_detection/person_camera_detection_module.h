@@ -82,6 +82,7 @@ private:
     absl::StatusOr<mediapipe::OutputStreamPoller> m_object_poller;
     absl::StatusOr<mediapipe::OutputStreamPoller> m_object_direction_poller;
 
+    std::mutex m_camera_mutex;  // 用于保护摄像头访问的互斥锁
     std::unique_ptr<cv::VideoCapture> m_camera;
     std::atomic_bool m_camera_opened = false;  // 是否成功打开摄像头
 

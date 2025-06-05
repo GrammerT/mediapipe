@@ -26,7 +26,7 @@ constexpr char kOriginWindow[] = "OriginWindow";
 constexpr char kFaceDetection[] = "FaceDetection";
 constexpr char kObjectDetection[] = "ObjectDetection";
 
-#define CAMERA_DETECTION_TIMER 2500 // 2s
+#define CAMERA_DETECTION_TIMER 2500 // 2.5s
 
 
 // 自定义streambuf，自动为每行日志添加时间戳
@@ -104,10 +104,12 @@ PersonCameraDetectionModule::PersonCameraDetectionModule(bool create_log) {
 
 PersonCameraDetectionModule::~PersonCameraDetectionModule() {
     // Destructor implementation
+    std::unique_lock<std::mutex> lock(m_camera_mutex);
     if (m_camera) {
         m_camera->release();
         m_camera.reset();
     }
+    lock.unlock();
     StopDetection();
     std::cout << "PersonCameraDetectionModule destroyed." << std::endl;
     google::ShutdownGoogleLogging();
@@ -263,10 +265,12 @@ DetectionError PersonCameraDetectionModule::StopDetection() {
     }
     m_detection_running = false;
     stopInterfaceDetectionThread();
+    std::unique_lock<std::mutex> lock(m_camera_mutex);
     if (m_camera) {
         m_camera->release(); // 释放摄像头资源
         m_camera.reset();
     }
+    lock.unlock();
     if (m_face_detection_graph) {
         m_face_detection_graph->CloseInputStream(kInputStream);
         m_face_detection_graph->WaitUntilDone();
@@ -366,6 +370,7 @@ DetectionError PersonCameraDetectionModule::InitializeCamera(const GeneralConfig
               generalConfig.camera.height << std::endl;
 
     // Open the camera using OpenCV
+    std::unique_lock<std::mutex> lock(m_camera_mutex);
     m_camera = std::make_unique<cv::VideoCapture>();  // Open default camera (index 0)
     std::cout << "Camera initialized successfully." << std::endl;
     return DetectionError::None;
@@ -373,14 +378,18 @@ DetectionError PersonCameraDetectionModule::InitializeCamera(const GeneralConfig
 
 
 DetectionError PersonCameraDetectionModule::PauseCameraCapture() {
+    std::unique_lock<std::mutex> lock(m_camera_mutex);
     if (!m_camera || !m_camera->isOpened()) {
         std::cout << "Camera is not initialized or already closed." << std::endl;
+        lock.unlock();
         return DetectionError::None;
     }
     
     if (m_camera->isOpened()) {
         std::cout <<" Pausing camera capture..." << std::endl;
         m_camera->release(); // 释放摄像头资源
+        m_camera.reset(); // Reset the camera pointer
+        lock.unlock();
         m_camera_opened.store(false);  // Set camera opened flag to false
         std::cout << "Camera capture paused successfully." << std::endl;
         return DetectionError::None;
@@ -391,9 +400,9 @@ DetectionError PersonCameraDetectionModule::PauseCameraCapture() {
 
 
 DetectionError PersonCameraDetectionModule::ResumeCameraCapture() {
+    std::unique_lock<std::mutex> lock(m_camera_mutex);
     if (!m_camera) {
-        std::cout << "Failed to resume camera capture." << std::endl;
-        return DetectionError::CameraInitializationFailed;
+        m_camera = std::make_unique<cv::VideoCapture>();
     }
     
     if (!m_camera->isOpened()) {
@@ -449,19 +458,22 @@ void PersonCameraDetectionModule::startInterfaceDetectionThread(DetectionResultC
     
     m_inference_thread = std::thread([this, callback,user_data]() {
         while (m_detection_running) {
+            std::unique_lock<std::mutex> lock(m_camera_mutex);
             if (!m_camera || !m_camera->isOpened()) {
                 std::cout << "Camera is not initialized or closed." << std::endl;
+                lock.unlock();
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000/m_general_config.camera.frame_rate));
                 continue;
             }
             if (!m_camera_opened.load())
             {
+                lock.unlock();
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000/m_general_config.camera.frame_rate));
                 continue;
             }
-            
             cv::Mat camera_frame_raw;
             *m_camera>>camera_frame_raw;
+            lock.unlock();
             if (camera_frame_raw.empty()) {
                 std::cout << "Ignore empty frames from Queue." << std::endl;
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -532,6 +544,7 @@ void PersonCameraDetectionModule::startInterfaceDetectionThread(DetectionResultC
             m_callback_result.is_photo_leak_possible = false; // Reset for next frame
             m_callback_result.is_camera_blocked = false; // Reset for next frame
             m_callback_result.absence_timeout = 0; // Reset for next frame
+            m_callback_result.photo_leak_confidence = 0.0f;
            // Log detection results for debugging
             std::cout << "Processed frame at timestamp: " << frame_timestamp_us << " us" << std::endl;            
             std::this_thread::sleep_for(std::chrono::milliseconds(1000/m_general_config.camera.frame_rate));
@@ -635,6 +648,7 @@ void PersonCameraDetectionModule::processObjectDetectionResult(DetectionResult &
                     }
                     else
                     {
+                        std::cout<<"photo leak confidence: "<<detection.score(0)<<std::endl;
                         m_photo_leak_confidences.push_back(detection.score(0));
                         auto current_time = std::chrono::steady_clock::now();
                         auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - m_detection_start_time).count();
