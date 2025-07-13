@@ -114,7 +114,7 @@ PersonCameraDetectionModule::~PersonCameraDetectionModule() {
     lock.unlock();
     StopDetection();
     std::cout << "PersonCameraDetectionModule destroyed." << std::endl;
-    google::ShutdownGoogleLogging();
+    // google::ShutdownGoogleLogging();
 }
 
 DetectionError PersonCameraDetectionModule::Initialize(const GeneralConfig& generalConfig, 
