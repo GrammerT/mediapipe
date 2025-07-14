@@ -28,7 +28,7 @@ constexpr char kOriginWindow[] = "OriginWindow";
 constexpr char kFaceDetection[] = "FaceDetection";
 constexpr char kObjectDetection[] = "ObjectDetection";
 
-#define CAMERA_DETECTION_TIMER 2500 // 2.5s
+#define CAMERA_DETECTION_TIMER 700 // 0.7s
 
 
 // 自定义streambuf，自动为每行日志添加时间戳
@@ -202,11 +202,11 @@ DetectionError PersonCameraDetectionModule::StartDetection(DetectionResultCallba
     }
 
     std::cout << "ResumeCameraCapture will started ." << std::endl;
-    DetectionError err = ResumeCameraCapture();
-    if (err != DetectionError::None) {
-        std::cout << "Failed to resume camera capture." << std::endl;
-        return err;
-    }
+    // DetectionError err = ResumeCameraCapture();
+    // if (err != DetectionError::None) {
+    //     std::cout << "Failed to resume camera capture." << std::endl;
+    //     return err;
+    // }
     std::cout << "AddOutputStreamPoller will started ." << std::endl;
 
     m_face_img_poller = 
@@ -348,7 +348,7 @@ DetectionError PersonCameraDetectionModule::InitializeObjectDetectionGraph(const
     // Simulate initialization of the object detection graph
     std::cout << "Initializing object detection graph..." << std::endl;
 
-    std::string calculator_graph_config_contents = generateObjectionDetectionGraph(photoLeakConfig.pose_threshold,9);
+    std::string calculator_graph_config_contents = generateObjectionDetectionGraph(photoLeakConfig.pose_threshold,1);
     mediapipe::CalculatorGraphConfig config =
                             mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(
                                                         calculator_graph_config_contents);
@@ -372,8 +372,8 @@ DetectionError PersonCameraDetectionModule::InitializeCamera(const GeneralConfig
               generalConfig.camera.height << std::endl;
 
     // Open the camera using OpenCV
-    std::unique_lock<std::mutex> lock(m_camera_mutex);
-    m_camera = std::make_unique<cv::VideoCapture>();  // Open default camera (index 0)
+    // std::unique_lock<std::mutex> lock(m_camera_mutex);
+    // m_camera = std::make_unique<cv::VideoCapture>();  // Open default camera (index 0)
     std::cout << "Camera initialized successfully." << std::endl;
     return DetectionError::None;
 }
@@ -566,7 +566,7 @@ void PersonCameraDetectionModule::stopInterfaceDetectionThread() {
 
 
 void PersonCameraDetectionModule::dealAbsentDetection(DetectionResult& result) {
-    if (result.is_absent) {
+    if (result.is_absent) { // If absence is detected
         if (!m_already_recode_time) {
             m_already_recode_time = true;
             result.absence_timeout = 0;
@@ -578,7 +578,7 @@ void PersonCameraDetectionModule::dealAbsentDetection(DetectionResult& result) {
             result.absence_timeout = elapsed_time;
             std::cout << "Absence detected, elapsed time: " << elapsed_time << " seconds." << std::endl;
         }
-    } else {
+    } else { // If presence is detected
         if (m_already_recode_time) {
             m_already_recode_time = false;
             std::cout << "Presence detected, resetting absence timer." << std::endl;
@@ -627,7 +627,6 @@ void PersonCameraDetectionModule::processFaceDetectionResult(DetectionResult &re
 
 void PersonCameraDetectionModule::processObjectDetectionResult(DetectionResult &result)
 {
-
     if (m_object_direction_poller->QueueSize() > 0) {
         // std::cout << "m_object_direction_poller->QueueSize() > 0" << std::endl;
         mediapipe::Packet obj_packet;
