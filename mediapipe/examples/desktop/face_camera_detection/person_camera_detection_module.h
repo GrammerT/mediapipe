@@ -98,9 +98,13 @@ private:
     bool m_camera_detected = false;  // 是否检测到相机
     std::chrono::steady_clock::time_point m_detection_start_time;  // 检测开始时间
 
-    std::mutex m_img_mutex;
+    std::mutex m_face_img_mutex;
     cv::Mat m_last_mat_face_detect;
+
+    std::mutex m_obj_img_mutex;
     cv::Mat m_last_mat_object_detect;
+
+    bool m_need_save_obj_mat = false;  // 是否需要保存物体检测的图像
 
     std::vector<float> m_photo_leak_confidences;  // 用于存储拍照动作置信度
 };

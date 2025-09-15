@@ -101,7 +101,7 @@ PersonCameraDetectionModule::PersonCameraDetectionModule(bool create_log) {
     {
         log_init();
     }
-    std::cout << "PersonCameraDetectionModule initialized." << std::endl;
+    // std::cout << "PersonCameraDetectionModule initialized." << std::endl;
 }
 
 PersonCameraDetectionModule::~PersonCameraDetectionModule() {
@@ -113,7 +113,7 @@ PersonCameraDetectionModule::~PersonCameraDetectionModule() {
     }
     lock.unlock();
     StopDetection();
-    std::cout << "PersonCameraDetectionModule destroyed." << std::endl;
+    // std::cout << "PersonCameraDetectionModule destroyed." << std::endl;
     // google::ShutdownGoogleLogging();
 }
 
@@ -121,11 +121,11 @@ DetectionError PersonCameraDetectionModule::Initialize(const GeneralConfig& gene
     const CrowdDetectionConfig& crowdConfig, 
     const PhotoLeakDetectionConfig& photoLeakConfig, 
     const AbsenceDetectionConfig& absenceConfig) {
-    std::cout << "GeneralConfig details:" << std::endl;
-    std::cout << "Camera Timeout: " << generalConfig.camera.timeout << std::endl;
-    std::cout << "Camera Resolution: " << generalConfig.camera.width << "x" << generalConfig.camera.height << std::endl;
-    std::cout << "Camera Frame Rate: " << generalConfig.camera.frame_rate << std::endl;
-    std::cout << "Debug Mode: " << (generalConfig.debug_mode ? "Enabled" : "Disabled") << std::endl;
+    // std::cout << "GeneralConfig details:" << std::endl;
+    // std::cout << "Camera Timeout: " << generalConfig.camera.timeout << std::endl;
+    // std::cout << "Camera Resolution: " << generalConfig.camera.width << "x" << generalConfig.camera.height << std::endl;
+    // std::cout << "Camera Frame Rate: " << generalConfig.camera.frame_rate << std::endl;
+    // std::cout << "Debug Mode: " << (generalConfig.debug_mode ? "Enabled" : "Disabled") << std::endl;
     // Deep copy for char* members in GeneralConfig
     // If GeneralConfig contains char* fields, copy their contents instead of pointers
     // Example assumes a field: char* name;
@@ -141,31 +141,31 @@ DetectionError PersonCameraDetectionModule::Initialize(const GeneralConfig& gene
     // Initialize the camera
     DetectionError error = InitializeCamera(generalConfig);
     if (error != DetectionError::None) {
-        std::cout << "Failed to initialize camera. Error code: " << static_cast<int>(error) << std::endl;
+        // std::cout << "Failed to initialize camera. Error code: " << static_cast<int>(error) << std::endl;
         return error;
     }
     // Initialize the detection graphs
     error = InitializeFaceDetectionGraph();
     if (error != DetectionError::None) {
-        std::cout << "Failed to initialize face detection graph." << std::endl;
+        // std::cout << "Failed to initialize face detection graph." << std::endl;
         return error;
     }
 
     error = InitializeObjectDetectionGraph(photoLeakConfig);
     if (error != DetectionError::None) {
-        std::cout << "Failed to initialize object detection graph." << std::endl;
+        // std::cout << "Failed to initialize object detection graph." << std::endl;
         return error;
     }
     m_already_initialized = true;
-    std::cout << "Module initialized with camera timeout: " << generalConfig.camera.timeout
-              << " and resolution:" << generalConfig.camera.width << "x" << generalConfig.camera.height << std::endl;
+    // std::cout << "Module initialized with camera timeout: " << generalConfig.camera.timeout
+    //           << " and resolution:" << generalConfig.camera.width << "x" << generalConfig.camera.height << std::endl;
     return DetectionError::None;
 }
 
 DetectionError PersonCameraDetectionModule::UpdateGeneralConfig(const GeneralConfig& generalConfig) {
     if (memcmp(&m_general_config, &generalConfig, sizeof(GeneralConfig)) != 0) {
         m_general_config = generalConfig;
-        std::cout << "GeneralConfig updated." << std::endl;
+        // std::cout << "GeneralConfig updated." << std::endl;
     }
     return DetectionError::None;
 }
@@ -173,7 +173,7 @@ DetectionError PersonCameraDetectionModule::UpdateGeneralConfig(const GeneralCon
 DetectionError PersonCameraDetectionModule::UpdateCrowdDetectionConfig(const CrowdDetectionConfig& crowdConfig) {
     if (memcmp(&m_crowd_config, &crowdConfig, sizeof(CrowdDetectionConfig)) != 0) {
         m_crowd_config = crowdConfig;
-        std::cout << "CrowdDetectionConfig updated." << std::endl;
+        // std::cout << "CrowdDetectionConfig updated." << std::endl;
     }
     return DetectionError::None;
 }
@@ -181,7 +181,7 @@ DetectionError PersonCameraDetectionModule::UpdateCrowdDetectionConfig(const Cro
 DetectionError PersonCameraDetectionModule::UpdatePhotoLeakDetectionConfig(const PhotoLeakDetectionConfig& photoLeakConfig) {
     if (memcmp(&m_photo_leak_config, &photoLeakConfig, sizeof(PhotoLeakDetectionConfig)) != 0) {
         m_photo_leak_config = photoLeakConfig;
-        std::cout << "PhotoLeakDetectionConfig updated." << std::endl;
+        // std::cout << "PhotoLeakDetectionConfig updated." << std::endl;
     }
     return DetectionError::None;
 }
@@ -189,7 +189,7 @@ DetectionError PersonCameraDetectionModule::UpdatePhotoLeakDetectionConfig(const
 DetectionError PersonCameraDetectionModule::UpdateAbsenceDetectionConfig(const AbsenceDetectionConfig& absenceConfig) {
     if (memcmp(&m_absence_config, &absenceConfig, sizeof(AbsenceDetectionConfig)) != 0) {
         m_absence_config = absenceConfig;
-        std::cout << "AbsenceDetectionConfig updated." << std::endl;
+        // std::cout << "AbsenceDetectionConfig updated." << std::endl;
     }
     return DetectionError::None;
 }
@@ -197,23 +197,23 @@ DetectionError PersonCameraDetectionModule::UpdateAbsenceDetectionConfig(const A
 
 DetectionError PersonCameraDetectionModule::StartDetection(DetectionResultCallback callback, void* user_data) {
     if (m_detection_running) {
-        std::cout << "Detection is already running." << std::endl;
+        // std::cout << "Detection is already running." << std::endl;
         return DetectionError::None;
     }
 
-    std::cout << "ResumeCameraCapture will started ." << std::endl;
+    // std::cout << "ResumeCameraCapture will started ." << std::endl;
     // DetectionError err = ResumeCameraCapture();
     // if (err != DetectionError::None) {
     //     std::cout << "Failed to resume camera capture." << std::endl;
     //     return err;
     // }
-    std::cout << "AddOutputStreamPoller will started ." << std::endl;
+    // std::cout << "AddOutputStreamPoller will started ." << std::endl;
 
     m_face_img_poller = 
         m_face_detection_graph->AddOutputStreamPoller(kOutputStream);
     if (!m_face_img_poller.ok())
     {
-        std::cout << "Failed to add output stream poller for face detection." << std::endl;
+        // std::cout << "Failed to add output stream poller for face detection." << std::endl;
         return DetectionError::MMPStartFailed;
     }
 
@@ -221,48 +221,48 @@ DetectionError PersonCameraDetectionModule::StartDetection(DetectionResultCallba
         m_face_detection_graph->AddOutputStreamPoller(kFaceDetections);
     if (!m_face_detection_poller.ok())
     {
-        std::cout << "Failed to add output stream poller for face detection." << std::endl;
+        // std::cout << "Failed to add output stream poller for face detection." << std::endl;
         return DetectionError::MMPStartFailed;
     }
-    std::cout << "m_face_poller AddOutputStreamPoller finished ." << std::endl;
+    // std::cout << "m_face_poller AddOutputStreamPoller finished ." << std::endl;
 
     m_object_poller = 
         m_object_detection_graph->AddOutputStreamPoller(kOutputStream);
     if (!m_object_poller.ok())
     {
-        std::cout << "Failed to add output stream poller for object detection." << std::endl;
+        // std::cout << "Failed to add output stream poller for object detection." << std::endl;
         return DetectionError::MMPStartFailed;
     }
 
     m_object_direction_poller = m_object_detection_graph->AddOutputStreamPoller(kObjectDetections);
     if (!m_object_direction_poller.ok())
     {
-        std::cout << "Failed to add objection output stream direction poller for object detection." << std::endl;
+        // std::cout << "Failed to add objection output stream direction poller for object detection." << std::endl;
         return DetectionError::MMPStartFailed;
     }
 
-    std::cout << "m_object_poller AddOutputStreamPoller finished ." << std::endl;
-    std::cout << "Detection will started ." << std::endl;
+    // std::cout << "m_object_poller AddOutputStreamPoller finished ." << std::endl;
+    // std::cout << "Detection will started ." << std::endl;
     auto status = m_face_detection_graph->StartRun({});
     if (!status.ok()) {
-        std::cout << "Failed to start face detection graph: " << status.message() << std::endl;
+        // std::cout << "Failed to start face detection graph: " << status.message() << std::endl;
         return DetectionError::MMPStartFailed;
     }
     status = m_object_detection_graph->StartRun({});
     if (!status.ok()) {
-        std::cout << "Failed to start object detection graph: " << status.message() << std::endl;
+        // std::cout << "Failed to start object detection graph: " << status.message() << std::endl;
         return DetectionError::MMPStartFailed;
     }
     // Start the detection thread
     startInterfaceDetectionThread(callback, user_data);
-    std::cout << "Detection thread started successfully." << std::endl;
+    // std::cout << "Detection thread started successfully." << std::endl;
     m_detection_running = true;
     return DetectionError::None;
 }
 
 DetectionError PersonCameraDetectionModule::StopDetection() {
     if (!m_detection_running) {
-        std::cout << "Detection is not running." << std::endl;
+        // std::cout << "Detection is not running." << std::endl;
         return DetectionError::None;
     }
     m_detection_running = false;
@@ -283,14 +283,14 @@ DetectionError PersonCameraDetectionModule::StopDetection() {
         m_object_detection_graph->WaitUntilDone();
         m_object_detection_graph.reset();
     }
-    std::cout << "Detection stopped." << std::endl;
+    // std::cout << "Detection stopped." << std::endl;
     return DetectionError::None;
 }
 
 DetectionError PersonCameraDetectionModule::DetectFromImage(const uint8_t* image_data, int width, int height, 
                                                         DetectionResultCallback callback, void* user_data) {
     if (!image_data || width <= 0 || height <= 0) {
-        std::cout << "Invalid image data." << std::endl;
+        // std::cout << "Invalid image data." << std::endl;
         return DetectionError::ProcessingError;
     }
 
@@ -299,13 +299,13 @@ DetectionError PersonCameraDetectionModule::DetectFromImage(const uint8_t* image
     result.person_count = 1;  // Example: detected one person
     callback(&result,user_data);
 
-    std::cout << "Image detection completed for resolution: " << width << "x" << height << std::endl;
+    // std::cout << "Image detection completed for resolution: " << width << "x" << height << std::endl;
     return DetectionError::None;
     }
 
 DetectionError PersonCameraDetectionModule::GetDetectionResult(DetectionResult& result) const {
     if (!m_detection_running) {
-        std::cout << "Detection is not running." << std::endl;
+        // std::cout << "Detection is not running." << std::endl;
         return DetectionError::Uninitialized;
     }
 
@@ -314,7 +314,7 @@ DetectionError PersonCameraDetectionModule::GetDetectionResult(DetectionResult& 
     result.is_absent = false;
     result.is_photo_leak_possible = false;
 
-    std::cout << "Returning detection result." << std::endl;
+    // std::cout << "Returning detection result." << std::endl;
     return DetectionError::None;
 }
 
@@ -325,9 +325,9 @@ bool PersonCameraDetectionModule::IsDetectionRunning() const {
 
 DetectionError PersonCameraDetectionModule::InitializeFaceDetectionGraph() {
     // Simulate initialization of the face detection graph
-    std::cout << "Initializing face detection graph..." << std::endl;
+    // std::cout << "Initializing face detection graph..." << std::endl;
 
-    std::cout << "Initialize the calculator graph." << std::endl;
+    // std::cout << "Initialize the calculator graph." << std::endl;
     std::string calculator_graph_config_contents = generateFaceDetectionGraph();
     mediapipe::CalculatorGraphConfig config =
                             mediapipe::ParseTextProtoOrDie<mediapipe::CalculatorGraphConfig>(
@@ -337,16 +337,16 @@ DetectionError PersonCameraDetectionModule::InitializeFaceDetectionGraph() {
     
     absl::Status status = m_face_detection_graph->Initialize(config);
     if (!status.ok()) {
-        std::cout << "Failed to initialize face detection graph: " << status.message() << std::endl;
+        // std::cout << "Failed to initialize face detection graph: " << status.message() << std::endl;
         return DetectionError::MMPInitializationFailed;
     }
-    std::cout << "Face detection graph initialized successfully." << std::endl;
+    // std::cout << "Face detection graph initialized successfully." << std::endl;
     return DetectionError::None;
 }
 
 DetectionError PersonCameraDetectionModule::InitializeObjectDetectionGraph(const PhotoLeakDetectionConfig& photoLeakConfig) {
     // Simulate initialization of the object detection graph
-    std::cout << "Initializing object detection graph..." << std::endl;
+    // std::cout << "Initializing object detection graph..." << std::endl;
 
     std::string calculator_graph_config_contents = generateObjectionDetectionGraph(photoLeakConfig.pose_threshold,1);
     mediapipe::CalculatorGraphConfig config =
@@ -357,24 +357,24 @@ DetectionError PersonCameraDetectionModule::InitializeObjectDetectionGraph(const
     
     absl::Status status = m_object_detection_graph->Initialize(config);
     if (!status.ok()) {
-        std::cout << "Failed to initialize face detection graph: " << status.message() << std::endl;
+        // std::cout << "Failed to initialize face detection graph: " << status.message() << std::endl;
         return DetectionError::MMPInitializationFailed;
     }
 
-    std::cout << "Object detection graph initialized successfully." << std::endl;
+    // std::cout << "Object detection graph initialized successfully." << std::endl;
     return DetectionError::None;
 }
 
 
 DetectionError PersonCameraDetectionModule::InitializeCamera(const GeneralConfig& generalConfig) {
-    std::cout << "Initializing camera with timeout: " << generalConfig.camera.timeout
-              << " and resolution: " << generalConfig.camera.width << "x" <<
-              generalConfig.camera.height << std::endl;
+    // std::cout << "Initializing camera with timeout: " << generalConfig.camera.timeout
+    //           << " and resolution: " << generalConfig.camera.width << "x" <<
+    //           generalConfig.camera.height << std::endl;
 
     // Open the camera using OpenCV
     // std::unique_lock<std::mutex> lock(m_camera_mutex);
     // m_camera = std::make_unique<cv::VideoCapture>();  // Open default camera (index 0)
-    std::cout << "Camera initialized successfully." << std::endl;
+    // std::cout << "Camera initialized successfully." << std::endl;
     return DetectionError::None;
 }
 
@@ -382,21 +382,21 @@ DetectionError PersonCameraDetectionModule::InitializeCamera(const GeneralConfig
 DetectionError PersonCameraDetectionModule::PauseCameraCapture() {
     std::unique_lock<std::mutex> lock(m_camera_mutex);
     if (!m_camera || !m_camera->isOpened()) {
-        std::cout << "Camera is not initialized or already closed." << std::endl;
+        // std::cout << "Camera is not initialized or already closed." << std::endl;
         lock.unlock();
         return DetectionError::None;
     }
     
     if (m_camera->isOpened()) {
-        std::cout <<" Pausing camera capture..." << std::endl;
+        // std::cout <<" Pausing camera capture..." << std::endl;
         m_camera->release(); // 释放摄像头资源
         m_camera.reset(); // Reset the camera pointer
         lock.unlock();
         m_camera_opened.store(false);  // Set camera opened flag to false
-        std::cout << "Camera capture paused successfully." << std::endl;
+        // std::cout << "Camera capture paused successfully." << std::endl;
         return DetectionError::None;
     }
-    std::cout << "Camera capture is already paused." << std::endl;
+    // std::cout << "Camera capture is already paused." << std::endl;
     return DetectionError::InvalidOperation;
 }
 
@@ -408,27 +408,27 @@ DetectionError PersonCameraDetectionModule::ResumeCameraCapture() {
     }
     
     if (!m_camera->isOpened()) {
-        std::cout << "will open camera 0" << std::endl;
+        // std::cout << "will open camera 0" << std::endl;
         m_camera_detected = false;
         bool camera_opened = false;
         for (int i = 0; i <= 10; ++i) {
           m_camera->open(i, cv::CAP_DSHOW);  // Use DirectShow backend explicitly for better compatibility.
           if (m_camera->isOpened()) {
-            std::cout << "Successfully opened webcam at index " << i << std::endl;
+            // std::cout << "Successfully opened webcam at index " << i << std::endl;
             camera_opened = true;
             break;
           } else {
-            std::cout << "Failed to open webcam at index " << i << std::endl;
+            // std::cout << "Failed to open webcam at index " << i << std::endl;
           }
         }
         if (!camera_opened) {
-          std::cout << "Failed to open any webcam. Please check the device connections." << std::endl;
+        //   std::cout << "Failed to open any webcam. Please check the device connections." << std::endl;
           return DetectionError::CameraStartFailed;
         }
 
-        std::cout << "opened camera 0" << std::endl;
+        // std::cout << "opened camera 0" << std::endl;
         if (!m_camera->isOpened()) {
-            std::cout << "Failed to resume camera capture." << std::endl;
+            // std::cout << "Failed to resume camera capture." << std::endl;
             return DetectionError::CameraStartFailed;
         }
         m_camera_opened.store(true);  // Set camera opened flag to true
@@ -440,19 +440,19 @@ DetectionError PersonCameraDetectionModule::ResumeCameraCapture() {
         return DetectionError::None;
     }
 
-    std::cout << "Camera capture is already running." << std::endl;
+    // std::cout << "Camera capture is already running." << std::endl;
     return DetectionError::None;
 }
 
 void PersonCameraDetectionModule::startInterfaceDetectionThread(DetectionResultCallback callback, void* user_data) {
     if (m_inference_thread.joinable()) {
-        std::cout << "Detection thread is already running." << std::endl;
+        // std::cout << "Detection thread is already running." << std::endl;
         return;
     }
     m_detection_running = true;
     if (m_general_config.debug_mode)
     {
-        std::cout << "Debug mode is enabled. Creating debug windows." << std::endl;
+        // std::cout << "Debug mode is enabled. Creating debug windows." << std::endl;
         cv::namedWindow(kOriginWindow, /*flags=WINDOW_AUTOSIZE*/ 1);
         cv::namedWindow(kFaceDetection, /*flags=WINDOW_AUTOSIZE*/ 1);
         cv::namedWindow(kObjectDetection, /*flags=WINDOW_AUTOSIZE*/ 1);
@@ -462,7 +462,7 @@ void PersonCameraDetectionModule::startInterfaceDetectionThread(DetectionResultC
         while (m_detection_running) {
             std::unique_lock<std::mutex> lock(m_camera_mutex);
             if (!m_camera || !m_camera->isOpened()) {
-                std::cout << "Camera is not initialized or closed." << std::endl;
+                // std::cout << "Camera is not initialized or closed." << std::endl;
                 lock.unlock();
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000/m_general_config.camera.frame_rate));
                 continue;
@@ -477,13 +477,13 @@ void PersonCameraDetectionModule::startInterfaceDetectionThread(DetectionResultC
             *m_camera>>camera_frame_raw;
             lock.unlock();
             if (camera_frame_raw.empty()) {
-                std::cout << "Ignore empty frames from Queue." << std::endl;
+                // std::cout << "Ignore empty frames from Queue." << std::endl;
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             }
             {
-                std::unique_lock<std::mutex> lock(m_img_mutex);
-                camera_frame_raw.copyTo(m_last_mat_face_detect);
+                // std::unique_lock<std::mutex> lock(m_face_img_mutex);
+                // camera_frame_raw.copyTo(m_last_mat_face_detect);
             }
             cv::Mat camera_frame;
             cv::cvtColor(camera_frame_raw, camera_frame, cv::COLOR_BGR2RGB);
@@ -518,8 +518,8 @@ void PersonCameraDetectionModule::startInterfaceDetectionThread(DetectionResultC
                                       .At(mediapipe::Timestamp(frame_timestamp_us)));
 
             if (!addRetStatus.ok()||!addRetStatus2.ok()) {
-                std::cout << "Failed to send frame to face detection graph: "
-                          << addRetStatus.message() << std::endl;
+                // std::cout << "Failed to send frame to face detection graph: "
+                //           << addRetStatus.message() << std::endl;
                 continue;
             }
             // std::cout << "Processing frame at timestamp: " << frame_timestamp_us << " us" << std::endl;
@@ -529,12 +529,12 @@ void PersonCameraDetectionModule::startInterfaceDetectionThread(DetectionResultC
             processFaceDetectionResult(m_callback_result);
             processObjectDetectionResult(m_callback_result);
             // Output detection result to the log
-            std::cout << "Detection Result: " 
-                      << "Person Count: " << m_callback_result.person_count 
-                      << ", Is Absent: " << m_callback_result.is_absent 
-                      << ", Absence Timeout: " << m_callback_result.absence_timeout 
-                      << ", Is Photo Leak Possible: " << m_callback_result.is_photo_leak_possible 
-                      << ", Is Camera Blocked: " << m_callback_result.is_camera_blocked << std::endl;
+            // std::cout << "Detection Result: " 
+            //           << "Person Count: " << m_callback_result.person_count 
+            //           << ", Is Absent: " << m_callback_result.is_absent 
+            //           << ", Absence Timeout: " << m_callback_result.absence_timeout 
+            //           << ", Is Photo Leak Possible: " << m_callback_result.is_photo_leak_possible 
+            //           << ", Is Camera Blocked: " << m_callback_result.is_camera_blocked << std::endl;
 
             // Invoke the callback with the detection result
             if(callback)
@@ -548,12 +548,12 @@ void PersonCameraDetectionModule::startInterfaceDetectionThread(DetectionResultC
             m_callback_result.absence_timeout = 0; // Reset for next frame
             m_callback_result.photo_leak_confidence = 0.0f;
            // Log detection results for debugging
-            std::cout << "Processed frame at timestamp: " << frame_timestamp_us << " us" << std::endl;            
+            // std::cout << "Processed frame at timestamp: " << frame_timestamp_us << " us" << std::endl;            
             std::this_thread::sleep_for(std::chrono::milliseconds(1000/m_general_config.camera.frame_rate));
         }
     });
 
-    std::cout << "Detection thread started." << std::endl;
+    // std::cout << "Detection thread started." << std::endl;
 }
 
 void PersonCameraDetectionModule::stopInterfaceDetectionThread() {
@@ -561,7 +561,7 @@ void PersonCameraDetectionModule::stopInterfaceDetectionThread() {
     if (m_inference_thread.joinable()) {
         m_inference_thread.join();
     }
-    std::cout << "Detection thread stopped." << std::endl;
+    // std::cout << "Detection thread stopped." << std::endl;
 }
 
 
@@ -571,17 +571,17 @@ void PersonCameraDetectionModule::dealAbsentDetection(DetectionResult& result) {
             m_already_recode_time = true;
             result.absence_timeout = 0;
             m_absence_start_time = std::chrono::steady_clock::now();
-            std::cout << "Absence detected, starting timer." << std::endl;
+            // std::cout << "Absence detected, starting timer." << std::endl;
         } else {
             auto current_time = std::chrono::steady_clock::now();
             auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(current_time - m_absence_start_time).count();
             result.absence_timeout = elapsed_time;
-            std::cout << "Absence detected, elapsed time: " << elapsed_time << " seconds." << std::endl;
+            // std::cout << "Absence detected, elapsed time: " << elapsed_time << " seconds." << std::endl;
         }
     } else { // If presence is detected
         if (m_already_recode_time) {
             m_already_recode_time = false;
-            std::cout << "Presence detected, resetting absence timer." << std::endl;
+            // std::cout << "Presence detected, resetting absence timer." << std::endl;
         }
     }
 }
@@ -603,20 +603,21 @@ void PersonCameraDetectionModule::processFaceDetectionResult(DetectionResult &re
         if(m_face_img_poller->QueueSize() > 0) {
             if (m_face_img_poller->Next(&face_packet)) {
                 auto& output_frame = face_packet.Get<mediapipe::ImageFrame>();
-                // std::unique_lock<std::mutex> lock(m_img_mutex);
-                // m_last_mat_face_detect = mediapipe::formats::MatView(&output_frame);
-                // cv::cvtColor(m_last_mat_face_detect, m_last_mat_face_detect, cv::COLOR_RGB2BGR);
+                cv::Mat face_detect = mediapipe::formats::MatView(&output_frame);
+                cv::cvtColor(face_detect, face_detect, cv::COLOR_RGB2BGR);
+                std::unique_lock<std::mutex> lock(m_face_img_mutex);
+                face_detect.copyTo(m_last_mat_face_detect);
             }
         }
     } else {
         if(m_face_img_poller->QueueSize() > 0) {
             if (m_face_img_poller->Next(&face_packet)) {
                 auto& output_frame = face_packet.Get<mediapipe::ImageFrame>();
-                // std::unique_lock<std::mutex> lock(m_img_mutex);
-                // m_last_mat_face_detect = mediapipe::formats::MatView(&output_frame);
-                // cv::cvtColor(m_last_mat_face_detect, m_last_mat_face_detect, cv::COLOR_RGB2BGR);
+                cv::Mat face_detect = mediapipe::formats::MatView(&output_frame);
+                cv::cvtColor(face_detect, face_detect, cv::COLOR_RGB2BGR);
+                std::unique_lock<std::mutex> lock(m_face_img_mutex);
+                face_detect.copyTo(m_last_mat_face_detect);
             }
-            
             result.person_count = 0;
             result.is_absent = true;
             dealAbsentDetection(result);
@@ -643,13 +644,14 @@ void PersonCameraDetectionModule::processObjectDetectionResult(DetectionResult &
                         m_photo_leak_confidences.clear();
                         m_photo_leak_confidences.push_back(detection.score(0));
                         m_camera_detected = true;
+                        m_need_save_obj_mat = true;
                         m_detection_start_time = std::chrono::steady_clock::now();
-                        std::cout << "Camera detected, starting timer." << std::endl;
+                        // std::cout << "Camera detected, starting timer." << std::endl;
                         break;
                     }
                     else
                     {
-                        std::cout<<"photo leak confidence: "<<detection.score(0)<<std::endl;
+                        // std::cout<<"photo leak confidence: "<<detection.score(0)<<std::endl;
                         m_photo_leak_confidences.push_back(detection.score(0));
                         auto current_time = std::chrono::steady_clock::now();
                         auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - m_detection_start_time).count();
@@ -657,17 +659,18 @@ void PersonCameraDetectionModule::processObjectDetectionResult(DetectionResult &
                             // Camera detected for too long, set to absent
                             result.is_photo_leak_possible = true;  // Example: set to true for now                       
                             // 求m_photo_leak_confidences的平均值
-                            float max_conf = 0.0f;
+                            float sum_conf = 0.0f;
                             for (float v : m_photo_leak_confidences) {
-                                if (v > max_conf) max_conf = v;
+                                sum_conf += v;
                             }
-                            result.photo_leak_confidence = max_conf;
+                            result.photo_leak_confidence = sum_conf / m_photo_leak_confidences.size();
                         }
                     }
                 }
             }
             if(detections.size()<=0)
             {
+                m_need_save_obj_mat = false;
                 m_camera_detected = false;
             }
         }
@@ -676,9 +679,15 @@ void PersonCameraDetectionModule::processObjectDetectionResult(DetectionResult &
         if (m_object_poller->Next(&object_packet)) {
            auto& output_frame = object_packet.Get<mediapipe::ImageFrame>();
                // Convert back to opencv for display or saving.
-            // std::unique_lock<std::mutex> lock(m_img_mutex);
-            // m_last_mat_object_detect = mediapipe::formats::MatView(&output_frame);
-            // cv::cvtColor(m_last_mat_object_detect, m_last_mat_object_detect, cv::COLOR_RGB2BGR);
+            if(m_need_save_obj_mat)
+            {
+                m_need_save_obj_mat = false;
+                cv::Mat object_detect = mediapipe::formats::MatView(&output_frame);
+                cv::cvtColor(object_detect, object_detect, cv::COLOR_RGB2BGR);
+                std::unique_lock<std::mutex> lock(m_obj_img_mutex);
+                object_detect.copyTo(m_last_mat_object_detect);
+            }
+
         }
     }
     else
@@ -692,9 +701,14 @@ void PersonCameraDetectionModule::processObjectDetectionResult(DetectionResult &
         mediapipe::Packet object_packet;
         if (m_object_poller->Next(&object_packet)) {
            auto& output_frame = object_packet.Get<mediapipe::ImageFrame>();
-        //    std::unique_lock<std::mutex> lock(m_img_mutex);
-        //    m_last_mat_object_detect = mediapipe::formats::MatView(&output_frame);
-        //    cv::cvtColor(m_last_mat_object_detect, m_last_mat_object_detect, cv::COLOR_RGB2BGR);
+            if(m_need_save_obj_mat)
+            {
+                m_need_save_obj_mat = false;
+                cv::Mat object_detect = mediapipe::formats::MatView(&output_frame);
+                cv::cvtColor(object_detect, object_detect, cv::COLOR_RGB2BGR);
+                std::unique_lock<std::mutex> lock(m_obj_img_mutex);
+                object_detect.copyTo(m_last_mat_object_detect);
+            }
         }
     } 
 }
@@ -703,7 +717,7 @@ void PersonCameraDetectionModule::processObjectDetectionResult(DetectionResult &
 bool PersonCameraDetectionModule::IsCameraPossiblyBlocked(cv::Mat image) const
 {
     if (image.empty()) {
-        std::cout << "Input image is empty." << std::endl;
+        // std::cout << "Input image is empty." << std::endl;
         return false;
     }
     cv::Mat gray_image;
@@ -724,23 +738,60 @@ bool PersonCameraDetectionModule::IsCameraPossiblyBlocked(cv::Mat image) const
 
 DetectionError PersonCameraDetectionModule::SaveImage(const char* file_path,bool face_detect)
 {
-    std::string file_path_str(file_path);
+    std::string file_path_str;
+#ifdef _WIN32
+    // Windows环境下，将UTF-8编码的路径转换为ANSI编码
+    int wlen = MultiByteToWideChar(CP_UTF8, 0, file_path, -1, nullptr, 0);
+    if (wlen > 0) {
+        std::wstring wfile_path(wlen, 0);
+        MultiByteToWideChar(CP_UTF8, 0, file_path, -1, &wfile_path[0], wlen);
+        
+        int len = WideCharToMultiByte(CP_ACP, 0, wfile_path.c_str(), -1, nullptr, 0, nullptr, nullptr);
+        if (len > 0) {
+            file_path_str.resize(len - 1);
+            WideCharToMultiByte(CP_ACP, 0, wfile_path.c_str(), -1, &file_path_str[0], len, nullptr, nullptr);
+        } else {
+            file_path_str = file_path; // 转换失败时使用原始路径
+        }
+    } else {
+        file_path_str = file_path; // 转换失败时使用原始路径
+    }
+#else
+    // Linux环境下直接使用UTF-8编码
+    file_path_str = file_path;
+#endif
     if (file_path_str.empty()) {
-        std::cout << "File path is empty." << std::endl;
+        // std::cout << "File path is empty." << std::endl;
         return DetectionError::InvalidArgument;
     }
+    if(face_detect)
     {
-        std::unique_lock<std::mutex> lock(m_img_mutex);
+        std::unique_lock<std::mutex> lock(m_face_img_mutex);
         if (m_last_mat_face_detect.empty()) {
-            std::cout << "No face detection image available." << std::endl;
+            // std::cout << "No face detection image available." << std::endl;
             return DetectionError::ProcessingError;
         }
         if (!cv::imwrite(file_path_str.c_str(), m_last_mat_face_detect)) {
-            std::cout << "Failed to write temporary face detection image." << std::endl;
+            // std::cout << "Failed to write temporary face detection image." << std::endl;
             return DetectionError::ProcessingError;
         }
         m_last_mat_face_detect.release(); // 释放图像资源
-        std::cout << "Face detection image saved to: " << file_path_str.c_str() << std::endl;
+        // std::cout << "Face detection image saved to: " << file_path_str.c_str() << std::endl;
+        return DetectionError::None;
+    }
+    else
+    {
+        std::unique_lock<std::mutex> lock(m_obj_img_mutex);
+        if (m_last_mat_object_detect.empty()) {
+            // std::cout << "No object detection image available." << std::endl;
+            return DetectionError::ProcessingError;
+        }
+        if (!cv::imwrite(file_path_str.c_str(), m_last_mat_object_detect)) {
+            // std::cout << "Failed to write temporary object detection image." << std::endl;
+            return DetectionError::ProcessingError;
+        }
+        m_last_mat_object_detect.release(); // 释放图像资源
+        // std::cout << "Object detection image saved to: " << file_path_str.c_str() << std::endl;
         return DetectionError::None;
     }
     return DetectionError::None;
